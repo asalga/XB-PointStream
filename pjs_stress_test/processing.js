@@ -3987,6 +3987,12 @@
           curContext.enable(curContext.BLEND);
           curContext.blendFunc(curContext.SRC_ALPHA, curContext.ONE_MINUS_SRC_ALPHA);
 
+          var symbols= "";
+          for(currSymbol in curContext) {
+           symbols += currSymbol + "\n";
+          }
+          tinylogLite.log(symbols);
+
           // We declare our own constants since Minefield doesn't 
           // do anything when curContext.VERTEX_PROGRAM_POINT_SIZE is used.
           curContext.enable(VERTEX_PROGRAM_POINT_SIZE);
