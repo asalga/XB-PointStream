@@ -65,13 +65,13 @@ class Octree{
   
   void render(){
     if(isBuilt){
-      
       if(showBounds){
         pushMatrix();
         translate(center.x, center.y, center.z);
         //stroke(radius*3,250-radius,200);
         stroke(33,66,99);
-        box(radius, radius, radius);
+        box(radius);
+       // println("sdfg");
         popMatrix();
       }
     
@@ -165,19 +165,44 @@ void setup() {
   // A tree with depth 0 has no direct children
   // A tree with depth 1 has 8 direct children
   // etc ...
-//  octree = new Octree(250);
- // octree.build(2);
+  octree = new Octree(250);
+  octree.build(1);
   
-  //println(ii);
- // octree.render();
+  println(ii);
+  octree.render();
 }
 
 void draw(){
   background(0);
-  
   translate(width/2, height/2, 0);
   rotateY(r+=0.01);
-  stroke(255);
-  box(30,30,30);
-//  octree.render();
+  octree.render();
+}
+
+int runTest(int numPoints){
+  background(200);
+  
+  ArrayList arr = new ArrayList();
+
+  for(int i = 0; i < numPoints; i++)
+  {
+    PVector p = new PVector();
+    p.set(random(-1,1), random(-1,1), random(-1,1));
+    p.normalize();
+    p.mult(200);
+    arr.add(p.x);
+    arr.add(p.y);
+    arr.add(p.z);
+  }
+  
+  strokeWeight(10);
+  int timer = millis();
+  for(int i=0; i < numPoints*3; i+=3){
+    float x = (float) arr.get(i);
+    float y = (float) arr.get(i+1);
+    float z = (float) arr.get(i+2);
+    
+    point(x, y, z);
+  }
+  return millis()-timer;
 }
