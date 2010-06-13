@@ -324,6 +324,9 @@ if(ready){
   rotateY(rotY);
   rotateX(rotX);
   
+  // once per frame
+  setMatrices()
+  
   octree.render();
 
   document.getElementById('fps').innerHTML = "FPS: " + floor(frameRate);

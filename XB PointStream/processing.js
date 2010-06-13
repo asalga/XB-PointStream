@@ -4083,13 +4083,19 @@
           
           curContext.useProgram(programObject2D);
           
-          var view = new PMatrix3D();
+         /* var view = new PMatrix3D();
           view.scale(1, -1, 1);
           view.apply(modelView.array());
           
           uniformMatrix(programObject2D, "model", true, [1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1]);
-          uniformMatrix(programObject2D, "view", true, view.array());
+          uniformMatrix(programObject2D, "view", true, view.array());*/
           uniformMatrix(programObject2D, "projection", true, projection.array());
+          
+          
+          curContext.useProgram(programObject3D);
+          uniformMatrix(programObject3D, "model", true, [1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1]);
+          uniformMatrix(programObject3D, "projection", true, projection.array());
+
         }
         p.stroke(0);
         p.fill(255);
@@ -4470,78 +4476,56 @@
     // Shapes
     ////////////////////////////////////////////////////////////////////////////
 
+    p.setMatrices = function(){
+      // viewing transformation needs to have Y flipped
+      // becuase that's what Processing does.
+      var view = new PMatrix3D();
+      view.scale(1, -1, 1);
+      view.apply(modelView.array());
+
+      var normalMatrix = new PMatrix3D();
+      normalMatrix.set(view);
+      normalMatrix.invert();
+
+      curContext.useProgram(programObject3D);
+      uniformMatrix(programObject3D, "view", true, view.array());
+      uniformMatrix(programObject3D, "normalTransform", false, normalMatrix.array());
+    };
+
     p.drawSplats = function(buff) {
-    
-      if (p.use3DContext) {
-    
-        // Modeling transformation
-        var model = new PMatrix3D();
-
-        // viewing transformation needs to have Y flipped
-        // becuase that's what Processing does.
-        var view = new PMatrix3D();
-        view.scale(1, -1, 1);
-        view.apply(modelView.array());
-
-          curContext.useProgram(programObject3D);
-
-          uniformMatrix(programObject3D, "model", true, model.array());
-          uniformMatrix(programObject3D, "view", true, view.array());
-          uniformMatrix(programObject3D, "projection", true, projection.array());
-
-          uniformf(programObject3D, "color", fillStyle);
-
-          var v = new PMatrix3D();
-          v.set(view);
-
-          var m = new PMatrix3D();
-          m.set(model);
-
-          v.mult(m);
-
-          var normalMatrix = new PMatrix3D();
-          normalMatrix.set(v);
-          normalMatrix.invert();
-
-          uniformMatrix(programObject3D, "normalTransform", false, normalMatrix.array());
-
-vertexAttribPointer(programObject3D, "aVertex", 3, buff.posBuffer);
-vertexAttribPointer(programObject3D, "aColor", 3, buff.colBuffer);
-vertexAttribPointer(programObject3D, "aNormal", 3, buff.normBuffer);
-curContext.drawArrays(curContext.POINTS, 0, buff.size/3);
-
-      }
+      curContext.useProgram(programObject3D);
+      vertexAttribPointer(programObject3D, "aVertex", 3, buff.posBuffer);
+      vertexAttribPointer(programObject3D, "aColor", 3, buff.colBuffer);
+      vertexAttribPointer(programObject3D, "aNormal", 3, buff.normBuffer);
+      curContext.drawArrays(curContext.POINTS, 0, buff.size/3);
     };
 
     p.box = function(w, h, d) {
-      
-        // user can uniformly scale the box by
-        // passing in only one argument.
-        if (!h || !d) {
-          h = d = w;
-        }
-    
-        // Modeling transformation
-        var model = new PMatrix3D();
-        model.scale(w, h, d);
+      // user can uniformly scale the box by
+      // passing in only one argument.
+      if (!h || !d) {
+        h = d = w;
+      }
 
-        // viewing transformation needs to have Y flipped
-        // becuase that's what Processing does.
-        var view = new PMatrix3D();
-        view.scale(1, -1, 1);
-        view.apply(modelView.array());
-        
-          curContext.useProgram(programObject2D);
-          uniformMatrix(programObject2D, "model", true, model.array());
-          uniformMatrix(programObject2D, "view", true, view.array());
-          uniformMatrix(programObject2D, "projection", true, projection.array());
+      // Modeling transformation
+      var model = new PMatrix3D();
+      model.scale(w, h, d);
 
-          uniformf(programObject2D, "color", strokeStyle);
-          curContext.lineWidth(lineWidth);
-          vertexAttribPointer(programObject2D, "Vertex", 3, boxOutlineBuffer);
-          curContext.drawArrays(curContext.LINES, 0, boxOutlineVerts.length / 3);
-          
+      // viewing transformation needs to have Y flipped
+      // becuase that's what Processing does.
+      var view = new PMatrix3D();
+      view.scale(1, -1, 1);
+      view.apply(modelView.array());
 
+      curContext.useProgram(programObject2D);
+      uniformMatrix(programObject2D, "projection", true, projection.array());
+      uniformMatrix(programObject2D, "view", true, view.array());
+      uniformMatrix(programObject2D, "model", true, model.array());
+
+      uniformf(programObject2D, "color", strokeStyle);
+      curContext.lineWidth(lineWidth);
+      vertexAttribPointer(programObject2D, "Vertex", 3, boxOutlineBuffer);
+      curContext.drawArrays(curContext.LINES, 0, boxOutlineVerts.length / 3);
     };
 
 
@@ -7958,7 +7942,7 @@ curContext.drawArrays(curContext.POINTS, 0, buff.size/3);
   // Processing global methods and constants for the parser
   function getGlobalMembers() {
     var names =
-  ["drawSplats", "points", "startBuffer", "endBuffer", "addToBuffer", "abs","acos","ADD","alpha","ALPHA","ALT","ambient","ambientLight","append","applyMatrix","arc",
+  ["setMatrices", "drawSplats", "points", "startBuffer", "endBuffer", "addToBuffer", "abs","acos","ADD","alpha","ALPHA","ALT","ambient","ambientLight","append","applyMatrix","arc",
   "ARGB","arrayCopy","ArrayList","ARROW","asin","atan","atan2","background","BACKSPACE","beginCamera",
   "beginDraw","beginShape","BEVEL","bezier","bezierPoint","bezierTangent","bezierVertex","binary",
   "blend","BLEND","blendColor","blue","BLUE_MASK","boolean","box","brightness","BURN","byte","camera","ceil",
