@@ -270,7 +270,7 @@ if(stillDownloading === false){
   }
   
   document.getElementById('octree_percent').innerHTML = "done";
-  document.getElementById('vbo_title').innerHTML = "Creating VBOS: ...........";
+  document.getElementById('vbo_title').innerHTML = "Creating VBOs: ...........";
     
   octree.createBuffersR();
   document.getElementById('vbo_progress').innerHTML = "done";
