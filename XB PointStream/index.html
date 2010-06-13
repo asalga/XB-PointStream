@@ -25,7 +25,6 @@
     var verts = [];
     var cols = [];
     var norms = [];
-    var totalPoints = 0;
     
     var MaxX = -10000;
     var MaxY = -10000;
@@ -33,10 +32,8 @@
 
     var stillDownloading = true;
     var s = 3;
-
     var AJAX = new XMLHttpRequest();
-    var sss = "";
-    
+
     function blah(){
       var values = AJAX.responseText.split(/\s+/);
 
@@ -63,15 +60,14 @@
         norms.push(parseFloat(values[i+7]));
         norms.push(parseFloat(values[i+8]));
 
-       // sss += "<br />" + parseFloat(currX+10) + " " + parseFloat(currY+10) + " " + parseFloat(currZ+10) + " " +
+        //sss += "<br />" + parseFloat(currX+10) + " " + parseFloat(currY+10) + " " + parseFloat(currZ+10) + " " +
         //values[i+3] + " " + values[i+4] + " " + values[i+5] + " " +
-       // values[i+6] + " " + values[i+7] + " " + values[i+8];
+        // values[i+6] + " " + values[i+7] + " " + values[i+8];
       }
-      
-        totalPoints = values.length/9;
+
         document.getElementById('parse_percent').innerHTML = "done";
-        document.getElementById('NP_title').innerHTML = "Number of Points: ........";
-        document.getElementById('num_points').innerHTML = totalPoints;
+        document.getElementById('NP_title').innerHTML = "Number of points: ........";
+        document.getElementById('num_points').innerHTML = values.length/9;
         document.getElementById('Oc_title').innerHTML ="Inserting into octree: ...";
         
         stillDownloading = false;
@@ -88,7 +84,7 @@
         setTimeout(blah, 50);
       }
       else{
-      //3997253
+      //3997253 acorn.asc
         document.getElementById('load_percent').innerHTML = "" + Math.ceil(100 * AJAX.responseText.length/10636534) + "%";
       }
     }

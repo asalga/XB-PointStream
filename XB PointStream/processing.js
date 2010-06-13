@@ -4470,7 +4470,7 @@
     // Shapes
     ////////////////////////////////////////////////////////////////////////////
 
-    p.box = function(buff) {
+    p.drawSplats = function(buff) {
     
       if (p.use3DContext) {
     
@@ -4483,7 +4483,6 @@
         view.scale(1, -1, 1);
         view.apply(modelView.array());
 
-       // if (doFill === true) {
           curContext.useProgram(programObject3D);
 
           uniformMatrix(programObject3D, "model", true, model.array());
@@ -4506,38 +4505,15 @@
 
           uniformMatrix(programObject3D, "normalTransform", false, normalMatrix.array());
 
-      //    vertexAttribPointer(programObject3D, "Vertex", 3, boxBuffer);
-       //   vertexAttribPointer(programObject3D, "Normal", 3, boxNormBuffer);
-
-          // Ugly hack. Can't simply disable the vertex attribute
-          // array. No idea why, so I'm passing in dummy data.
-         // vertexAttribPointer(programObject3D, "aColor", 3, boxNormBuffer);
-
-        //  curContext.drawArrays(curContext.POINTS, 0, boxVerts.length / 3);
-      
 vertexAttribPointer(programObject3D, "aVertex", 3, buff.posBuffer);
 vertexAttribPointer(programObject3D, "aColor", 3, buff.colBuffer);
 vertexAttribPointer(programObject3D, "aNormal", 3, buff.normBuffer);
 curContext.drawArrays(curContext.POINTS, 0, buff.size/3);
 
-          
-      //  }
-/*
-        if (lineWidth > 0 && doStroke) {
-          curContext.useProgram(programObject2D);
-          uniformMatrix(programObject2D, "model", true, [1,0,0,0,  0,1,0,0, 0,0,1,0, 0,0,0,1]);
-          uniformMatrix(programObject2D, "view", true, view.array());
-          uniformMatrix(programObject2D, "projection", true, projection.array());
-
-          uniformf(programObject2D, "color", strokeStyle);
-          curContext.lineWidth(lineWidth);
-          vertexAttribPointer(programObject2D, "Vertex", 3, boxOutlineBuffer);
-          curContext.drawArrays(curContext.LINES, 0, boxOutlineVerts.length / 3);
-        }*/
       }
     };
 
-    p.box2 = function(w, h, d) {
+    p.box = function(w, h, d) {
       
         // user can uniformly scale the box by
         // passing in only one argument.
@@ -7982,7 +7958,7 @@ curContext.drawArrays(curContext.POINTS, 0, buff.size/3);
   // Processing global methods and constants for the parser
   function getGlobalMembers() {
     var names =
-  ["points", "startBuffer", "endBuffer", "addToBuffer", "abs","acos","ADD","alpha","ALPHA","ALT","ambient","ambientLight","append","applyMatrix","arc",
+  ["drawSplats", "points", "startBuffer", "endBuffer", "addToBuffer", "abs","acos","ADD","alpha","ALPHA","ALT","ambient","ambientLight","append","applyMatrix","arc",
   "ARGB","arrayCopy","ArrayList","ARROW","asin","atan","atan2","background","BACKSPACE","beginCamera",
   "beginDraw","beginShape","BEVEL","bezier","bezierPoint","bezierTangent","bezierVertex","binary",
   "blend","BLEND","blendColor","blue","BLUE_MASK","boolean","box","brightness","BURN","byte","camera","ceil",

@@ -1,19 +1,8 @@
-import processing.opengl.*;
-
-int numOctants = 0;
-
-float r = 0.0f;
-int levelToDraw = -1;
-int level = -1;
-
 var ready = false;
-var octreeSize;
-boolean drawComplete = true;
-boolean drawPoints = true;
 float fps;
-
 var isSetup = false;
 
+// manipulate object
 var rotX = 0;
 var rotY = 0;
 var mouseIsDown = false;
@@ -22,12 +11,12 @@ var lastX = 0;
 var lastY = 0;
 var zoom = 0;
 
-int bufferCounter = 0;
-int IDCounter = 0;
-
 Octree octree;
-
-int NUM_POINTS = 50;
+int IDCounter = 0;
+int levelToDraw = -1;
+int level = -1;
+int numOctants = 0;
+var octreeSize;
 
 class Pointt{
   public float x,y,z;
@@ -103,8 +92,7 @@ class Octree{
   void render(){
     
     if(isLeaf && (data.size() > 0 || datajs.length > 0)){
-      //points(buffer);
-      box(buffer);
+      drawSplats(buffer);
    /*
       for(int i = 0; i < data.size(); i++){
         Pointt p = (Pointt)data.get(i);
@@ -116,22 +104,13 @@ class Octree{
     }
     
     if(drawOctree){
-      //if(drawComplete || dataInChildren > 0 || 
       if(isLeaf && buffer){
-       // level++;
-      
-        //if(level == levelToDraw || levelToDraw == -1)
-
           pushMatrix();
           translate(center.x, center.y, center.z);
-         // strokeWeight(1);
-          //noStroke();
-//          stroke(abs(center.x),150- abs(center.y),abs(center.z));
           stroke( 255 * (abs(center.x)/octreeSize),
                   255 * (abs(center.y)/octreeSize),
                   255 * (abs(center.z)/octreeSize));
-          //fill(abs(center.x),150- abs(center.y),abs(center.z));
-          box2(radius/0.95);
+          box(radius/0.95);
           popMatrix();
           }
 
@@ -140,14 +119,11 @@ class Octree{
 
     // if the frustum and the current octant intersect
    // if( BoundingSpheresIntersect(frus, 20, center, getRadius()) ){
-    
       if(numChildren > 0){
         for(int i = 0; i < numChildren; i++){
           Octree o = (Octree)children.get(i);
           o.render();
         }
-     // }
-      
     }
     level--;
     
@@ -273,7 +249,6 @@ void setup() {
 
 void draw(){
 
-
 if(stillDownloading === false){
 
   MaxX = abs(MaxX);
@@ -329,7 +304,7 @@ if(ready){
   if(mouseIsDown){
     if(lastX != mouseX){
       rotY += (mouseX - mouseCoords[0])/width * 2 * PI;
-      rotX += (mouseCoords[1]- mouseY)/height * 2 * PI;
+      rotX += (mouseY - mouseCoords[1])/height * 2 * PI;
       mouseCoords[0] = mouseX;
       mouseCoords[1] = mouseY;
     }
@@ -344,6 +319,7 @@ if(ready){
   }
 
   translate(width/2, height/2, 300 + zoom);
+  scale(1,-1,1);
   
   rotateY(rotY);
   rotateX(rotX);
