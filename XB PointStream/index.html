@@ -1,39 +1,116 @@
 <html>
 
   <head>
-    <script src="processing.js"></script>
-
-    <style type="text/css">
-    table {
-      border-width: 1px;
-      border-spacing: 0px;
+  <style>
+    span{
+      vertical-align:top;
+      font-family: monospace;
     }
-    table td {
-      border-width: 1px;
-      border-style: solid;
-    </style>
+    
+    .prog{
+      color: #4400CC;
+    }
+    
+    .file{
+      color:green;
+    }
+  </style>
+    <script src="processing.js"></script>
+    <script>
+    var lightOn = true;
+    var drawOctree = true;
+    
+    var file = "mickey.asc";
+    
+    var verts = [];
+    var cols = [];
+    var norms = [];
+    var totalPoints = 0;
+    
+    var MaxX = -10000;
+    var MaxY = -10000;
+    var MaxZ = -10000;
+
+    var stillDownloading = true;
+    var s = 3;
+
+    var AJAX = new XMLHttpRequest();
+    var sss = "";
+    
+    function blah(){
+      var values = AJAX.responseText.split(/\s+/);
+
+      // xyz  rgb  normals
+      for(var i = 0; i < values.length; i += 9){
+      
+        var currX = parseFloat(values[i+0]) * s; 
+        var currY = parseFloat(values[i+1]) * s;
+        var currZ = parseFloat(values[i+2]) * s;
+        
+        verts.push(currX);
+        verts.push(currY);
+        verts.push(currZ);
+                
+        if(currX > MaxX){MaxX = currX;}
+        if(currY > MaxY){MaxY = currY;}
+        if(currZ > MaxZ){MaxZ = currZ;}
+
+        cols.push(parseInt(values[i+3])/255);
+        cols.push(parseInt(values[i+4])/255);
+        cols.push(parseInt(values[i+5])/255);
+
+        norms.push(parseFloat(values[i+6]));
+        norms.push(parseFloat(values[i+7]));
+        norms.push(parseFloat(values[i+8]));
+
+       // sss += "<br />" + parseFloat(currX+10) + " " + parseFloat(currY+10) + " " + parseFloat(currZ+10) + " " +
+        //values[i+3] + " " + values[i+4] + " " + values[i+5] + " " +
+       // values[i+6] + " " + values[i+7] + " " + values[i+8];
+      }
+      
+        totalPoints = values.length/9;
+        document.getElementById('parse_percent').innerHTML = "done";
+        document.getElementById('NP_title').innerHTML = "Number of Points: ........";
+        document.getElementById('num_points').innerHTML = totalPoints;
+        document.getElementById('Oc_title').innerHTML ="Inserting into octree: ...";
+        
+        stillDownloading = false;
+    }
+    
+    
+    function changed(){
+    
+      if(AJAX.readyState === 4){
+      
+        document.getElementById('load_percent').innerHTML = "done";
+        document.getElementById('Pa_title').innerHTML = "Parsing <span class='file'>mickey.asc</span>: ......";
+
+        setTimeout(blah, 50);
+      }
+      else{
+      //3997253
+        document.getElementById('load_percent').innerHTML = "" + Math.ceil(100 * AJAX.responseText.length/10636534) + "%";
+      }
+    }
+    
+    AJAX.onreadystatechange = changed;
+    AJAX.open("GET", file, true);
+    AJAX.send(null);
+    </script>
   </head>
 
   <body>
-    Points To Render: <input type="text" id="numPoints" value="1000" /><input type="button" value="Run Test" onclick="runIt(parseInt(document.getElementById('numPoints').value));" />
+   <canvas datasrc= "xb.js" style="float: left;" id="cvs"></canvas>
+   <span id="La_title">Downloading <span class="file">mickey.asc</span>: ..</span><span class ="prog" id="load_percent">0%</span><br />
+   <span id="Pa_title"></span><span class ="prog" id="parse_percent"></span><br />
+   <span id="NP_title"></span><span class ="prog" id="num_points"></span><br />
+   <span id="Oc_title"></span><span class ="prog" id="octree_percent"></span><br />
+   <span id="vbo_title"></span><span class ="prog" id="vbo_progress"></span><br />
 
-    <table border="1">
-      <tr>
-        <td valign="top">
-          <canvas id="cvs" datasrc="xb.js" width="500" height="500"></canvas>
-        </td>
-        <td valign="top">
-
-          <table id="entries">
-            <tr>
-              <td>Num Points</td>
-              <td>Time (ms)</td>
-            </tr>
-          </table>
-          
-        </td>
-      </tr>
-    </table>
-
+   <br />
+   <span style="float: left;" id="fps"></span><br />
+   
+   <span id="controls"></span>
   </body>
+
 </html>
