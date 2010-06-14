@@ -564,7 +564,7 @@
       "      gl_FrontColor = vec4(finalDiffuse[0] * col[0], finalDiffuse[1] * col[1], finalDiffuse[2] * col[2], 1.0);" +
       "  }" +
 
-      "  gl_PointSize = 3.0;" +
+      "  gl_PointSize = 4.0;" +
       "  gl_Position = projection * view * model * vec4( aVertex, 1.0 );" +
       "}";
 
@@ -4089,12 +4089,15 @@
           
           uniformMatrix(programObject2D, "model", true, [1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1]);
           uniformMatrix(programObject2D, "view", true, view.array());*/
-          uniformMatrix(programObject2D, "projection", true, projection.array());
           
+          var tproj = new PMatrix3D();
+          tproj.set(projection);
+          tproj.transpose();
+          uniformMatrix(programObject2D, "projection", false, tproj.array());
           
           curContext.useProgram(programObject3D);
-          uniformMatrix(programObject3D, "model", true, [1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1]);
-          uniformMatrix(programObject3D, "projection", true, projection.array());
+          uniformMatrix(programObject3D, "model", false, [1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1]);
+          uniformMatrix(programObject3D, "projection", false, tproj.array());
 
         }
         p.stroke(0);
@@ -4482,13 +4485,15 @@
       var view = new PMatrix3D();
       view.scale(1, -1, 1);
       view.apply(modelView.array());
+      view.transpose();
 
       var normalMatrix = new PMatrix3D();
       normalMatrix.set(view);
       normalMatrix.invert();
+      normalMatrix.transpose();
 
       curContext.useProgram(programObject3D);
-      uniformMatrix(programObject3D, "view", true, view.array());
+      uniformMatrix(programObject3D, "view", false, view.array());
       uniformMatrix(programObject3D, "normalTransform", false, normalMatrix.array());
     };
 
@@ -4510,17 +4515,23 @@
       // Modeling transformation
       var model = new PMatrix3D();
       model.scale(w, h, d);
+      model.transpose();
 
       // viewing transformation needs to have Y flipped
       // becuase that's what Processing does.
       var view = new PMatrix3D();
       view.scale(1, -1, 1);
       view.apply(modelView.array());
+      view.transpose();
+      
+      var tproj = new PMatrix3D();
+      tproj.set(projection);
+      tproj.transpose();
 
       curContext.useProgram(programObject2D);
-      uniformMatrix(programObject2D, "projection", true, projection.array());
-      uniformMatrix(programObject2D, "view", true, view.array());
-      uniformMatrix(programObject2D, "model", true, model.array());
+      uniformMatrix(programObject2D, "projection", false, tproj.array());
+      uniformMatrix(programObject2D, "view", false, view.array());
+      uniformMatrix(programObject2D, "model", false, model.array());
 
       uniformf(programObject2D, "color", strokeStyle);
       curContext.lineWidth(lineWidth);
@@ -5036,13 +5047,15 @@
     var view = new PMatrix3D();
     view.scale(1, -1, 1);
     view.apply(modelView.array());
+    view.transpose();
     
     var normalMatrix = new PMatrix3D();
     normalMatrix.set(view);
     normalMatrix.invert();
+    normalMatrix.transpose();
 
     uniformMatrix(programObject2D, "normalTransform", false, normalMatrix.array());
-    uniformMatrix(programObject2D, "view", true, view.array());
+    uniformMatrix(programObject2D, "view", false, view.array());
                     
     vertexAttribPointer(programObject2D, "aVertex", 3, buff.posBuffer);
     vertexAttribPointer(programObject2D, "aColor", 3, buff.colBuffer);
