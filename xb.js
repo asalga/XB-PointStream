@@ -1,3 +1,18 @@
+var AJAX = new XMLHttpRequest();
+
+//    
+var verts = [];
+var cols = [];
+var norms = [];
+
+//
+var MaxX = -10000;
+var MaxY = -10000;
+var MaxZ = -10000;
+
+var stillDownloading = true;
+var s = 3;
+
 var ready = false;
 float fps;
 var isSetup = false;
@@ -236,8 +251,74 @@ class Octree{
   }
 }
 
+    
 
-void setup() {
+
+    function parse(){
+      var values = AJAX.responseText.split(/\s+/);
+
+      // xyz  rgb  normals
+      for(var i = 0, len = values.length; i < len; i += 9){
+      
+        var currX = parseFloat(values[i+0]) * s; 
+        var currY = parseFloat(values[i+1]) * s;
+        var currZ = parseFloat(values[i+2]) * s;
+        
+        verts.push(currX);
+        verts.push(currY);
+        verts.push(currZ);
+                
+        if(currX > MaxX){MaxX = currX;}
+        if(currY > MaxY){MaxY = currY;}
+        if(currZ > MaxZ){MaxZ = currZ;}
+
+        cols.push(parseInt(values[i+3])/255);
+        cols.push(parseInt(values[i+4])/255);
+        cols.push(parseInt(values[i+5])/255);
+
+        norms.push(parseFloat(values[i+6]));
+        norms.push(parseFloat(values[i+7]));
+        norms.push(parseFloat(values[i+8]));
+
+        //sss += "<br />" + parseFloat(currX+10) + " " + parseFloat(currY+10) + " " + parseFloat(currZ+10) + " " +
+        //values[i+3] + " " + values[i+4] + " " + values[i+5] + " " +
+        // values[i+6] + " " + values[i+7] + " " + values[i+8];
+      }
+
+      document.getElementById('parse_percent').innerHTML = "done";
+      document.getElementById('NumPoints_log').innerHTML = "Number of points: ........";
+      document.getElementById('num_points').innerHTML = values.length/9;
+      document.getElementById('Octree_log').innerHTML ="Inserting into octree: ...";
+      
+      stillDownloading = false;
+    }
+    
+    
+    function changed(){
+    
+      if(AJAX.readyState === 4){
+      
+        document.getElementById('load_percent').innerHTML = "done";
+        document.getElementById('Parse_log').innerHTML = "Parsing <span class='filename'>" + filename + "</span>: ......";
+
+        setTimeout(parse, 50);
+      }
+      else{
+      if(filename =="mickey.asc"){
+        document.getElementById('load_percent').innerHTML = "" + Math.ceil(100 * AJAX.responseText.length/10636534) + "%";
+        }
+        else{
+          document.getElementById('load_percent').innerHTML = "" + Math.ceil(100 * AJAX.responseText.length/3997253) + "%";
+        }
+      }
+    }
+
+
+void setup() {  
+  AJAX.onreadystatechange = changed;
+  AJAX.open("GET", filename, true);
+  AJAX.send(null);
+
   size(500, 500, OPENGL);
   
   stroke(255);
@@ -270,7 +351,7 @@ if(stillDownloading === false){
   }
   
   document.getElementById('octree_percent').innerHTML = "done";
-  document.getElementById('vbo_title').innerHTML = "Creating VBOs: ...........";
+  document.getElementById('VBO_log').innerHTML = "Creating VBOs: ...........";
     
   octree.createBuffersR();
   document.getElementById('vbo_progress').innerHTML = "done";
@@ -311,7 +392,6 @@ if(ready){
     lastY = mouseY;
     lastX = mouseX;
   }
-
 
  if(lightOn){
     // (point light) not a directional light, check shader

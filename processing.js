@@ -365,7 +365,7 @@
         cameraX = curElement.width / 2,
         cameraY = curElement.height / 2,
         cameraZ = cameraY / Math.tan(cameraFOV / 2),
-        cameraNear = cameraZ / 10,
+        cameraNear = cameraZ / 1000,
         cameraFar = cameraZ * 10,
         cameraAspect = curElement.width / curElement.height;
 
@@ -564,7 +564,7 @@
       "      gl_FrontColor = vec4(finalDiffuse[0] * col[0], finalDiffuse[1] * col[1], finalDiffuse[2] * col[2], 1.0);" +
       "  }" +
 
-      "  gl_PointSize = 4.0;" +
+      "  gl_PointSize = 3.0;" +
       "  gl_Position = projection * view * model * vec4( aVertex, 1.0 );" +
       "}";
 
@@ -4427,7 +4427,7 @@
         //in case canvas is resized
         cameraY = curElement.height / 2;
         cameraZ = cameraY / Math.tan(cameraFOV / 2);
-        cameraNear = cameraZ / 10;
+        cameraNear = cameraZ / 100;
         cameraFar = cameraZ * 10;
         cameraAspect = curElement.width / curElement.height;
         p.perspective(cameraFOV, cameraAspect, cameraNear, cameraFar);
