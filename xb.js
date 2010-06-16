@@ -1,17 +1,19 @@
 var AJAX = new XMLHttpRequest();
+var fileSize;
 
+var objCenter = [0,0,0];
 //    
 var verts = [];
 var cols = [];
 var norms = [];
 
-//
+// Make sure these values get overwritten
 var MaxX = -10000;
 var MaxY = -10000;
 var MaxZ = -10000;
 
 var stillDownloading = true;
-var s = 3;
+var s = 1;
 
 var ready = false;
 float fps;
@@ -33,19 +35,19 @@ int level = -1;
 int numOctants = 0;
 var octreeSize;
 
-class Pointt{
+class Point{
   public float x,y,z;
-  Pointt(float xx, float yy, float zz){
+  Point(float xx, float yy, float zz){
     x = xx;
     y = yy;
     z = zz;
   }
-  Pointt(){
+  Point(){
     x = y = z = 0;
   }
 }
 
-Pointt frus = new Pointt(0,0,100);
+Point frus = new Point(0,0,100);
 
 class Octree{
   
@@ -56,7 +58,7 @@ class Octree{
   int numPrimitives;
   
   // position of the octant
-  private Pointt center;
+  private Point center;
   private float radius;
   private ArrayList children;
   
@@ -80,7 +82,7 @@ class Octree{
     dataInChildren = 0;
     radius = fsize;
     isBuilt = false;
-    center = new Pointt(0,0,0);
+    center = new Point(0,0,0);
     
     datajs = [];
     datacjs = [];
@@ -110,8 +112,8 @@ class Octree{
       drawSplats(buffer);
    /*
       for(int i = 0; i < data.size(); i++){
-        Pointt p = (Pointt)data.get(i);
-        Pointt cl = (Pointt)datac.get(i);
+        Point p = (Point)data.get(i);
+        Point cl = (Point)datac.get(i);
       //  stroke(abs(p.x*5), abs(p.y*5), abs(p.z*5));
 //        stroke(cl.x, cl.y, cl.z);
         point(p.x, p.y, p.z, cl.x, cl.y, cl.z);
@@ -152,11 +154,11 @@ class Octree{
     showBounds = show;
   }
   
-  void setCenter(Pointt c){
+  void setCenter(Point c){
     center = c;
   }
   
-  Pointt getCenter(){
+  Point getCenter(){
     return center;
   }
   
@@ -168,7 +170,7 @@ class Octree{
     radius = r;
   }
   
-  void insert(Pointt p, Pointt col, Pointt n){
+  void insert(Point p, Point col, Point n){
 
     if(isLeaf){
 
@@ -190,7 +192,7 @@ class Octree{
       boolean isInserted = false;
       for(int i=0; !isInserted && i < 8; i++){
         Octree o = (Octree)children.get(i);
-        Pointt c = o.getCenter();
+        Point c = o.getCenter();
         float r = o.getRadius();
 
         if(p.x > c.x - r/2 && p.x < c.x + r/2 &&
@@ -223,7 +225,7 @@ class Octree{
       numChildren = 8;
     
       for(int i = 0; i < 8; i++){
-        Pointt p = new Pointt();
+        Point p = new Point();
         
         switch(i){
           case 0: p.x = -1;  p.y =  1; p.z =  1;break;
@@ -251,72 +253,93 @@ class Octree{
   }
 }
 
+function parse(){
+  var values = AJAX.responseText.split(/\s+/);
+
+  // xyz  rgb  normals
+  for(var i = 0, len = values.length; i < len; i += 9){
+  
+    var currX = parseFloat(values[i+0]) * s; 
+    var currY = parseFloat(values[i+1]) * s;
+    var currZ = parseFloat(values[i+2]) * s;
+    
+    verts.push(currX);
+    verts.push(currY);
+    verts.push(currZ);
+            
+    if(currX > MaxX){MaxX = currX;}
+    if(currY > MaxY){MaxY = currY;}
+    if(currZ > MaxZ){MaxZ = currZ;}
+
+    cols.push(parseInt(values[i+3])/255);
+    cols.push(parseInt(values[i+4])/255);
+    cols.push(parseInt(values[i+5])/255);
+
+    norms.push(parseFloat(values[i+6]));
+    norms.push(parseFloat(values[i+7]));
+    norms.push(parseFloat(values[i+8]));
+    
+    objCenter[0] += currX;
+    objCenter[1] += currY;
+    objCenter[2] += currZ;
     
 
+    //sss += "<br />" + parseFloat(currX+10) + " " + parseFloat(currY+10) + " " + parseFloat(currZ+10) + " " +
+    //values[i+3] + " " + values[i+4] + " " + values[i+5] + " " +
+    // values[i+6] + " " + values[i+7] + " " + values[i+8];
+  }
+ // alert(len/9);
+  
+  objCenter[0] /= len/9;
+  objCenter[1] /= len/9;
+  objCenter[2] /= len/9;
+  
+  MaxX -= objCenter[0];
+  MaxY -= objCenter[1];
+  MaxZ -= objCenter[2];
+  
+  //alert(objCenter);
 
-    function parse(){
-      var values = AJAX.responseText.split(/\s+/);
+  document.getElementById('parse_percent').innerHTML = "done";
+  document.getElementById('NumPoints_log').innerHTML = "Number of points: ........";
+  document.getElementById('num_points').innerHTML = values.length/9;
+  document.getElementById('Octree_log').innerHTML ="Inserting into octree: ...";
+  
+  stillDownloading = false;
+}
 
-      // xyz  rgb  normals
-      for(var i = 0, len = values.length; i < len; i += 9){
-      
-        var currX = parseFloat(values[i+0]) * s; 
-        var currY = parseFloat(values[i+1]) * s;
-        var currZ = parseFloat(values[i+2]) * s;
-        
-        verts.push(currX);
-        verts.push(currY);
-        verts.push(currZ);
-                
-        if(currX > MaxX){MaxX = currX;}
-        if(currY > MaxY){MaxY = currY;}
-        if(currZ > MaxZ){MaxZ = currZ;}
+    
+function changed(){
 
-        cols.push(parseInt(values[i+3])/255);
-        cols.push(parseInt(values[i+4])/255);
-        cols.push(parseInt(values[i+5])/255);
+  if(AJAX.readyState === 4){
 
-        norms.push(parseFloat(values[i+6]));
-        norms.push(parseFloat(values[i+7]));
-        norms.push(parseFloat(values[i+8]));
+    document.getElementById('load_percent').innerHTML = "done";
+    document.getElementById('Parse_log').innerHTML = "Parsing <span class='filename'>" + filename + "</span>: ......";
 
-        //sss += "<br />" + parseFloat(currX+10) + " " + parseFloat(currY+10) + " " + parseFloat(currZ+10) + " " +
-        //values[i+3] + " " + values[i+4] + " " + values[i+5] + " " +
-        // values[i+6] + " " + values[i+7] + " " + values[i+8];
-      }
+    setTimeout(parse, 500);
+  }
+  else{
+    var percent;
 
-      document.getElementById('parse_percent').innerHTML = "done";
-      document.getElementById('NumPoints_log').innerHTML = "Number of points: ........";
-      document.getElementById('num_points').innerHTML = values.length/9;
-      document.getElementById('Octree_log').innerHTML ="Inserting into octree: ...";
-      
-      stillDownloading = false;
+    if(filename =="mickey.asc"){
+      percent = Math.ceil(100 * AJAX.responseText.length/10636534);
+    }
+    else{
+     percent = Math.ceil(100 * AJAX.responseText.length/3997253);
     }
     
-    
-    function changed(){
-    
-      if(AJAX.readyState === 4){
-      
-        document.getElementById('load_percent').innerHTML = "done";
-        document.getElementById('Parse_log').innerHTML = "Parsing <span class='filename'>" + filename + "</span>: ......";
+    if(percent > 100){percent = 100;}
 
-        setTimeout(parse, 50);
-      }
-      else{
-      if(filename =="mickey.asc"){
-        document.getElementById('load_percent').innerHTML = "" + Math.ceil(100 * AJAX.responseText.length/10636534) + "%";
-        }
-        else{
-          document.getElementById('load_percent').innerHTML = "" + Math.ceil(100 * AJAX.responseText.length/3997253) + "%";
-        }
-      }
-    }
+    document.getElementById('load_percent').innerHTML = "" + percent + "%"; 
+ //     p.println(AJAX.responseText);
+  }
+}
 
 
 void setup() {  
   AJAX.onreadystatechange = changed;
   AJAX.open("GET", filename, true);
+  
   AJAX.send(null);
 
   size(500, 500, OPENGL);
@@ -343,11 +366,11 @@ if(stillDownloading === false){
   octree = new Octree(octreeSize*2.0);
   octree.build(3);
   
-  for(int i = 0; i < verts.length; i+=3)
+  for(int i = 0, len = verts.length; i < len; i+=3)
   {
-    octree.insert(new Pointt(verts[i], verts[i+1], verts[i+2]),
-                  new Pointt(cols[i], cols[i+1], cols[i+2]),
-                  new Pointt(norms[i], norms[i+1], norms[i+2]));
+    octree.insert(new Point(verts[i]-objCenter[0], verts[i+1]-objCenter[1], verts[i+2]-objCenter[2]),
+                  new Point(cols[i], cols[i+1], cols[i+2]),
+                  new Point(norms[i], norms[i+1], norms[i+2]));
   }
   
   document.getElementById('octree_percent').innerHTML = "done";
@@ -399,8 +422,6 @@ if(ready){
   }
 
   translate(width/2, height/2, 300 + zoom);
-  scale(1,-1,1);
-  
   rotateY(rotY);
   rotateX(rotX);
   
@@ -414,7 +435,7 @@ if(ready){
 }
 
 
-boolean BoundingSpheresIntersect(Pointt sphere1Pos, float sphere1Rad, Pointt sphere2Pos, float sphere2Rad){
+boolean BoundingSpheresIntersect(Point sphere1Pos, float sphere1Rad, Point sphere2Pos, float sphere2Rad){
   PVector v = new PVector(sphere1Pos.x-sphere2Pos.x-width/4, sphere1Pos.y-sphere2Pos.y-height/4, sphere1Pos.z-sphere2Pos.z);
   return v.mag() < sphere1Rad + sphere2Rad;
 }
@@ -428,13 +449,25 @@ void mousePressed(){
 }
 
 function scroll(event) {
-  if(event.detail > 0 && zoom + event.detail < 300 ||
-     event.detail < 0 && zoom - event.detail > -50){
-    zoom += event.detail;
+
+  var amt;
+
+  // Chromium, Webkit
+  if(event.wheelDelta) {
+    amt = -event.wheelDelta/50;
+  }
+  // Minefield
+  else if(event.detail) {
+    amt = event.detail;
+  }
+      
+  if(amt > 0 && zoom + amt < 300 || amt < 0 && zoom - amt > -50){
+    zoom += amt;
   }
 }
 
 window.addEventListener("DOMMouseScroll",  scroll, false);
+window.addEventListener("mousewheel", scroll, false);
    
 void mouseReleased(){
   mouseIsDown = false;

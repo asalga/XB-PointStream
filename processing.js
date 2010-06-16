@@ -325,7 +325,7 @@
     // Work-around for Minefield. using ctx.VERTEX_PROGRAM_POINT_SIZE
     // in Minefield does nothing and does not report any errors.
     var VERTEX_PROGRAM_POINT_SIZE = 0x8642;
-    var POINT_SMOOTH = 0x0B10;
+//    var POINT_SMOOTH = 0x0B10;
     
     // Get padding and border style widths for mouse offsets
     if (document.defaultView && document.defaultView.getComputedStyle) {
@@ -4005,7 +4005,7 @@
           // We declare our own constants since Minefield doesn't 
           // do anything when curContext.VERTEX_PROGRAM_POINT_SIZE is used.
           curContext.enable(VERTEX_PROGRAM_POINT_SIZE);
-          curContext.enable(POINT_SMOOTH);
+//          curContext.enable(POINT_SMOOTH);
 
           // Create the program objects to render 2D (points, lines) and
           // 3D (spheres, boxes) shapes. Because 2D shapes are not lit,
@@ -4480,10 +4480,7 @@
     ////////////////////////////////////////////////////////////////////////////
 
     p.setMatrices = function(){
-      // viewing transformation needs to have Y flipped
-      // becuase that's what Processing does.
       var view = new PMatrix3D();
-      view.scale(1, -1, 1);
       view.apply(modelView.array());
       view.transpose();
 
@@ -4520,7 +4517,7 @@
       // viewing transformation needs to have Y flipped
       // becuase that's what Processing does.
       var view = new PMatrix3D();
-      view.scale(1, -1, 1);
+      //view.scale(1, -1, 1);
       view.apply(modelView.array());
       view.transpose();
       
@@ -5007,13 +5004,13 @@
     // Vector drawing functions
     ////////////////////////////////////////////////////////////////////////////
 
-    p.Point = function Point(x, y) {
+/*    p.Point = function Point(x, y) {
       this.x = x;
       this.y = y;
       this.copy = function() {
         return new Point(x, y);
       };
-    };
+    };*/
   
   p.endBuffer = function(xyz,rgb,norm){
   
@@ -5040,30 +5037,6 @@
 
     return o;
   };
-
-  p.points = function(buff){
-    curContext.useProgram(programObject2D);
-
-    var view = new PMatrix3D();
-    view.scale(1, -1, 1);
-    view.apply(modelView.array());
-    view.transpose();
-    
-    var normalMatrix = new PMatrix3D();
-    normalMatrix.set(view);
-    normalMatrix.invert();
-    normalMatrix.transpose();
-
-    uniformMatrix(programObject2D, "normalTransform", false, normalMatrix.array());
-    uniformMatrix(programObject2D, "view", false, view.array());
-                    
-    vertexAttribPointer(programObject2D, "aVertex", 3, buff.posBuffer);
-    vertexAttribPointer(programObject2D, "aColor", 3, buff.colBuffer);
-    vertexAttribPointer(programObject2D, "aNormal", 3, buff.normBuffer);
-    
-    curContext.drawArrays(curContext.POINTS, 0, buff.size/3);
-}
-
 
     p.point = function point(x, y, z, cx, cy, cz) {
       if (p.use3DContext) {
