@@ -1,5 +1,5 @@
 function PointStream(){
-  var bk = [0,0,0,0];
+  var bk = [1,1,1,0];
   var AJAX;
   var magicbuffer;
   var verts = [];
@@ -191,36 +191,38 @@ var fragmentShaderSource3D =
   };
 
   var xb = {
+  
     background: function(a){
-      curContext.clearColor(a[0], a[1], a[2], 1.0);
+      curContext.clearColor(a[0], a[1], a[2], a[3]);
     },
+    
     clear: function(){
       curContext.clear(curContext.COLOR_BUFFER_BIT | curContext.DEPTH_BUFFER);
     },
+    
     render: function(){
-    if(curContext){
-      curContext.useProgram(programObject3D);
-      vertexAttribPointer(programObject3D, "aVertex", 3, magicbuffer.posBuffer);
-      vertexAttribPointer(programObject3D, "aColor", 3, magicbuffer.colBuffer);
-      vertexAttribPointer(programObject3D, "aNormal", 3, magicbuffer.normBuffer);
-      
-      curContext.drawArrays(curContext.POINTS, 0, magicbuffer.size/3);
+      if(curContext && magicbuffer){
+        vertexAttribPointer(programObject3D, "aVertex", 3, magicbuffer.posBuffer);
+        vertexAttribPointer(programObject3D, "aColor", 3, magicbuffer.colBuffer);
+        vertexAttribPointer(programObject3D, "aNormal", 3, magicbuffer.normBuffer);
+        curContext.drawArrays(curContext.POINTS, 0, magicbuffer.size/3);
       }
     },
+    
     createBuffer: function(xyz,rgb,norm){
       if(curContext){
 
         var newBuffer = curContext.createBuffer();
         curContext.bindBuffer(curContext.ARRAY_BUFFER, newBuffer);
-        curContext.bufferData(curContext.ARRAY_BUFFER, WebGLFloatArray(xyz), curContext.STATIC_DRAW);
+        curContext.bufferData(curContext.ARRAY_BUFFER, new WebGLFloatArray(xyz), curContext.STATIC_DRAW);
 
         var newColBuffer = curContext.createBuffer();
         curContext.bindBuffer(curContext.ARRAY_BUFFER, newColBuffer);
-        curContext.bufferData(curContext.ARRAY_BUFFER, WebGLFloatArray(rgb), curContext.STATIC_DRAW);
+        curContext.bufferData(curContext.ARRAY_BUFFER, new WebGLFloatArray(rgb), curContext.STATIC_DRAW);
 
         var newNormBuffer = curContext.createBuffer();
         curContext.bindBuffer(curContext.ARRAY_BUFFER, newNormBuffer);
-        curContext.bufferData(curContext.ARRAY_BUFFER, WebGLFloatArray(norm), curContext.STATIC_DRAW);
+        curContext.bufferData(curContext.ARRAY_BUFFER, new WebGLFloatArray(norm), curContext.STATIC_DRAW);
       
         bufferIDCounter++;
       
@@ -236,8 +238,10 @@ var fragmentShaderSource3D =
     },
 
     setMatrices: function(){
-      curContext.useProgram(programObject3D);
-      uniformMatrix(programObject3D, "view", true, modelView);
+      modelView = M4x4.$(1,0,0,0,0,1,0,0,0,0,1,-50,0,0,0,1);
+      M4x4.transpose(modelView, modelView);
+
+      uniformMatrix(programObject3D, "view", false, modelView);
       uniformMatrix(programObject3D, "normalTransform", false, modelView);
     },
 
@@ -247,23 +251,14 @@ var fragmentShaderSource3D =
      
       if(curContext){
         curContext.viewport(0, 0, 500,500);
-        
-//        curContext.clear(curContext.COLOR_BUFFER_BIT | curContext.DEPTH_BUFFER);
         curContext.enable(curContext.DEPTH_TEST);
       }
       
       programObject3D = createProgramObject(curContext, vertexShaderSource3D, fragmentShaderSource3D);
-     // modelView = M4x4.$(1,0,0,-250,0,1,0,-250,0,0,1,-433.0127018922194,0,0,0,1);
-      projection = M4x4.$(1.7320508075688779,0,0,0,0,1.7320508075688779,0,0,0,0,-1.002002002002002,-8.668922960805196,0,0,-1,0);
-      
-      var proj = projection;
-      M4x4.transpose(proj, proj);
       
       var test = M4x4.$(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1);
-
       curContext.useProgram(programObject3D);
       uniformMatrix(programObject3D, "model", false, test);
-      uniformMatrix(programObject3D, "projection", false, proj);
     },
 
     openFile: function(path){
@@ -293,8 +288,20 @@ var fragmentShaderSource3D =
           }
           
           magicbuffer = xb.createBuffer(pos, col, norm);
-          modelView = M4x4.$(1,0,0,0,0,1,0,0,0,0,1,-50,0,0,0,1);          
+          
+          
+          modelView = M4x4.$(1,0,0,0,0,1,0,0,0,0,1,-50,0,0,0,1);
+          M4x4.transpose(modelView, modelView);
+          
+          projection = M4x4.$(1.7320508075688779,0,0,0,0,1.7320508075688779,0,0,0,0,-1.002002002002002,-8.668922960805196,0,0,-1,0);      
+          var proj = projection;
+          M4x4.transpose(proj, proj);
+          
+          
+          uniformMatrix(programObject3D, "projection", false, proj);
+       
           xb.setMatrices();
+          
         }
       }
     }
