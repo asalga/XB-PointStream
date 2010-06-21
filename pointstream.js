@@ -1,7 +1,11 @@
 function PointStream(){
 
-
-
+  // for fps
+  var frames = 0;
+  var timeElapsed = 0;
+  var time = new Date();
+  var lastTime;
+  
   var bk = [1,1,1,1];
   var AJAX;
   var magicbuffer;
@@ -13,7 +17,6 @@ function PointStream(){
   
   var stillDownloading = true;
   var ready = false;
-  var fps;
 
   var canvas;
   var curContext;
@@ -242,6 +245,7 @@ var fragmentShaderSource3D =
     */
     mouseX: 0,
     mouseY: 0,
+    frameRate: 0,
     
     /**
     */
@@ -258,14 +262,23 @@ var fragmentShaderSource3D =
     /**
     */
     render: function(){
+      frames++;
+      var now = new Date();
+    
       if(curContext && magicbuffer){
         vertexAttribPointer(programObject3D, "aVertex", 3, magicbuffer.posBuffer);
         vertexAttribPointer(programObject3D, "aColor", 3, magicbuffer.colBuffer);
         vertexAttribPointer(programObject3D, "aNormal", 3, magicbuffer.normBuffer);
         curContext.drawArrays(curContext.POINTS, 0, magicbuffer.size/3);
       }
+
+      // if more than 0.5 seconds have elapsed, recalc fps
+      if(now - lastTime > 1000){
+        xb.frameRate = frames/(now-lastTime)*1000;
+        frames = 0;
+        lastTime = now;
+      }
     },
-    
  
     /**
     */
@@ -280,14 +293,16 @@ var fragmentShaderSource3D =
     },
 
     /**
+      Update the cursor position everytime the mouse moves
     */
     mouseMove: function(e){
       xb.mouseX = e.pageX;
       xb.mouseY = e.pageY;
-      window.status = "->" + xb.mouseX + "," + xb.mouseY;
+//      window.status = "->" + xb.mouseX + "," + xb.mouseY;
     },
     
     /**
+      Cross browser
     */
     attach: function(element, type, func){
       //
@@ -301,6 +316,10 @@ var fragmentShaderSource3D =
     /**
     */
     setup: function(cvs){
+
+      lastTime = new Date();
+      frames = 0;
+    
       canvas = cvs;
       curContext = canvas.getContext("experimental-webgl");
       

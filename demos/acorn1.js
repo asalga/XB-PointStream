@@ -11,11 +11,13 @@ function xbinit(){
   ps.background([0,0,0, 1]);
   ps.openFile("acorn1.asc");
 
-  setInterval(draw, 1000);
+  setInterval(draw, 100);
 
   function draw(){
     ps.background([0,0.5,Math.abs(Math.sin(t+=0.01)), 0.5]);
     ps.clear();
     ps.render();
+    //ps.mouseX = Math.sin(t);
+    window.status = ps.frameRate;
   }
 }
