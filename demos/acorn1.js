@@ -1,15 +1,20 @@
 document.addEventListener('DOMContentLoaded', start, false);
 
-var t = 0;
 var ps;
 var acorn;
 var r = 0;
+var zoomed = 0;
 
-function render(){
+function zoom(amt){
+  zoomed += amt;
+}
 
-  ps.rotateY(r);
+function render() {
+
+  ps.translate(0,0,zoomed);
+  ps.scale(2);
+  
   ps.rotateX(r+=0.01);
-  ps.rotateZ(r);
   
   ps.clear();
   ps.render();
@@ -18,7 +23,11 @@ function render(){
 
 function start(){
   ps = new PointStream();
+  
   ps.setup(document.getElementById('canvas'), render);
   ps.background([0,0,0,1]);
-  acorn = ps.loadFile("acorn1.asc");
+
+  ps.onMouseScroll = zoom;
+  
+  acorn = ps.loadFile("acorn1.asc",true);
 }

@@ -1,16 +1,31 @@
+/*
+  Copyright (c) 2010  Seneca College
+  MIT LICENSE
+
+TODO: 
+rename verts
+add mouseScroll empty var?
+"normalize" mousescroll
+fix popping
+*/
+
 function PointStream(){
 
   // to calculate fps
   var frames = 0;
   var lastTime;
-  var model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+
   //
+      
   var renderCallback;
-  var XHR_DONE = 4;
+  
+  const XHR_DONE = 4;
   var isLooping = true;
   
   var bk = [1,1,1,1];
   var magicbuffer;
+  
+  /// rename these vars
   var verts = [];
   var pos = [];
   var col = [];
@@ -26,6 +41,7 @@ function PointStream(){
   var bufferIDCounter = 0;
   var modelView;
   var projection;
+  var model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
   var programObject3D;
       
 // Vertex shader for boxes and spheres
@@ -246,8 +262,14 @@ var fragmentShaderSource3D =
     /**
     */
     mouseX: 0,
+    mousew: function(){},
     mouseY: 0,
     frameRate: 0,
+    
+    // Number of frames rendered since script started running
+    frameCount: 0,
+
+
     
     /**
     */
@@ -265,19 +287,20 @@ var fragmentShaderSource3D =
     */
     render: function(){
       frames++;
+      xb.frameCount++;
       var now = new Date();
-    
-      M4x4.transpose(model,model);
-      uniformMatrix(programObject3D, "model", false, model);
-    
+
       if(curContext && magicbuffer){
         vertexAttribPointer(programObject3D, "aVertex", 3, magicbuffer.posBuffer);
         vertexAttribPointer(programObject3D, "aColor", 3, magicbuffer.colBuffer);
         vertexAttribPointer(programObject3D, "aNormal", 3, magicbuffer.normBuffer);
+
+        uniformMatrix(programObject3D, "model", false, model);
+
         curContext.drawArrays(curContext.POINTS, 0, magicbuffer.size/3);
       }
 
-      // if more than 0.5 seconds have elapsed, recalc fps
+      // if more than 1 second has elapsed, recalculate fps
       if(now - lastTime > 1000){
         xb.frameRate = frames/(now-lastTime)*1000;
         frames = 0;
@@ -306,7 +329,6 @@ var fragmentShaderSource3D =
     mouseMove: function(e){
       xb.mouseX = e.pageX;
       xb.mouseY = e.pageY;
-//      window.status = "->" + xb.mouseX + "," + xb.mouseY;
     },
     
     /**
@@ -318,6 +340,14 @@ var fragmentShaderSource3D =
         element.addEventListener(type, func, false);
       }
       else{
+      }
+    },
+    
+    /*
+    */
+    _mouseScroll: function(evt){
+      if(xb.onMouseScroll){
+        xb.onMouseScroll(evt.detail);
       }
     },
     
@@ -334,19 +364,41 @@ var fragmentShaderSource3D =
       setInterval(xb.renderCallback, 10);
       
       xb.attach(cvs, "mousemove", xb.mouseMove);
+      xb.attach(cvs, "DOMMouseScroll", xb._mouseScroll);
+      xb.attach(cvs, "mousewheel", xb._mouseScroll);
      
       if(curContext){
         curContext.viewport(0, 0, 500, 500);
-
         curContext.enable(curContext.DEPTH_TEST);
       }
       
       programObject3D = createProgramObject(curContext, vertexShaderSource3D, fragmentShaderSource3D);
       curContext.useProgram(programObject3D);
-            
+      
       model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
     },
-
+    
+    /**
+      1 arg = uniform scaling
+      3 args = independant scaling
+    */
+    scale: function(sx, sy, sz){
+    
+      // uniform scaling
+      if( !sy && !sz){
+        model =  M4x4.scale1(sx, model);
+      }
+      else{
+        model =  M4x4.scale3(sx, sy, sz, model);
+      }
+    },
+    
+    /**
+    */
+    translate: function(tx, ty, tz){
+      model = M4x4.translate3(tx, ty, tz, model, model);
+    },
+    
     rotateY: function(radians){
       model =  M4x4.rotate(radians,V3.$(0,1,0),model);
     },
@@ -361,9 +413,10 @@ var fragmentShaderSource3D =
         
     /**
     */
-    loadFile: function(path){
+    loadFile: function(path, autoCenter){
+
       var AJAX = new XMLHttpRequest();
-     // AJAX.addEventListener("progress", f,false);
+      // AJAX.addEventListener("progress", f,false);
       AJAX.open("GET", path, true);
       AJAX.send(null);
       
@@ -377,6 +430,8 @@ var fragmentShaderSource3D =
       AJAX.onreadystatechange = 
       function(){
 
+        var objCenter = [0,0,0];
+        
         //??
         if(AJAX.status === 200){
           file.status = 1;
@@ -384,19 +439,33 @@ var fragmentShaderSource3D =
         
         if(AJAX.readyState === 4){
            var values = AJAX.responseText.split(/\s+/);
+           const numVerts = values.length/9;
+           var objCenter = [0,0,0];
+           
           // xyz  rgb  normals
           for(var i = 0, len = values.length; i < len; i += 9){
-            verts.push(parseFloat(values[i+0]));
+            verts.push(parseFloat(values[i]));
             verts.push(parseFloat(values[i+1]));
             verts.push(parseFloat(values[i+2]));
             
+            objCenter[0] += parseFloat(values[i])
+            objCenter[1] += parseFloat(values[i+1])
+            objCenter[2] += parseFloat(values[i+2])
+
             cols.push(parseInt(values[i+3])/255);
             cols.push(parseInt(values[i+4])/255);
             cols.push(parseInt(values[i+5])/255);
           }
-          for(var i = 0, len = verts.length; i < len; i+=3)
-          {
-            pos.push(verts[i],verts[i+1],verts[i+2]);
+          
+          // if the user wants to center the point cloud
+          if(autoCenter){
+            objCenter[0] /= numVerts;
+            objCenter[1] /= numVerts;
+            objCenter[2] /= numVerts;
+          }
+          
+          for(var i = 0, len = verts.length; i < len; i+=3){
+            pos.push(verts[i]-objCenter[0],verts[i+1]-objCenter[1],verts[i+2]-objCenter[2]); 
             col.push(cols[i+3],cols[i+4],cols[i+5]);
             norm.push(verts[i+6],verts[i+7],verts[i+8]);
           }
