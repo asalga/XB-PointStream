@@ -1,13 +1,15 @@
 function PointStream(){
 
-  // for fps
+  // to calculate fps
   var frames = 0;
-  var timeElapsed = 0;
-  var time = new Date();
   var lastTime;
+  var model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+  //
+  var renderCallback;
+  var XHR_DONE = 4;
+  var isLooping = true;
   
   var bk = [1,1,1,1];
-  var AJAX;
   var magicbuffer;
   var verts = [];
   var pos = [];
@@ -265,6 +267,8 @@ var fragmentShaderSource3D =
       frames++;
       var now = new Date();
     
+      uniformMatrix(programObject3D, "model", false, model);
+    
       if(curContext && magicbuffer){
         vertexAttribPointer(programObject3D, "aVertex", 3, magicbuffer.posBuffer);
         vertexAttribPointer(programObject3D, "aColor", 3, magicbuffer.colBuffer);
@@ -315,13 +319,15 @@ var fragmentShaderSource3D =
     
     /**
     */
-    setup: function(cvs){
-
+    setup: function(cvs, renderCB){
       lastTime = new Date();
       frames = 0;
-    
+
       canvas = cvs;
       curContext = canvas.getContext("experimental-webgl");
+      
+      xb.renderCallback = renderCB;
+      setInterval(xb.renderCallback, 10);
       
       xb.attach(cvs, "mousemove", xb.mouseMove);
      
@@ -335,18 +341,38 @@ var fragmentShaderSource3D =
       
       var test = M4x4.$(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1);
       curContext.useProgram(programObject3D);
-      uniformMatrix(programObject3D, "model", false, test);
+     // uniformMatrix(programObject3D, "model", false, test);
     },
 
+    rotateY: function(radians){
+      model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+      M4x4.rotate(radians,V3.$(0,1,0),model,model);
+      M4x4.transpose(model,model);
+    },
+    
     /**
     */
-    openFile: function(path){
-      AJAX = new XMLHttpRequest();
+    loadFile: function(path){
+      var AJAX = new XMLHttpRequest();
+     // AJAX.addEventListener("progress", f,false);
       AJAX.open("GET", path, true);
       AJAX.send(null);
+      
+      var file = {
+        status: 0,
+        progress: 0,
+        numPoints: 0,
+      };
     
+      
       AJAX.onreadystatechange = 
       function(){
+
+        //??
+        if(AJAX.status === 200){
+          file.status = 1;
+        }
+        
         if(AJAX.readyState === 4){
            var values = AJAX.responseText.split(/\s+/);
           // xyz  rgb  normals
@@ -368,7 +394,6 @@ var fragmentShaderSource3D =
           
           magicbuffer = createBuffer(pos, col, norm);
           
-          
           modelView = M4x4.$(1,0,0,0,0,1,0,0,0,0,1,-50,0,0,0,1);
           M4x4.transpose(modelView, modelView);
           
@@ -377,11 +402,14 @@ var fragmentShaderSource3D =
           M4x4.transpose(proj, proj);
           
           uniformMatrix(programObject3D, "projection", false, proj);
-       
+          
+          file.status = 4;
           xb.setMatrices();
         }
       }
+      return file;
     }
+
   }
   return xb;
 };

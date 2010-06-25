@@ -1,23 +1,20 @@
-document.addEventListener('DOMContentLoaded', xbinit, false);
+document.addEventListener('DOMContentLoaded', start, false);
 
 var t = 0;
+var ps;
+var acorn;
+var r = 0;
 
-function xbinit(){
-  var ps = new PointStream();
+function render(){
+  ps.rotateY(Math.PI*2);
+  ps.clear();
+  ps.render();
+//  window.status = Math.floor(ps.frameRate);
+}
 
-  cvs = document.getElementById('canvas');
-
-  ps.setup(cvs);
-  ps.background([0,0,0, 1]);
-  ps.openFile("acorn1.asc");
-
-  setInterval(draw, 100);
-
-  function draw(){
-    ps.background([0,0.5,Math.abs(Math.sin(t+=0.01)), 0.5]);
-    ps.clear();
-    ps.render();
-    //ps.mouseX = Math.sin(t);
-    window.status = ps.frameRate;
-  }
+function start(){
+  ps = new PointStream();
+  ps.setup(document.getElementById('canvas'), render);
+  ps.background([0,0,0,1]);
+  acorn = ps.loadFile("acorn1.asc");
 }
