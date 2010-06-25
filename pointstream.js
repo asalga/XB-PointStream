@@ -267,6 +267,7 @@ var fragmentShaderSource3D =
       frames++;
       var now = new Date();
     
+      M4x4.transpose(model,model);
       uniformMatrix(programObject3D, "model", false, model);
     
       if(curContext && magicbuffer){
@@ -282,6 +283,9 @@ var fragmentShaderSource3D =
         frames = 0;
         lastTime = now;
       }
+
+      // clear state      
+      model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
     },
  
     /**
@@ -338,18 +342,23 @@ var fragmentShaderSource3D =
       }
       
       programObject3D = createProgramObject(curContext, vertexShaderSource3D, fragmentShaderSource3D);
-      
-      var test = M4x4.$(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1);
       curContext.useProgram(programObject3D);
-     // uniformMatrix(programObject3D, "model", false, test);
+            
+      model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
     },
 
     rotateY: function(radians){
-      model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
-      M4x4.rotate(radians,V3.$(0,1,0),model,model);
-      M4x4.transpose(model,model);
+      model =  M4x4.rotate(radians,V3.$(0,1,0),model);
     },
-    
+
+    rotateX: function(radians){
+      model = M4x4.rotate(radians,V3.$(1,0,0),model);
+    },
+
+    rotateZ: function(radians){
+      model = M4x4.rotate(radians,V3.$(0,0,1),model);
+    },
+        
     /**
     */
     loadFile: function(path){

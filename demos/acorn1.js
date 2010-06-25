@@ -6,10 +6,14 @@ var acorn;
 var r = 0;
 
 function render(){
-  ps.rotateY(Math.PI*2);
+
+  ps.rotateY(r);
+  ps.rotateX(r+=0.01);
+  ps.rotateZ(r);
+  
   ps.clear();
   ps.render();
-//  window.status = Math.floor(ps.frameRate);
+  window.status = Math.floor(ps.frameRate);
 }
 
 function start(){
