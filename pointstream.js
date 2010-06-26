@@ -2,11 +2,12 @@
   Copyright (c) 2010  Seneca College
   MIT LICENSE
 
-TODO: 
-rename verts
-add mouseScroll empty var?
-"normalize" mousescroll
-fix popping
+TODO:
+-add mouseScroll empty var?
+-fix "popping"
+- change verts, norms, cols to webglarrays
+- should mousewheel return single value or object?
+- add debugger
 */
 
 function PointStream(){
@@ -14,9 +15,6 @@ function PointStream(){
   // to calculate fps
   var frames = 0;
   var lastTime;
-
-  //
-  var userAgent = "unknown";
   
   var renderCallback;
   
@@ -24,9 +22,9 @@ function PointStream(){
   var isLooping = true;
   
   var bk = [1,1,1,1];
-  var magicbuffer;
+  var VBOs;
   
-  // browser detection to handle differences
+  // browser detection to handle differences such as mouse scrolling
   var browser     = -1 ;
   const MINEFIELD = 0;
   const CHROME    = 1;
@@ -39,12 +37,9 @@ function PointStream(){
   const SAFARI    = 6;
   const IE        = 7;
   
-  /// rename these vars
   var verts = [];
-  var pos = [];
-  var col = [];
   var cols = [];
-  var norm = [];
+  var norms = [];
   
   var stillDownloading = true;
   var ready = false;
@@ -130,7 +125,7 @@ var vertexShaderSource3D =
 "      gl_FrontColor = vec4(finalDiffuse[0] * col[0], finalDiffuse[1] * col[1], finalDiffuse[2] * col[2], 1.0);" +
 "  }" +
 
-"  gl_PointSize = 3.0;" +
+"  gl_PointSize = 6.0;" +
 "  gl_Position = projection * view * model * vec4( aVertex, 1.0 );" +
 "}";
 
@@ -184,35 +179,35 @@ var fragmentShaderSource3D =
     }
   }
   
-     /**
-    */
-   function createBuffer(xyz,rgb,norm){
-      if(curContext){
+  /**
+  */
+  function createVBOs(xyz, rgb, norm){
+    if(curContext){
 
-        var newBuffer = curContext.createBuffer();
-        curContext.bindBuffer(curContext.ARRAY_BUFFER, newBuffer);
-        curContext.bufferData(curContext.ARRAY_BUFFER, new WebGLFloatArray(xyz), curContext.STATIC_DRAW);
+      var newBuffer = curContext.createBuffer();
+      curContext.bindBuffer(curContext.ARRAY_BUFFER, newBuffer);
+      curContext.bufferData(curContext.ARRAY_BUFFER, new WebGLFloatArray(xyz), curContext.STATIC_DRAW);
 
-        var newColBuffer = curContext.createBuffer();
-        curContext.bindBuffer(curContext.ARRAY_BUFFER, newColBuffer);
-        curContext.bufferData(curContext.ARRAY_BUFFER, new WebGLFloatArray(rgb), curContext.STATIC_DRAW);
+      var newColBuffer = curContext.createBuffer();
+      curContext.bindBuffer(curContext.ARRAY_BUFFER, newColBuffer);
+      curContext.bufferData(curContext.ARRAY_BUFFER, new WebGLFloatArray(rgb), curContext.STATIC_DRAW);
 
-        var newNormBuffer = curContext.createBuffer();
-        curContext.bindBuffer(curContext.ARRAY_BUFFER, newNormBuffer);
-        curContext.bufferData(curContext.ARRAY_BUFFER, new WebGLFloatArray(norm), curContext.STATIC_DRAW);
-      
-        bufferIDCounter++;
-      
-        var o = {};
-        o.id =  bufferIDCounter;
-        o.posBuffer = newBuffer;
-        o.colBuffer = newColBuffer;
-        o.normBuffer = newNormBuffer;
-        o.size = xyz.length;
+      var newNormBuffer = curContext.createBuffer();
+      curContext.bindBuffer(curContext.ARRAY_BUFFER, newNormBuffer);
+      curContext.bufferData(curContext.ARRAY_BUFFER, new WebGLFloatArray(norm), curContext.STATIC_DRAW);
 
-        return o;
-      }
-    };
+      bufferIDCounter++;
+
+      var o = {};
+      o.id =  bufferIDCounter;
+      o.posBuffer = newBuffer;
+      o.colBuffer = newColBuffer;
+      o.normBuffer = newNormBuffer;
+      o.size = xyz.length;
+
+      return o;
+    }
+  };
 
   /**
   */
@@ -292,15 +287,14 @@ var fragmentShaderSource3D =
     /**
     */
     mouseX: 0,
-    mousew: function(){},
     mouseY: 0,
+    
+    // Number of frames per seconds rendered in the last second.
     frameRate: 0,
     
     // Number of frames rendered since script started running
     frameCount: 0,
 
-
-    
     /**
     */
     background: function(a){
@@ -320,14 +314,14 @@ var fragmentShaderSource3D =
       xb.frameCount++;
       var now = new Date();
 
-      if(curContext && magicbuffer){
-        vertexAttribPointer(programObject3D, "aVertex", 3, magicbuffer.posBuffer);
-        vertexAttribPointer(programObject3D, "aColor", 3, magicbuffer.colBuffer);
-        vertexAttribPointer(programObject3D, "aNormal", 3, magicbuffer.normBuffer);
+      if(curContext && VBOs){
+        vertexAttribPointer(programObject3D, "aVertex", 3, VBOs.posBuffer);
+        vertexAttribPointer(programObject3D, "aColor", 3, VBOs.colBuffer);
+        vertexAttribPointer(programObject3D, "aNormal", 3, VBOs.normBuffer);
 
         uniformMatrix(programObject3D, "model", false, model);
 
-        curContext.drawArrays(curContext.POINTS, 0, magicbuffer.size/3);
+        curContext.drawArrays(curContext.POINTS, 0, VBOs.size/3);
       }
 
       // if more than 1 second has elapsed, recalculate fps
@@ -374,20 +368,25 @@ var fragmentShaderSource3D =
     },
     
     /*
+      returns -1 or 1
+      scrolling towards user is 1
+      scrolling towards screen is -1
+      should this return an object or a single value?
     */
     _mouseScroll: function(evt){
-     var amt;
+      var delta = 0;
      
-     if(browser === MINEFIELD){
-       amt = evt.detail;
-     }
-     else{
-       alert(evt.wheelDelta);
-     }
-    
+       // which check to use?
+      //if(browser === MINEFIELD){
+      if(evt.detail){
+        delta = evt.detail / 3;
+      }
+      else if(evt.wheelDelta){
+        delta = -evt.wheelDelta / 360;
+      }
     
       if(xb.onMouseScroll){
-        xb.onMouseScroll(evt.detail);
+        xb.onMouseScroll(delta);
       }
     },
     
@@ -457,7 +456,11 @@ var fragmentShaderSource3D =
         
     /**
     */
-    loadFile: function(path, autoCenter){
+    loadFile: function(o){
+      var path = o.path;
+      
+      // need ||?
+      var autoCenter = o.autoCenter || false;
 
       var AJAX = new XMLHttpRequest();
       // AJAX.addEventListener("progress", f,false);
@@ -472,33 +475,42 @@ var fragmentShaderSource3D =
     
       
       AJAX.onreadystatechange = 
-      function(){
-
-        var objCenter = [0,0,0];
-        
+      function(){        
         //??
         if(AJAX.status === 200){
           file.status = 1;
         }
         
-        if(AJAX.readyState === 4){
+        if(AJAX.readyState === XHR_DONE){
            var values = AJAX.responseText.split(/\s+/);
            const numVerts = values.length/9;
+           
            var objCenter = [0,0,0];
            
           // xyz  rgb  normals
           for(var i = 0, len = values.length; i < len; i += 9){
-            verts.push(parseFloat(values[i]));
-            verts.push(parseFloat(values[i+1]));
-            verts.push(parseFloat(values[i+2]));
+            var currX = parseFloat(values[i]);
+            var currY = parseFloat(values[i+1]);
+            var currZ = parseFloat(values[i+2]);
             
-            objCenter[0] += parseFloat(values[i])
-            objCenter[1] += parseFloat(values[i+1])
-            objCenter[2] += parseFloat(values[i+2])
+            verts.push(currX);
+            verts.push(currY);
+            verts.push(currZ);
+            
+            // don't waste cycles if the user didn't want it centered.
+            if(autoCenter){
+              objCenter[0] += currX;
+              objCenter[1] += currY;
+              objCenter[2] += currZ;
+            }
 
             cols.push(parseInt(values[i+3])/255);
             cols.push(parseInt(values[i+4])/255);
             cols.push(parseInt(values[i+5])/255);
+            
+            norms.push(parseFloat(values[i+6]));
+            norms.push(parseFloat(values[i+7]));
+            norms.push(parseFloat(values[i+8]));
           }
           
           // if the user wants to center the point cloud
@@ -508,13 +520,18 @@ var fragmentShaderSource3D =
             objCenter[2] /= numVerts;
           }
           
-          for(var i = 0, len = verts.length; i < len; i+=3){
-            pos.push(verts[i]-objCenter[0],verts[i+1]-objCenter[1],verts[i+2]-objCenter[2]); 
-            col.push(cols[i+3],cols[i+4],cols[i+5]);
-            norm.push(verts[i+6],verts[i+7],verts[i+8]);
+          // if the user wanted to autocenter the point cloud,
+          // iterate over all the verts and subtract by the 
+          // point cloud's current center.
+          if(autoCenter){
+            for(var i = 0; i < numVerts; i++){
+              verts[i*3]   -= objCenter[0];
+              verts[i*3+1] -= objCenter[1];
+              verts[i*3+2] -= objCenter[2]; 
+            }
           }
           
-          magicbuffer = createBuffer(pos, col, norm);
+          VBOs = createVBOs(verts, cols, norms);
           
           modelView = M4x4.$(1,0,0,0,0,1,0,0,0,0,1,-50,0,0,0,1);
           M4x4.transpose(modelView, modelView);

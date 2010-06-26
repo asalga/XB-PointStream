@@ -6,18 +6,20 @@ var r = 0;
 var zoomed = 0;
 
 function zoom(amt){
-  zoomed += amt;
+  zoomed += amt * 2;
 }
 
 function render() {
 
+  // transform point cloud
   ps.translate(0,0,zoomed);
   ps.scale(2);
-  
   ps.rotateX(r+=0.01);
   
+  // redraw
   ps.clear();
   ps.render();
+  
   window.status = Math.floor(ps.frameRate);
 }
 
@@ -29,5 +31,5 @@ function start(){
 
   ps.onMouseScroll = zoom;
   
-  acorn = ps.loadFile("acorn1.asc",true);
+  acorn = ps.loadFile({path:"acorn1.asc", autoCenter: true});
 }
