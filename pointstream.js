@@ -3,11 +3,13 @@
   MIT LICENSE
 
 TODO:
--add mouseScroll empty var?
--fix "popping"
+- add mouseScroll empty var?
+- fix "popping"
 - change verts, norms, cols to webglarrays
 - should mousewheel return single value or object?
 - add debugger
+- add getversion()
+- add external js loading so mjs isn't present in html file
 */
 
 function PointStream(){
