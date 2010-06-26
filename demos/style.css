@@ -1,0 +1,18 @@
+span{
+  vertical-align: top;
+  font-family: monospace;
+}
+
+.progress{
+  color:purple;
+}
+
+.filename{
+  color: green;
+}
+
+canvas{
+  float: left;
+  width: 500;
+  height: 500;
+}

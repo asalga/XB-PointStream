@@ -1,0 +1,26 @@
+<html>
+
+  <head>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <script src="../processing.js"></script>
+    <script>
+      var filename = "acorn1.asc";
+      var lightOn = true;
+      var drawOctree = true;
+    </script>
+  </head>
+
+  <body onload="document.getElementById('filename').innerHTML = filename;">
+   <canvas datasrc="../xb.js" id="cvs"></canvas>
+   
+   <span id="Filename_log">Downloading <span class="filename" id="filename"></span>: ..</span><span class="progress" id="load_percent">0%</span><br />
+   <span id="Parse_log"></span><span class="progress" id="parse_percent"></span><br />
+   <span id="NumPoints_log"></span><span class="progress" id="num_points"></span><br />
+   <span id="Octree_log"></span><span class="progress" id="octree_percent"></span><br />
+   <span id="VBO_log"></span><span class="progress" id="vbo_progress"></span><br />
+   <br />
+   <span id="fps"></span><br />
+   <span id="controls"></span>
+  </body>
+
+</html>
