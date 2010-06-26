@@ -31,5 +31,5 @@ function start(){
 
   ps.onMouseScroll = zoom;
   
-  acorn = ps.loadFile({path:"acorn1.asc", autoCenter: true});
+  acorn = ps.loadFile({path:"acorn.asc", autoCenter: true});
 }
