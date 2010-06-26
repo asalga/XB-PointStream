@@ -16,7 +16,8 @@ function PointStream(){
   var lastTime;
 
   //
-      
+  var userAgent = "unknown";
+  
   var renderCallback;
   
   const XHR_DONE = 4;
@@ -24,6 +25,19 @@ function PointStream(){
   
   var bk = [1,1,1,1];
   var magicbuffer;
+  
+  // browser detection to handle differences
+  var browser     = -1 ;
+  const MINEFIELD = 0;
+  const CHROME    = 1;
+  const CHROMIUM  = 2;
+  const WEBKIT    = 3;
+
+  // not used yet
+  const FIREFOX   = 4;
+  const OPERA     = 5;
+  const SAFARI    = 6;
+  const IE        = 7;
   
   /// rename these vars
   var verts = [];
@@ -198,7 +212,7 @@ var fragmentShaderSource3D =
 
         return o;
       }
-    }
+    };
 
   /**
   */
@@ -207,6 +221,22 @@ var fragmentShaderSource3D =
    if (varLocation !== -1) {
      curContext.disableVertexAttribArray(varLocation);
    }
+  }
+  
+  /**
+  */
+  function getUserAgent(userAgentString){
+    
+    // keep in this order
+    if(userAgentString.match(/Chrome/)){
+      return CHROME;
+    }
+    if(userAgentString.match(/AppleWebKit/)){
+      return WEBKIT;
+    }
+    if(userAgentString.match(/Minefield/)){
+      return MINEFIELD;
+    }
   }
 
   /**
@@ -339,13 +369,23 @@ var fragmentShaderSource3D =
       if(element.addEventListener){
         element.addEventListener(type, func, false);
       }
-      else{
+      else{alert("attach listener error: fix me");
       }
     },
     
     /*
     */
     _mouseScroll: function(evt){
+     var amt;
+     
+     if(browser === MINEFIELD){
+       amt = evt.detail;
+     }
+     else{
+       alert(evt.wheelDelta);
+     }
+    
+    
       if(xb.onMouseScroll){
         xb.onMouseScroll(evt.detail);
       }
@@ -354,6 +394,9 @@ var fragmentShaderSource3D =
     /**
     */
     setup: function(cvs, renderCB){
+    
+      browser = getUserAgent(navigator.userAgent);
+      
       lastTime = new Date();
       frames = 0;
 
@@ -363,10 +406,11 @@ var fragmentShaderSource3D =
       xb.renderCallback = renderCB;
       setInterval(xb.renderCallback, 10);
       
-      xb.attach(cvs, "mousemove", xb.mouseMove);
+      xb.attach(cvs, "mousemove", xb.mouseMove);      
       xb.attach(cvs, "DOMMouseScroll", xb._mouseScroll);
       xb.attach(cvs, "mousewheel", xb._mouseScroll);
-     
+      
+      
       if(curContext){
         curContext.viewport(0, 0, 500, 500);
         curContext.enable(curContext.DEPTH_TEST);
