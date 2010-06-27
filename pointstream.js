@@ -8,19 +8,20 @@ TODO:
 - change verts, norms, cols to webglarrays
 - should mousewheel return single value or object?
 - add debugger
-- add getversion()
 - add external js loading so mjs isn't present in html file
 */
 
 function PointStream(){
 
+  const version  = 0.2;
+  const XHR_DONE = 4;
+    
   // to calculate fps
   var frames = 0;
   var lastTime;
   
   var renderCallback;
-  
-  const XHR_DONE = 4;
+
   var isLooping = true;
   
   var bk = [1,1,1,1];
@@ -42,21 +43,18 @@ function PointStream(){
   var verts = [];
   var cols = [];
   var norms = [];
-  
-  var stillDownloading = true;
-  var ready = false;
 
   var canvas;
-  var curContext;
+  var ctx;
 
   var bufferIDCounter = 0;
   var modelView;
   var projection;
   var model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
-  var programObject3D;
+  var progObj;
       
 // Vertex shader for boxes and spheres
-var vertexShaderSource3D =
+var vertexShaderSource =
 "attribute vec3 aVertex;" +
 "attribute vec3 aNormal;" +
 "attribute vec4 aColor;" +
@@ -131,23 +129,23 @@ var vertexShaderSource3D =
 "  gl_Position = projection * view * model * vec4( aVertex, 1.0 );" +
 "}";
 
-var fragmentShaderSource3D =
+var fragmentShaderSource =
 "void main(void){" +
 "  gl_FragColor = gl_Color;" +
 "}";
 
   function uniformi(programObj, varName, varValue) {
-    var varLocation = curContext.getUniformLocation(programObj, varName);
+    var varLocation = ctx.getUniformLocation(programObj, varName);
     // the variable won't be found if it was optimized out.
     if (varLocation !== -1) {
       if (varValue.length === 4) {
-        curContext.uniform4iv(varLocation, varValue);
+        ctx.uniform4iv(varLocation, varValue);
       } else if (varValue.length === 3) {
-        curContext.uniform3iv(varLocation, varValue);
+        ctx.uniform3iv(varLocation, varValue);
       } else if (varValue.length === 2) {
-        curContext.uniform2iv(varLocation, varValue);
+        ctx.uniform2iv(varLocation, varValue);
       } else {
-        curContext.uniform1i(varLocation, varValue);
+        ctx.uniform1i(varLocation, varValue);
       }
     }
   }
@@ -155,17 +153,17 @@ var fragmentShaderSource3D =
   /**
   */
   function uniformf(programObj, varName, varValue) {
-    var varLocation = curContext.getUniformLocation(programObj, varName);
+    var varLocation = ctx.getUniformLocation(programObj, varName);
     // the variable won't be found if it was optimized out.
     if (varLocation !== -1) {
       if (varValue.length === 4) {
-        curContext.uniform4fv(varLocation, varValue);
+        ctx.uniform4fv(varLocation, varValue);
       } else if (varValue.length === 3) {
-        curContext.uniform3fv(varLocation, varValue);
+        ctx.uniform3fv(varLocation, varValue);
       } else if (varValue.length === 2) {
-        curContext.uniform2fv(varLocation, varValue);
+        ctx.uniform2fv(varLocation, varValue);
       } else {
-        curContext.uniform1f(varLocation, varValue);
+        ctx.uniform1f(varLocation, varValue);
       }
     }
   }
@@ -173,30 +171,30 @@ var fragmentShaderSource3D =
   /**
   */
   function vertexAttribPointer(programObj, varName, size, VBO) {
-    var varLocation = curContext.getAttribLocation(programObj, varName);
+    var varLocation = ctx.getAttribLocation(programObj, varName);
     if (varLocation !== -1) {
-      curContext.bindBuffer(curContext.ARRAY_BUFFER, VBO);
-      curContext.vertexAttribPointer(varLocation, size, curContext.FLOAT, false, 0, 0);
-      curContext.enableVertexAttribArray(varLocation);
+      ctx.bindBuffer(ctx.ARRAY_BUFFER, VBO);
+      ctx.vertexAttribPointer(varLocation, size, ctx.FLOAT, false, 0, 0);
+      ctx.enableVertexAttribArray(varLocation);
     }
   }
   
   /**
   */
   function createVBOs(xyz, rgb, norm){
-    if(curContext){
+    if(ctx){
 
-      var newBuffer = curContext.createBuffer();
-      curContext.bindBuffer(curContext.ARRAY_BUFFER, newBuffer);
-      curContext.bufferData(curContext.ARRAY_BUFFER, new WebGLFloatArray(xyz), curContext.STATIC_DRAW);
+      var newBuffer = ctx.createBuffer();
+      ctx.bindBuffer(ctx.ARRAY_BUFFER, newBuffer);
+      ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(xyz), ctx.STATIC_DRAW);
 
-      var newColBuffer = curContext.createBuffer();
-      curContext.bindBuffer(curContext.ARRAY_BUFFER, newColBuffer);
-      curContext.bufferData(curContext.ARRAY_BUFFER, new WebGLFloatArray(rgb), curContext.STATIC_DRAW);
+      var newColBuffer = ctx.createBuffer();
+      ctx.bindBuffer(ctx.ARRAY_BUFFER, newColBuffer);
+      ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(rgb), ctx.STATIC_DRAW);
 
-      var newNormBuffer = curContext.createBuffer();
-      curContext.bindBuffer(curContext.ARRAY_BUFFER, newNormBuffer);
-      curContext.bufferData(curContext.ARRAY_BUFFER, new WebGLFloatArray(norm), curContext.STATIC_DRAW);
+      var newNormBuffer = ctx.createBuffer();
+      ctx.bindBuffer(ctx.ARRAY_BUFFER, newNormBuffer);
+      ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(norm), ctx.STATIC_DRAW);
 
       bufferIDCounter++;
 
@@ -214,9 +212,9 @@ var fragmentShaderSource3D =
   /**
   */
   function disableVertexAttribPointer(programObj, varName){
-   var varLocation = curContext.getAttribLocation(programObj, varName);
+   var varLocation = ctx.getAttribLocation(programObj, varName);
    if (varLocation !== -1) {
-     curContext.disableVertexAttribArray(varLocation);
+     ctx.disableVertexAttribArray(varLocation);
    }
   }
   
@@ -239,51 +237,53 @@ var fragmentShaderSource3D =
   /**
   */
   function uniformMatrix(programObj, varName, transpose, matrix) {
-    var varLocation = curContext.getUniformLocation(programObj, varName);
+    var varLocation = ctx.getUniformLocation(programObj, varName);
     // the variable won't be found if it was optimized out.
     if (varLocation !== -1) {
       if (matrix.length === 16) {
-        curContext.uniformMatrix4fv(varLocation, transpose, matrix);
+        ctx.uniformMatrix4fv(varLocation, transpose, matrix);
       } else if (matrix.length === 9) {
-        curContext.uniformMatrix3fv(varLocation, transpose, matrix);
+        ctx.uniformMatrix3fv(varLocation, transpose, matrix);
       } else {
-        curContext.uniformMatrix2fv(varLocation, transpose, matrix);
+        ctx.uniformMatrix2fv(varLocation, transpose, matrix);
       }
     }
   }
 
   /**
   */
-  var createProgramObject = function(curContext, vetexShaderSource, fragmentShaderSource) {
-    var vertexShaderObject = curContext.createShader(curContext.VERTEX_SHADER);
-    curContext.shaderSource(vertexShaderObject, vetexShaderSource);
-    curContext.compileShader(vertexShaderObject);
-    if (!curContext.getShaderParameter(vertexShaderObject, curContext.COMPILE_STATUS)) {
-      throw curContext.getShaderInfoLog(vertexShaderObject);
+  var createProgramObject = function(ctx, vetexShaderSource, fragmentShaderSource) {
+    var vertexShaderObject = ctx.createShader(ctx.VERTEX_SHADER);
+    ctx.shaderSource(vertexShaderObject, vetexShaderSource);
+    ctx.compileShader(vertexShaderObject);
+    if (!ctx.getShaderParameter(vertexShaderObject, ctx.COMPILE_STATUS)) {
+      throw ctx.getShaderInfoLog(vertexShaderObject);
     }
 
     /**
     */
-    var fragmentShaderObject = curContext.createShader(curContext.FRAGMENT_SHADER);
-    curContext.shaderSource(fragmentShaderObject, fragmentShaderSource);
-    curContext.compileShader(fragmentShaderObject);
-    if (!curContext.getShaderParameter(fragmentShaderObject, curContext.COMPILE_STATUS)) {
-      throw curContext.getShaderInfoLog(fragmentShaderObject);
+    var fragmentShaderObject = ctx.createShader(ctx.FRAGMENT_SHADER);
+    ctx.shaderSource(fragmentShaderObject, fragmentShaderSource);
+    ctx.compileShader(fragmentShaderObject);
+    if (!ctx.getShaderParameter(fragmentShaderObject, ctx.COMPILE_STATUS)) {
+      throw ctx.getShaderInfoLog(fragmentShaderObject);
     }
 
     /**
     */
-    var programObject = curContext.createProgram();
-    curContext.attachShader(programObject, vertexShaderObject);
-    curContext.attachShader(programObject, fragmentShaderObject);
-    curContext.linkProgram(programObject);
-    if (!curContext.getProgramParameter(programObject, curContext.LINK_STATUS)) {
+    var programObject = ctx.createProgram();
+    ctx.attachShader(programObject, vertexShaderObject);
+    ctx.attachShader(programObject, fragmentShaderObject);
+    ctx.linkProgram(programObject);
+    if (!ctx.getProgramParameter(programObject, ctx.LINK_STATUS)) {
       throw "Error linking shaders.";
     }
 
     return programObject;
   };
 
+  /**
+  */
   var xb = {
 
     /**
@@ -300,13 +300,20 @@ var fragmentShaderSource3D =
     /**
     */
     background: function(a){
-      curContext.clearColor(a[0],a[1],a[2],a[3]);
+      ctx.clearColor(a[0],a[1],a[2],a[3]);
     },
 
     /**
     */
     clear: function(){
-      curContext.clear(curContext.COLOR_BUFFER_BIT | curContext.DEPTH_BUFFER_BIT);
+      ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
+    },
+    
+    /**
+      Get the version of the library.
+    */
+    getVersion: function(){
+      return version;
     },
     
     /**
@@ -316,14 +323,14 @@ var fragmentShaderSource3D =
       xb.frameCount++;
       var now = new Date();
 
-      if(curContext && VBOs){
-        vertexAttribPointer(programObject3D, "aVertex", 3, VBOs.posBuffer);
-        vertexAttribPointer(programObject3D, "aColor", 3, VBOs.colBuffer);
-        vertexAttribPointer(programObject3D, "aNormal", 3, VBOs.normBuffer);
+      if(ctx && VBOs){
+        vertexAttribPointer(progObj, "aVertex", 3, VBOs.posBuffer);
+        vertexAttribPointer(progObj, "aColor", 3, VBOs.colBuffer);
+        vertexAttribPointer(progObj, "aNormal", 3, VBOs.normBuffer);
 
-        uniformMatrix(programObject3D, "model", false, model);
+        uniformMatrix(progObj, "model", false, model);
 
-        curContext.drawArrays(curContext.POINTS, 0, VBOs.size/3);
+        ctx.drawArrays(ctx.POINTS, 0, VBOs.size/3);
       }
 
       // if more than 1 second has elapsed, recalculate fps
@@ -343,10 +350,10 @@ var fragmentShaderSource3D =
       modelView = M4x4.$(1,0,0,0,0,1,0,0,0,0,1,-50,0,0,0,1);
       M4x4.transpose(modelView, modelView);
 
-      uniformMatrix(programObject3D, "view", false, modelView);
+      uniformMatrix(progObj, "view", false, modelView);
       
       var nt = M4x4.$(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1);
-      uniformMatrix(programObject3D, "normalTransform", false, nt);
+      uniformMatrix(progObj, "normalTransform", false, nt);
     },
 
     /**
@@ -358,14 +365,11 @@ var fragmentShaderSource3D =
     },
     
     /**
-      Cross browser
     */
     attach: function(element, type, func){
       //
       if(element.addEventListener){
         element.addEventListener(type, func, false);
-      }
-      else{alert("attach listener error: fix me");
       }
     },
     
@@ -402,7 +406,7 @@ var fragmentShaderSource3D =
       frames = 0;
 
       canvas = cvs;
-      curContext = canvas.getContext("experimental-webgl");
+      ctx = canvas.getContext("experimental-webgl");
       
       xb.renderCallback = renderCB;
       setInterval(xb.renderCallback, 10);
@@ -412,13 +416,13 @@ var fragmentShaderSource3D =
       xb.attach(cvs, "mousewheel", xb._mouseScroll);
       
       
-      if(curContext){
-        curContext.viewport(0, 0, 500, 500);
-        curContext.enable(curContext.DEPTH_TEST);
+      if(ctx){
+        ctx.viewport(0, 0, 500, 500);
+        ctx.enable(ctx.DEPTH_TEST);
       }
       
-      programObject3D = createProgramObject(curContext, vertexShaderSource3D, fragmentShaderSource3D);
-      curContext.useProgram(programObject3D);
+      progObj = createProgramObject(ctx, vertexShaderSource, fragmentShaderSource);
+      ctx.useProgram(progObj);
       
       model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
     },
@@ -439,19 +443,28 @@ var fragmentShaderSource3D =
     },
     
     /**
+     tx
+     ty
+     tz
     */
     translate: function(tx, ty, tz){
       model = M4x4.translate3(tx, ty, tz, model, model);
     },
     
+    /**
+    */
     rotateY: function(radians){
       model =  M4x4.rotate(radians,V3.$(0,1,0),model);
     },
-
+    
+    /**
+    */
     rotateX: function(radians){
       model = M4x4.rotate(radians,V3.$(1,0,0),model);
     },
-
+    
+    /**
+    */
     rotateZ: function(radians){
       model = M4x4.rotate(radians,V3.$(0,0,1),model);
     },
@@ -542,7 +555,7 @@ var fragmentShaderSource3D =
           var proj = projection;
           M4x4.transpose(proj, proj);
           
-          uniformMatrix(programObject3D, "projection", false, proj);
+          uniformMatrix(progObj, "projection", false, proj);
           
           file.status = 4;
           xb.setMatrices();
