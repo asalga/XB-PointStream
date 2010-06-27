@@ -4,10 +4,8 @@
 
 TODO:
 - add mouseScroll empty var?
-- fix "popping"
 - change verts, norms, cols to webglarrays
 - should mousewheel return single value or object?
-- add debugger
 - add external js loading so mjs isn't present in html file
 */
 
@@ -125,7 +123,7 @@ var vertexShaderSource =
 "      gl_FrontColor = vec4(finalDiffuse[0] * col[0], finalDiffuse[1] * col[1], finalDiffuse[2] * col[2], 1.0);" +
 "  }" +
 
-"  gl_PointSize = 6.0;" +
+"  gl_PointSize = 3.0;" +
 "  gl_Position = projection * view * model * vec4( aVertex, 1.0 );" +
 "}";
 

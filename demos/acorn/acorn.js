@@ -13,7 +13,7 @@ function render() {
 
   // transform point cloud
   ps.translate(0,0,zoomed);
-  ps.scale(2);
+  ps.scale(1);
   ps.rotateX(r+=0.01);
   
   // redraw
