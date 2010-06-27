@@ -12,7 +12,7 @@ span{
 }
 
 canvas{
-  float: left;
+  border: 0px solid #0000FF;
   width: 500;
   height: 500;
 }

@@ -4,7 +4,7 @@
 
 TODO:
 - add mouseScroll empty var?
-- change verts, norms, cols to webglarrays
+- change verts, norms, cols to webglarrays?
 - should mousewheel return single value or object?
 - add external js loading so mjs isn't present in html file
 */
@@ -132,6 +132,7 @@ var fragmentShaderSource =
 "  gl_FragColor = gl_Color;" +
 "}";
 
+
   function uniformi(programObj, varName, varValue) {
     var varLocation = ctx.getUniformLocation(programObj, varName);
     // the variable won't be found if it was optimized out.
@@ -181,7 +182,6 @@ var fragmentShaderSource =
   */
   function createVBOs(xyz, rgb, norm){
     if(ctx){
-
       var newBuffer = ctx.createBuffer();
       ctx.bindBuffer(ctx.ARRAY_BUFFER, newBuffer);
       ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(xyz), ctx.STATIC_DRAW);
@@ -315,6 +315,44 @@ var fragmentShaderSource =
     },
     
     /**
+      Resize the viewport.
+      This can be called after setup
+    */
+    resize: function(width, height){
+      // delete old program object?
+      // delete old context?
+      
+      canvas.setAttribute("width", width);
+      canvas.setAttribute("height", height);
+
+      // check if style exists? how? can't just query it...
+      canvas.style.width = width;
+      canvas.style.height = height;
+      
+      ctx = canvas.getContext("experimental-webgl");
+      ctx.viewport(0, 0, width, height);
+      ctx.enable(ctx.DEPTH_TEST);
+      
+      xb.background(bk);
+      
+      progObj = createProgramObject(ctx, vertexShaderSource, fragmentShaderSource);
+      ctx.useProgram(progObj);
+      
+      model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);      
+      modelView = M4x4.$(1,0,0,0,0,1,0,0,0,0,1,-50,0,0,0,1);
+      projection = M4x4.$(1.7320508075688779,0,0,0,0,1.7320508075688779,0,0,0,0,-1.002002002002002,-8.668922960805196,0,0,-1,0);      
+      
+      M4x4.transpose(modelView, modelView);
+      uniformMatrix(progObj, "projection", false, M4x4.transpose(projection));
+      
+      if(VBOs)  {
+        VBOs = createVBOs(verts, cols, norms);
+      }
+      
+      xb.setMatrices();
+    },
+    
+    /**
     */
     render: function(){
       frames++;
@@ -340,15 +378,19 @@ var fragmentShaderSource =
 
       // clear state      
       model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+      
+      var error = ctx.getError();
+      if(error !== 0){
+        //alert("WebGL error: " + error);
+      }
     },
  
     /**
     */
     setMatrices: function(){
+    
       modelView = M4x4.$(1,0,0,0,0,1,0,0,0,0,1,-50,0,0,0,1);
-      M4x4.transpose(modelView, modelView);
-
-      uniformMatrix(progObj, "view", false, modelView);
+      uniformMatrix(progObj, "view", false, M4x4.transpose(modelView));
       
       var nt = M4x4.$(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1);
       uniformMatrix(progObj, "normalTransform", false, nt);
@@ -404,7 +446,8 @@ var fragmentShaderSource =
       frames = 0;
 
       canvas = cvs;
-      ctx = canvas.getContext("experimental-webgl");
+      
+      xb.resize(canvas.getAttribute("width"), canvas.getAttribute("height"));
       
       xb.renderCallback = renderCB;
       setInterval(xb.renderCallback, 10);
@@ -412,17 +455,6 @@ var fragmentShaderSource =
       xb.attach(cvs, "mousemove", xb.mouseMove);      
       xb.attach(cvs, "DOMMouseScroll", xb._mouseScroll);
       xb.attach(cvs, "mousewheel", xb._mouseScroll);
-      
-      
-      if(ctx){
-        ctx.viewport(0, 0, 500, 500);
-        ctx.enable(ctx.DEPTH_TEST);
-      }
-      
-      progObj = createProgramObject(ctx, vertexShaderSource, fragmentShaderSource);
-      ctx.useProgram(progObj);
-      
-      model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
     },
     
     /**
@@ -476,7 +508,10 @@ var fragmentShaderSource =
       var autoCenter = o.autoCenter || false;
 
       var AJAX = new XMLHttpRequest();
+      
+      // this doesn't work
       // AJAX.addEventListener("progress", f,false);
+
       AJAX.open("GET", path, true);
       AJAX.send(null);
       
@@ -485,7 +520,6 @@ var fragmentShaderSource =
         progress: 0,
         numPoints: 0,
       };
-    
       
       AJAX.onreadystatechange = 
       function(){        
@@ -546,17 +580,7 @@ var fragmentShaderSource =
           
           VBOs = createVBOs(verts, cols, norms);
           
-          modelView = M4x4.$(1,0,0,0,0,1,0,0,0,0,1,-50,0,0,0,1);
-          M4x4.transpose(modelView, modelView);
-          
-          projection = M4x4.$(1.7320508075688779,0,0,0,0,1.7320508075688779,0,0,0,0,-1.002002002002002,-8.668922960805196,0,0,-1,0);      
-          var proj = projection;
-          M4x4.transpose(proj, proj);
-          
-          uniformMatrix(progObj, "projection", false, proj);
-          
           file.status = 4;
-          xb.setMatrices();
         }
       }
       return file;

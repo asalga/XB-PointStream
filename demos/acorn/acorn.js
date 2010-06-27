@@ -1,12 +1,18 @@
-document.addEventListener('DOMContentLoaded', start, false);
-
 var ps;
-var acorn;
-var r = 0;
+
+var size = 500;
+
+var rot = 0;
 var zoomed = 0;
 
 function zoom(amt){
   zoomed += amt * 2;
+  size += amt * 10;
+
+  if(ps.mouseX < 25 && ps.mouseY < 25){ 
+    ps.resize(size, size);
+    ps.background([0,0,0,1]);
+  }
 }
 
 function render() {
@@ -14,7 +20,7 @@ function render() {
   // transform point cloud
   ps.translate(0,0,zoomed);
   ps.scale(1);
-  ps.rotateX(r+=0.01);
+  ps.rotateY(rot+=0.01);
   
   // redraw
   ps.clear();
@@ -31,5 +37,5 @@ function start(){
 
   ps.onMouseScroll = zoom;
   
-  acorn = ps.loadFile({path:"acorn.asc", autoCenter: true});
+  ps.loadFile({path:"acorn.asc", autoCenter: true});
 }
