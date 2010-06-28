@@ -23,7 +23,7 @@ function start(){
   ps = new PointStream();
   
   ps.setup(document.getElementById('canvas'), render);
-  ps.background([0,0,0,1]);
+  ps.background([.2,.5,.7,1]);
 
   ps.onMouseScroll = zoom;
   
