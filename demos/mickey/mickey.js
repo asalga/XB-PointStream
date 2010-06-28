@@ -1,16 +1,8 @@
 var ps;
-
-var size = 500;
 var zoomed = 0;
 
 function zoom(amt){
   zoomed += amt * 2;
-  size += amt * 10;
-
-  if(ps.mouseX < 25 && ps.mouseY < 25){ 
-    ps.resize(size, size);
-    ps.background([0,0,0,1]);
-  }
 }
 
 function render() {
@@ -33,5 +25,5 @@ function start(){
 
   ps.onMouseScroll = zoom;
   
-  ps.loadFile({path:"acorn.asc", autoCenter: true});
+  ps.loadFile({path:"mickey.asc", autoCenter: true});
 }

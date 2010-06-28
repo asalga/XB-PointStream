@@ -19,8 +19,6 @@ function PointStream(){
   var lastTime;
   
   var renderCallback;
-
-  var isLooping = true;
   
   var bk = [1,1,1,1];
   var VBOs;
@@ -46,9 +44,13 @@ function PointStream(){
   var ctx;
 
   var bufferIDCounter = 0;
+
+  // shader matrices  
   var modelView;
   var projection;
   var model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+  var normalTransform;
+
   var progObj;
       
 // Vertex shader for boxes and spheres
@@ -338,14 +340,18 @@ var fragmentShaderSource =
       progObj = createProgramObject(ctx, vertexShaderSource, fragmentShaderSource);
       ctx.useProgram(progObj);
       
-      model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);      
+      normalTransform = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);      
+      model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
       modelView = M4x4.$(1,0,0,0,0,1,0,0,0,0,1,-50,0,0,0,1);
       projection = M4x4.$(1.7320508075688779,0,0,0,0,1.7320508075688779,0,0,0,0,-1.002002002002002,-8.668922960805196,0,0,-1,0);      
+
+      uniformf(progObj, "lcolor", [1,1,1]);
+      uniformf(progObj, "lposition", [0,0,-1]);
+      uniformi(progObj, "lightCount", 1);        
       
-      M4x4.transpose(modelView, modelView);
       uniformMatrix(progObj, "projection", false, M4x4.transpose(projection));
       
-      if(VBOs)  {
+      if(VBOs) {
         VBOs = createVBOs(verts, cols, norms);
       }
       
@@ -364,6 +370,8 @@ var fragmentShaderSource =
         vertexAttribPointer(progObj, "aColor", 3, VBOs.colBuffer);
         vertexAttribPointer(progObj, "aNormal", 3, VBOs.normBuffer);
 
+        //normalTransform = M4x4.inverseOrthonormal(modelView);
+        //uniformMatrix(progObj, "normalTransform", false, M4x4.transpose(normalTransform));
         uniformMatrix(progObj, "model", false, model);
 
         ctx.drawArrays(ctx.POINTS, 0, VBOs.size/3);
@@ -439,13 +447,11 @@ var fragmentShaderSource =
     /**
     */
     setup: function(cvs, renderCB){
-    
+      canvas = cvs;    
       browser = getUserAgent(navigator.userAgent);
       
       lastTime = new Date();
       frames = 0;
-
-      canvas = cvs;
       
       xb.resize(canvas.getAttribute("width"), canvas.getAttribute("height"));
       
