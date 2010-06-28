@@ -45,96 +45,97 @@ function PointStream(){
 
   var bufferIDCounter = 0;
 
-  // shader matrices  
-  var modelView;
+  // shader matrices
   var projection;
+  var view;
   var model;
   var normalTransform;
 
   var progObj;
-      
-// Vertex shader for boxes and spheres
-var vertexShaderSource =
-"attribute vec3 aVertex;" +
-"attribute vec3 aNormal;" +
-"attribute vec4 aColor;" +
+        
+  // Vertex shader for boxes and spheres
+  var vertexShaderSource =
+  "attribute vec3 aVertex;" +
+  "attribute vec3 aNormal;" +
+  "attribute vec4 aColor;" +
 
-"uniform bool usingMat;" +
-"uniform vec3 specular;" +
-"uniform vec3 mat_emissive;" +
-"uniform vec3 mat_ambient;" +
-"uniform vec3 mat_specular;" +
-"uniform float shininess;" +
+  "uniform bool usingMat;" +
+  "uniform vec3 specular;" +
+  "uniform vec3 mat_emissive;" +
+  "uniform vec3 mat_ambient;" +
+  "uniform vec3 mat_specular;" +
+  "uniform float shininess;" +
 
-"uniform mat4 model;" +
-"uniform mat4 view;" +
-"uniform mat4 projection;" +
-"uniform mat4 normalTransform;" +
+  "uniform mat4 model;" +
+  "uniform mat4 view;" +
+  "uniform mat4 projection;" +
+  "uniform mat4 normalTransform;" +
 
-"uniform int lightCount;" +
+  "uniform int lightCount;" +
 
-"  uniform vec3 lposition;" +
-"  uniform vec3 lcolor;" +
+  "  uniform vec3 lposition;" +
+  "  uniform vec3 lcolor;" +
 
-"void DirectionalLight( inout vec3 col, in vec3 ecPos, in vec3 vertNormal ) {" +
-"  float nDotVP = max(0.0, dot( vertNormal, lposition ));" +
-"  float nDotVH = max(0.0, dot( vertNormal, normalize( lposition-ecPos )));" +
-"  col += lcolor * 2.0 * nDotVP;" +
-"}" +
+  "void DirectionalLight( inout vec3 col, in vec3 ecPos, in vec3 vertNormal ) {" +
+  "  float nDotVP = max(0.0, dot( vertNormal, lposition ));" +
+  "  float nDotVH = max(0.0, dot( vertNormal, normalize( lposition-ecPos )));" +
+  "  col += lcolor * 2.0 * nDotVP;" +
+  "}" +
 
-"void PointLight( inout vec3 col, in vec3 ecPos,  in vec3 vertNormal, in vec3 eye ) {" +
-// "  float powerfactor;" +
+  "void PointLight( inout vec3 col, in vec3 ecPos,  in vec3 vertNormal, in vec3 eye ) {" +
+  // "  float powerfactor;" +
 
-// Get the vector from the light to the vertex
-"   vec3 VP = lposition - ecPos;" +
+  // Get the vector from the light to the vertex
+  "   vec3 VP = lposition - ecPos;" +
 
-// Get the distance from the current vector to the light position
-"  float d = length( VP ); " +
+  // Get the distance from the current vector to the light position
+  "  float d = length( VP ); " +
 
-// Normalize the light ray so it can be used in the dot product operation.
-"  VP = normalize( VP );" +
+  // Normalize the light ray so it can be used in the dot product operation.
+  "  VP = normalize( VP );" +
 
-"  float attenuation = 1.0 / ( 1.0 + ( d ) + ( d * d ));" +
+  "  float attenuation = 1.0 / ( 1.0 + ( d ) + ( d * d ));" +
 
-"  float nDotVP = max( 0.0, dot( vertNormal, VP ));" +
-"  vec3 halfVector = normalize( VP + eye );" +
-"  float nDotHV = max( 0.0, dot( vertNormal, halfVector ));" +
+  "  float nDotVP = max( 0.0, dot( vertNormal, VP ));" +
+  "  vec3 halfVector = normalize( VP + eye );" +
+  "  float nDotHV = max( 0.0, dot( vertNormal, halfVector ));" +
 
-// "  spec += specular * powerfactor * attenuation;" +
-"  col += lcolor * nDotVP * 2.0;" +
-"}" +
+  // "  spec += specular * powerfactor * attenuation;" +
+  "  col += lcolor * nDotVP * 2.0;" +
+  "}" +
 
-"void main(void) {" +
-"  vec3 finalDiffuse = vec3( 0.0, 0.0, 0.0 );" +
+  "void main(void) {" +
+  "  vec3 finalDiffuse = vec3( 0.0, 0.0, 0.0 );" +
 
-"  vec4 col = aColor;" +
+  "  vec4 col = aColor;" +
 
-"  vec3 norm = vec3( normalTransform * vec4( aNormal, 0.0 ) );" +
+  "  vec3 norm = vec3( normalTransform * vec4( aNormal, 0.0 ) );" +
 
-"  vec4 ecPos4 = view * model * vec4(aVertex,1.0);" +
-"  vec3 ecPos = (vec3(ecPos4))/ecPos4.w;" +
-"  vec3 eye = vec3( 0.0, 0.0, 1.0 );" +
+  "  vec4 ecPos4 = view * model * vec4(aVertex,1.0);" +
+  "  vec3 ecPos = (vec3(ecPos4))/ecPos4.w;" +
+  "  vec3 eye = vec3( 0.0, 0.0, 1.0 );" +
 
-// If there were no lights this draw call, just use the
-// assigned fill color of the shape and the specular value
-"  if( lightCount == 0 ) {" +
-"      gl_FrontColor = vec4(col[0], col[1], col[2], 1.0);" +
-"  }" +
-"  else {" +
-"      PointLight(finalDiffuse, ecPos, norm, eye );" +
-"      gl_FrontColor = vec4(finalDiffuse[0] * col[0], finalDiffuse[1] * col[1], finalDiffuse[2] * col[2], 1.0);" +
-"  }" +
+  // If there were no lights this draw call, just use the
+  // assigned fill color of the shape and the specular value
+  "  if( lightCount == 0 ) {" +
+  "      gl_FrontColor = vec4(col[0], col[1], col[2], 1.0);" +
+  "  }" +
+  "  else {" +
+  "      PointLight(finalDiffuse, ecPos, norm, eye );" +
+  "      gl_FrontColor = vec4(finalDiffuse[0] * col[0], finalDiffuse[1] * col[1], finalDiffuse[2] * col[2], 1.0);" +
+  "  }" +
 
-"  gl_PointSize = 3.0;" +
-"  gl_Position = projection * view * model * vec4( aVertex, 1.0 );" +
-"}";
+  "  gl_PointSize = 3.0;" +
+  "  gl_Position = projection * view * model * vec4( aVertex, 1.0 );" +
+  "}";
 
-var fragmentShaderSource =
-"void main(void){" +
-"  gl_FragColor = gl_Color;" +
-"}";
+  var fragmentShaderSource =
+  "void main(void){" +
+  "  gl_FragColor = gl_Color;" +
+  "}";
 
-
+  /**
+  */
   function uniformi(programObj, varName, varValue) {
     var varLocation = ctx.getUniformLocation(programObj, varName);
     // the variable won't be found if it was optimized out.
@@ -260,8 +261,6 @@ var fragmentShaderSource =
       throw ctx.getShaderInfoLog(vertexShaderObject);
     }
 
-    /**
-    */
     var fragmentShaderObject = ctx.createShader(ctx.FRAGMENT_SHADER);
     ctx.shaderSource(fragmentShaderObject, fragmentShaderSource);
     ctx.compileShader(fragmentShaderObject);
@@ -269,8 +268,6 @@ var fragmentShaderSource =
       throw ctx.getShaderInfoLog(fragmentShaderObject);
     }
 
-    /**
-    */
     var programObject = ctx.createProgram();
     ctx.attachShader(programObject, vertexShaderObject);
     ctx.attachShader(programObject, fragmentShaderObject);
@@ -340,22 +337,21 @@ var fragmentShaderSource =
       progObj = createProgramObject(ctx, vertexShaderSource, fragmentShaderSource);
       ctx.useProgram(progObj);
       
-      normalTransform = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);      
-      model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
-      modelView = M4x4.$(1,0,0,0,0,1,0,0,0,0,1,-50,0,0,0,1);
       projection = M4x4.$(1.7320508075688779,0,0,0,0,1.7320508075688779,0,0,0,0,-1.002002002002002,-8.668922960805196,0,0,-1,0);      
-
-      uniformf(progObj, "lcolor", [1,1,1]);
-      uniformf(progObj, "lposition", [0,0,-1]);
-      uniformi(progObj, "lightCount", 1);        
-      
-      uniformMatrix(progObj, "projection", false, M4x4.transpose(projection));
+      view = M4x4.$(1,0,0,0,0,1,0,0,0,0,1,-50,0,0,0,1);
+      model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+      normalTransform = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);      
       
       if(VBOs) {
         VBOs = createVBOs(verts, cols, norms);
       }
       
-      xb.setMatrices();
+      uniformf(progObj, "lcolor", [1,1,1]);
+      uniformf(progObj, "lposition", [0,0,-1]);
+      uniformi(progObj, "lightCount", 1);
+      
+      uniformMatrix(progObj, "view", false, M4x4.transpose(view));
+      uniformMatrix(progObj, "projection", false, M4x4.transpose(projection));
     },
     
     /**
@@ -370,7 +366,7 @@ var fragmentShaderSource =
         vertexAttribPointer(progObj, "aColor", 3, VBOs.colBuffer);
         vertexAttribPointer(progObj, "aNormal", 3, VBOs.normBuffer);
 
-        var mvm = M4x4.mul(modelView, model);
+        var mvm = M4x4.mul(view, model);
         normalTransform = M4x4.inverseOrthonormal(mvm);
         uniformMatrix(progObj, "normalTransform", false, M4x4.transpose(normalTransform));
         
@@ -395,17 +391,6 @@ var fragmentShaderSource =
       }
     },
  
-    /**
-    */
-    setMatrices: function(){
-    
-      modelView = M4x4.$(1,0,0,0,0,1,0,0,0,0,1,-50,0,0,0,1);
-      uniformMatrix(progObj, "view", false, M4x4.transpose(modelView));
-      
-      var nt = M4x4.$(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1);
-      uniformMatrix(progObj, "normalTransform", false, nt);
-    },
-
     /**
       Update the cursor position everytime the mouse moves
     */
@@ -508,6 +493,7 @@ var fragmentShaderSource =
     },
         
     /**
+      o - object such as {path:"acorn.asc", autoCenter: true}
     */
     loadFile: function(o){
       var path = o.path;
