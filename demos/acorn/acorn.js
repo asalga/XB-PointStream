@@ -1,7 +1,9 @@
 var ps;
 
-var size = 500;
+var rot = 0;
 var zoomed = 0;
+
+var size = 500;
 
 function zoom(amt){
   zoomed += amt * 2;
@@ -17,6 +19,7 @@ function render() {
 
   // transform point cloud
   ps.translate(0,0,zoomed);
+  ps.rotateY(rot+=0.01);
   
   // redraw
   ps.clear();

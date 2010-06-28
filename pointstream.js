@@ -48,7 +48,7 @@ function PointStream(){
   // shader matrices  
   var modelView;
   var projection;
-  var model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+  var model;
   var normalTransform;
 
   var progObj;
@@ -370,8 +370,10 @@ var fragmentShaderSource =
         vertexAttribPointer(progObj, "aColor", 3, VBOs.colBuffer);
         vertexAttribPointer(progObj, "aNormal", 3, VBOs.normBuffer);
 
-        //normalTransform = M4x4.inverseOrthonormal(modelView);
-        //uniformMatrix(progObj, "normalTransform", false, M4x4.transpose(normalTransform));
+        var mvm = M4x4.mul(modelView, model);
+        normalTransform = M4x4.inverseOrthonormal(mvm);
+        uniformMatrix(progObj, "normalTransform", false, M4x4.transpose(normalTransform));
+        
         uniformMatrix(progObj, "model", false, model);
 
         ctx.drawArrays(ctx.POINTS, 0, VBOs.size/3);
