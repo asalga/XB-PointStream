@@ -384,11 +384,6 @@ function PointStream(){
 
       // clear state      
       model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
-      
-      var error = ctx.getError();
-      if(error !== 0){
-        //alert("WebGL error: " + error);
-      }
     },
  
     /**
@@ -431,6 +426,18 @@ function PointStream(){
       }
     },
     
+    _mousePressed: function(evt){
+      if(xb.onMousePressed){
+        xb.onMousePressed();
+      }
+    },
+    
+    _mouseReleased: function(){
+      if(xb.onMouseReleased){
+        xb.onMouseReleased();
+      }
+    },
+    
     /**
     */
     setup: function(cvs, renderCB){
@@ -444,7 +451,9 @@ function PointStream(){
       
       xb.renderCallback = renderCB;
       setInterval(xb.renderCallback, 10);
-      
+
+      xb.attach(cvs, "mouseup", xb._mouseReleased);      
+      xb.attach(cvs, "mousedown", xb._mousePressed);
       xb.attach(cvs, "mousemove", xb.mouseMove);      
       xb.attach(cvs, "DOMMouseScroll", xb._mouseScroll);
       xb.attach(cvs, "mousewheel", xb._mouseScroll);
@@ -521,8 +530,12 @@ function PointStream(){
         if(AJAX.status === 200){
           file.status = 1;
         }
-        
+
         if(AJAX.readyState === XHR_DONE){
+//document.getElementById('debug')."g;
+//debug = "sdf";
+//var blah = "";
+
            var values = AJAX.responseText.split(/\s+/);
            const numVerts = values.length/9;
            
@@ -533,7 +546,7 @@ function PointStream(){
             var currX = parseFloat(values[i]);
             var currY = parseFloat(values[i+1]);
             var currZ = parseFloat(values[i+2]);
-            
+
             verts.push(currX);
             verts.push(currY);
             verts.push(currZ);
@@ -552,7 +565,19 @@ function PointStream(){
             norms.push(parseFloat(values[i+6]));
             norms.push(parseFloat(values[i+7]));
             norms.push(parseFloat(values[i+8]));
+            
+            //debug += "dfg";
+            //document.getElementById('debug').innerHTML += 
+            blah 
+            +=
+            currX + " " + currY + " " + currZ + " "  + 
+            parseFloat(values[i+3]) + " " +
+            parseFloat(values[i+4]) + " " +
+            parseFloat(values[i+5]) + "\n";
+            
           }
+          //alert(blah);
+          //debug +="asdfasdf";
           
           // if the user wants to center the point cloud
           if(autoCenter){
