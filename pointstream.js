@@ -125,7 +125,8 @@ function PointStream(){
   "      gl_FrontColor = vec4(finalDiffuse[0] * col[0], finalDiffuse[1] * col[1], finalDiffuse[2] * col[2], 1.0);" +
   "  }" +
 
-  "  gl_PointSize = 3.0;" +
+  "  gl_PointSize = 3.0;" + 
+
   "  gl_Position = projection * view * model * vec4( aVertex, 1.0 );" +
   "}";
 
@@ -354,9 +355,10 @@ function PointStream(){
     frameCount: 0,
 
     /**
+      color
     */
-    background: function(a){
-      ctx.clearColor(a[0],a[1],a[2],a[3]);
+    background: function(color){
+      ctx.clearColor(color[0],color[1],color[2],color[3]);
     },
 
     /**
@@ -375,6 +377,9 @@ function PointStream(){
     /**
       Resize the viewport.
       This can be called after setup
+      
+      width
+      height
     */
     resize: function(width, height){
       // delete old program object?
@@ -396,27 +401,27 @@ function PointStream(){
       progObj = createProgramObject(ctx, vertexShaderSource, fragmentShaderSource);
       ctx.useProgram(progObj);
             
-  var fovy = 60;
-  var aspect = width/height;
-  var znear = 0.001;
-  var zfar = 1000;
+      var fovy = 60;
+      var aspect = width/height;
+      var znear = 0.001;
+      var zfar = 1000;
 
-  var ymax = znear * Math.tan(fovy * Math.PI / 360.0);
-  var ymin = -ymax;
-  var xmin = ymin * aspect;
-  var xmax = ymax * aspect;
+      var ymax = znear * Math.tan(fovy * Math.PI / 360.0);
+      var ymin = -ymax;
+      var xmin = ymin * aspect;
+      var xmax = ymax * aspect;
 
-  var left = xmin;
-  var right = xmax;
-  var top =  ymax;
-  var bottom = ymin;
+      var left = xmin;
+      var right = xmax;
+      var top =  ymax;
+      var bottom = ymin;
 
-  var X = 2 * znear / (right - left);
-  var Y = 2 * znear / (top - bottom);
-  var A = (right + left) / (right - left);
-  var B = (top + bottom) / (top - bottom);
-  var C = -(zfar + znear) / (zfar - znear);
-  var D = -2 * zfar * znear / (zfar - znear);
+      var X = 2 * znear / (right - left);
+      var Y = 2 * znear / (top - bottom);
+      var A = (right + left) / (right - left);
+      var B = (top + bottom) / (top - bottom);
+      var C = -(zfar + znear) / (zfar - znear);
+      var D = -2 * zfar * znear / (zfar - znear);
 
       projection = M4x4.$(
       X, 0, A, 0, 
@@ -424,7 +429,7 @@ function PointStream(){
       0, 0, C, D, 
       0, 0, -1, 0);
 
-      view = M4x4.$(1,0,0,0,0,1,0,0,0,0,1,-50,0,0,0,1);
+      view = M4x4.$(1,0,0,0,0,1,0,0,0,0,1,  0,   0,0,0,1);
       model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
       normalTransform = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);      
       
@@ -501,6 +506,9 @@ function PointStream(){
     },
     
     /**
+      element
+      type
+      func
     */
     attach: function(element, type, func){
       //
@@ -545,6 +553,8 @@ function PointStream(){
     },
     
     /**
+      cvs
+      renderCB
     */
     setup: function(cvs, renderCB){
       canvas = cvs;    
@@ -590,18 +600,21 @@ function PointStream(){
     },
     
     /**
+      radians
     */
     rotateY: function(radians){
       model =  M4x4.rotate(radians,V3.$(0,1,0),model);
     },
     
     /**
+      radians
     */
     rotateX: function(radians){
       model = M4x4.rotate(radians,V3.$(1,0,0),model);
     },
     
     /**
+      radians
     */
     rotateZ: function(radians){
       model = M4x4.rotate(radians,V3.$(0,0,1),model);
