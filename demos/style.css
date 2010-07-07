@@ -1,6 +1,15 @@
+html {
+  overflow-x: hidden;
+  overflow-y: hidden;
+}
+
 span{
   vertical-align: top;
   font-family: monospace;
+}
+
+body{
+  margin: 0px 0px;
 }
 
 .progress{

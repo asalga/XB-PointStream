@@ -6,16 +6,13 @@ var zoomed = 0;
 var rot =[0,0];
 var curCoords = [0,0];
 
-var size = 500;
+window.onresize = function(){
+  ps.resize(window.innerWidth, window.innerHeight);
+  ps.background([0,0,0,1]);
+};
 
 function zoom(amt){
   zoomed += amt * 2;
-  size += amt * 10;
-
-  if(ps.mouseX < 25 && ps.mouseY < 25){
-    ps.resize(size, size);
-    ps.background([0,0,0,1]);
-  }
 }
 
 function mousePressed(){
@@ -49,8 +46,6 @@ function render() {
   // redraw
   ps.clear();
   ps.render();
-  
-//  window.status = Math.floor(ps.frameRate);
 }
 
 function start(){

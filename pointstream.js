@@ -183,28 +183,87 @@ function PointStream(){
   
   /**
   */
+  function getDataLayout(values){
+    var normalsPresent = false;
+    var colorsPresent = false;
+    
+    // first check if there are 9 values, which would mean we have
+    // xyz rgb and normals
+    
+    // We can do this by counting the number of whitespace on the first line
+    var i = 0;
+    var numSpaces = 0;
+    do{
+      i++;
+      if(values[i] == " "){
+        numSpaces++;
+      }
+    }while( values[i] != '\n');
+    
+    // 1.916 -2.421 -4.0339 64 32 16 -0.3727 -0.2476 -0.8942
+    if(numSpaces === 8){
+      return 9;
+    }
+    
+    // 1.916 -2.421 -4.0339
+    if(numSpaces == 2){
+      return 3;
+    }
+    
+    var str = "";
+    
+    for(i = 0; i < 500; i++){
+      str += values[i];
+    }
+    
+    var str_split = str.split(/\s+/);
+    var data = [];
+    
+    for(var i=3; i < str_split.length;){
+      data.push(str_split[i++]);
+      data.push(str_split[i++]);
+      data.push(str_split[i++]);
+      i+=3;
+    }
+    
+    for(var i=0; i < data.length; i++){
+      if(data[i] < 0 || data[i] > 255){
+        normalsPresent = true;
+        return 1;
+      }
+    }
+    
+    return 2;
+  }
+  
+  /**
+  */
   function createVBOs(xyz, rgb, norm){
     if(ctx){
+      var o = {};
+      
       var newBuffer = ctx.createBuffer();
       ctx.bindBuffer(ctx.ARRAY_BUFFER, newBuffer);
       ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(xyz), ctx.STATIC_DRAW);
+      o.posBuffer = newBuffer;
+      o.id =  bufferIDCounter;
+      o.size = xyz.length;
+ 
+      if(rgb.length > 0){
+        var newColBuffer = ctx.createBuffer();
+        ctx.bindBuffer(ctx.ARRAY_BUFFER, newColBuffer);
+        ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(rgb), ctx.STATIC_DRAW);
+        o.colBuffer = newColBuffer;
+        }
 
-      var newColBuffer = ctx.createBuffer();
-      ctx.bindBuffer(ctx.ARRAY_BUFFER, newColBuffer);
-      ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(rgb), ctx.STATIC_DRAW);
-
-      var newNormBuffer = ctx.createBuffer();
-      ctx.bindBuffer(ctx.ARRAY_BUFFER, newNormBuffer);
-      ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(norm), ctx.STATIC_DRAW);
+      if(norm.length > 0){
+        var newNormBuffer = ctx.createBuffer();
+        ctx.bindBuffer(ctx.ARRAY_BUFFER, newNormBuffer);
+        ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(norm), ctx.STATIC_DRAW);
+        o.normBuffer = newNormBuffer;
+      }
 
       bufferIDCounter++;
-
-      var o = {};
-      o.id =  bufferIDCounter;
-      o.posBuffer = newBuffer;
-      o.colBuffer = newColBuffer;
-      o.normBuffer = newNormBuffer;
-      o.size = xyz.length;
 
       return o;
     }
@@ -336,19 +395,50 @@ function PointStream(){
       
       progObj = createProgramObject(ctx, vertexShaderSource, fragmentShaderSource);
       ctx.useProgram(progObj);
-      
-      projection = M4x4.$(1.7320508075688779,0,0,0,0,1.7320508075688779,0,0,0,0,-1.002002002002002,-8.668922960805196,0,0,-1,0);      
+            
+  var fovy = 60;
+  var aspect = width/height;
+  var znear = 0.001;
+  var zfar = 1000;
+
+  var ymax = znear * Math.tan(fovy * Math.PI / 360.0);
+  var ymin = -ymax;
+  var xmin = ymin * aspect;
+  var xmax = ymax * aspect;
+
+  var left = xmin;
+  var right = xmax;
+  var top =  ymax;
+  var bottom = ymin;
+
+  var X = 2 * znear / (right - left);
+  var Y = 2 * znear / (top - bottom);
+  var A = (right + left) / (right - left);
+  var B = (top + bottom) / (top - bottom);
+  var C = -(zfar + znear) / (zfar - znear);
+  var D = -2 * zfar * znear / (zfar - znear);
+
+      projection = M4x4.$(
+      X, 0, A, 0, 
+      0, Y, B, 0, 
+      0, 0, C, D, 
+      0, 0, -1, 0);
+
       view = M4x4.$(1,0,0,0,0,1,0,0,0,0,1,-50,0,0,0,1);
       model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
       normalTransform = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);      
       
+      // if VBOs already exist, recreate them
       if(VBOs) {
         VBOs = createVBOs(verts, cols, norms);
-      }
       
-      uniformf(progObj, "lcolor", [1,1,1]);
-      uniformf(progObj, "lposition", [0,0,-1]);
-      uniformi(progObj, "lightCount", 1);
+      
+      if(cols.length > 0){
+        uniformf(progObj, "lcolor", [1,1,1]);
+        uniformf(progObj, "lposition", [0,0,-1]);
+        uniformi(progObj, "lightCount", 1);
+      }
+      }
       
       uniformMatrix(progObj, "view", false, M4x4.transpose(view));
       uniformMatrix(progObj, "projection", false, M4x4.transpose(projection));
@@ -363,8 +453,24 @@ function PointStream(){
 
       if(ctx && VBOs){
         vertexAttribPointer(progObj, "aVertex", 3, VBOs.posBuffer);
-        vertexAttribPointer(progObj, "aColor", 3, VBOs.colBuffer);
-        vertexAttribPointer(progObj, "aNormal", 3, VBOs.normBuffer);
+        
+        if(VBOs.colBuffer){
+          vertexAttribPointer(progObj, "aColor", 3, VBOs.colBuffer);
+        }
+        else{
+          disableVertexAttribPointer(progObj, "aColor");
+        }
+        
+        if(VBOs.normBuffer){
+          vertexAttribPointer(progObj, "aNormal", 3, VBOs.normBuffer);
+          
+          uniformf(progObj, "lcolor", [1,1,1]);
+          uniformf(progObj, "lposition", [0,0,-1]);
+          uniformi(progObj, "lightCount", 1);
+        }
+        else{
+          disableVertexAttribPointer(progObj, "aNormal");
+        }
 
         var mvm = M4x4.mul(view, model);
         normalTransform = M4x4.inverseOrthonormal(mvm);
@@ -532,17 +638,34 @@ function PointStream(){
         }
 
         if(AJAX.readyState === XHR_DONE){
-//document.getElementById('debug')."g;
-//debug = "sdf";
-//var blah = "";
+          
+          var code = getDataLayout(AJAX.responseText);
+          
+          var normalsPresent = false;
+          var colorsPresent = false;
+          
+          if(code == 1 ){
+            code = 6;
+            normalsPresent = true;
+          }
+          else if(code ==2 ){
+            code = 6;
+            colorsPresent = true;
+          }
+          if(code ==9){
+             normalsPresent = true;
+           colorsPresent = true;
 
-           var values = AJAX.responseText.split(/\s+/);
-           const numVerts = values.length/9;
+          }
+          
+          var values = AJAX.responseText.split(/\s+/);
            
-           var objCenter = [0,0,0];
+          const numVerts = values.length/code;
+           
+          var objCenter = [0,0,0];
            
           // xyz  rgb  normals
-          for(var i = 0, len = values.length; i < len; i += 9){
+          for(var i = 0, len = values.length; i < len; i += code){
             var currX = parseFloat(values[i]);
             var currY = parseFloat(values[i+1]);
             var currZ = parseFloat(values[i+2]);
@@ -558,26 +681,18 @@ function PointStream(){
               objCenter[2] += currZ;
             }
 
-            cols.push(parseInt(values[i+3])/255);
-            cols.push(parseInt(values[i+4])/255);
-            cols.push(parseInt(values[i+5])/255);
+            if(colorsPresent){
+              cols.push(parseInt(values[i+3])/255);
+              cols.push(parseInt(values[i+4])/255);
+              cols.push(parseInt(values[i+5])/255);
+            }
             
-            norms.push(parseFloat(values[i+6]));
-            norms.push(parseFloat(values[i+7]));
-            norms.push(parseFloat(values[i+8]));
-            
-            //debug += "dfg";
-            //document.getElementById('debug').innerHTML += 
-            blah 
-            +=
-            currX + " " + currY + " " + currZ + " "  + 
-            parseFloat(values[i+3]) + " " +
-            parseFloat(values[i+4]) + " " +
-            parseFloat(values[i+5]) + "\n";
-            
+            if(normalsPresent){
+              norms.push(parseFloat(values[i+6]));
+              norms.push(parseFloat(values[i+7]));
+              norms.push(parseFloat(values[i+8]));
+            }
           }
-          //alert(blah);
-          //debug +="asdfasdf";
           
           // if the user wants to center the point cloud
           if(autoCenter){
