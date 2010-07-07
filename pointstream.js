@@ -552,6 +552,24 @@ function PointStream(){
       }
     },
     
+    _keyDown: function(){
+      if(xb.keyDown){
+        xb.keyDown();
+      }
+    },
+    
+    _keyPressed: function(){
+      if(xb.keyPressed){
+        xb.keyPressed();
+      }
+    },
+    
+    _keyUp: function(){
+      if(xb.keyUp){
+        xb.keyUp();
+      }
+    },
+    
     /**
       cvs
       renderCB
@@ -573,6 +591,9 @@ function PointStream(){
       xb.attach(cvs, "mousemove", xb.mouseMove);      
       xb.attach(cvs, "DOMMouseScroll", xb._mouseScroll);
       xb.attach(cvs, "mousewheel", xb._mouseScroll);
+      xb.attach(cvs, "keydown", xb._keyDown);
+      xb.attach(cvs, "keypressed", xb._keyPressed);
+      xb.attach(cvs, "keyup", xb._keyUp);
     },
     
     /**
