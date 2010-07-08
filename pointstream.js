@@ -347,6 +347,8 @@ function PointStream(){
     */
     mouseX: 0,
     mouseY: 0,
+    keyCode: null,
+    key: null,
     
     // Number of frames per seconds rendered in the last second.
     frameRate: 0,
@@ -535,37 +537,37 @@ function PointStream(){
         delta = -evt.wheelDelta / 360;
       }
     
-      if(xb.onMouseScroll){
+      if(typeof xb.onMouseScroll === "function"){
         xb.onMouseScroll(delta);
       }
     },
     
     _mousePressed: function(evt){
-      if(xb.onMousePressed){
+      if(typeof xb.onMousePressed === "function"){
         xb.onMousePressed();
       }
     },
     
     _mouseReleased: function(){
-      if(xb.onMouseReleased){
+      if(typeof xb.onMouseReleased === "function"){
         xb.onMouseReleased();
       }
     },
     
     _keyDown: function(){
-      if(xb.keyDown){
+      if(typeof xb.keyDown === "function"){
         xb.keyDown();
       }
     },
     
     _keyPressed: function(){
-      if(xb.keyPressed){
+      if(typeof xb.keyPressed === "function"){
         xb.keyPressed();
       }
     },
     
     _keyUp: function(){
-      if(xb.keyUp){
+      if(typeof xb.keyUp === "function"){
         xb.keyUp();
       }
     },
