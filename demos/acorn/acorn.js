@@ -25,6 +25,10 @@ function mouseReleased(){
   buttonDown = false;
 }
 
+function keyTest(){
+  alert("Test");
+}
+
 function render() {
 
   var deltaX = ps.mouseX - curCoords[0];
@@ -57,6 +61,7 @@ function start(){
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
+  ps.keyDown = keyTest;
   
   ps.loadFile({path:"acorn.asc", autoCenter: true});
 }

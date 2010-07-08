@@ -432,8 +432,9 @@ function PointStream(){
     */
     mouseX: 0,
     mouseY: 0,
-    keyCode: null,
-    key: null,
+    keyDownCode: null,
+    keyUpCode: null,
+    keyPressCode: null,
     
     // Number of frames per seconds rendered in the last second.
     frameRate: 0,
@@ -640,13 +641,18 @@ function PointStream(){
     },
     
     _keyDown: function(evt){
-      key = keyCodeMap(evt.keyCode, evt.shiftKey)
+      keyDownCode = keyCodeMap(evt.keyCode, evt.shiftKey);
       if(typeof xb.keyDown === "function"){
         xb.keyDown();
       }
     },
     
     _keyPressed: function(evt){
+      if (evt.charCode){
+        keyPressCode = keyCodeMap(evt.charCode, evt.shiftKey);
+      } else {
+        keyPressCode = keyCodeMap(evt.keyCode, evt.shiftKey);
+      }
       if(typeof xb.keyPressed === "function"){
         xb.keyPressed();
       }
@@ -680,7 +686,7 @@ function PointStream(){
       xb.attach(cvs, "DOMMouseScroll", xb._mouseScroll);
       xb.attach(cvs, "mousewheel", xb._mouseScroll);
       xb.attach(cvs, "keydown", xb._keyDown);
-      xb.attach(cvs, "keypressed", xb._keyPressed);
+      xb.attach(cvs, "keypress", xb._keyPressed);
       xb.attach(cvs, "keyup", xb._keyUp);
     },
     
