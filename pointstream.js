@@ -23,6 +23,9 @@ function PointStream(){
   var bk = [1,1,1,1];
   var VBOs;
   
+  // defaults
+  var attn = [0.01, 0.0, 0.003];
+    
   // browser detection to handle differences such as mouse scrolling
   var browser     = -1 ;
   const MINEFIELD = 0;
@@ -65,7 +68,11 @@ function PointStream(){
   "uniform vec3 mat_ambient;" +
   "uniform vec3 mat_specular;" +
   "uniform float shininess;" +
-
+  
+  //
+  "uniform float pointSize;" +
+  "uniform vec3 attenuation;" +
+  
   "uniform mat4 model;" +
   "uniform mat4 view;" +
   "uniform mat4 projection;" +
@@ -125,9 +132,17 @@ function PointStream(){
   "      gl_FrontColor = vec4(finalDiffuse[0] * col[0], finalDiffuse[1] * col[1], finalDiffuse[2] * col[2], 1.0);" +
   "  }" +
 
-  "  gl_PointSize = 3.0;" + 
+  "  float dist = length( view * model * vec4(aVertex, 1.0));" +
+    "float attn = attenuation[0] + (attenuation[1] * dist) + (attenuation[2] * dist * dist);" +
 
-  "  gl_Position = projection * view * model * vec4( aVertex, 1.0 );" +
+  "  if(attn > 0.0){" +
+  "    gl_PointSize = pointSize * sqrt(1.0/attn);" +
+  "  }" +
+  "  else{" +
+  "    gl_PointSize = 1.0;" +
+  "  }"+
+  
+  "  gl_Position = projection * view * model * vec4(aVertex, 1.0);" +
   "}";
 
   var fragmentShaderSource =
@@ -445,6 +460,9 @@ function PointStream(){
       }
       }
       
+      uniformf(progObj, "pointSize", 1);
+      uniformf(progObj, "attenuation", [attn[0], attn[1], attn[2]]);
+      
       uniformMatrix(progObj, "view", false, M4x4.transpose(view));
       uniformMatrix(progObj, "projection", false, M4x4.transpose(projection));
     },
@@ -452,10 +470,11 @@ function PointStream(){
     /**
     */
     render: function(){
+          
       frames++;
       xb.frameCount++;
       var now = new Date();
-
+      
       if(ctx && VBOs){
         vertexAttribPointer(progObj, "aVertex", 3, VBOs.posBuffer);
         
@@ -604,6 +623,22 @@ function PointStream(){
     */
     rotateY: function(radians){
       model =  M4x4.rotate(radians,V3.$(0,1,0),model);
+    },
+    
+    /**
+      constant
+      linear
+      quadratic
+    */
+    attenuation: function(constant, linear, quadratic){
+      uniformf(progObj, "attenuation", [constant, linear, quadratic]);
+    },
+    
+    /**
+      size - in pixels
+    */
+    pointSize: function(size){
+      uniformf(progObj, "pointSize", size);
     },
     
     /**
