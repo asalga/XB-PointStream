@@ -375,6 +375,7 @@ function PointStream(){
   };
 
   /**
+    Used by keyboard event handlers
   */
   function keyCodeMap(code, shift) {
     // Letters
@@ -414,11 +415,6 @@ function PointStream(){
           return 41; // )
         }
       }
-    }
-    // Coded keys
-    else if (codedKeys.indexOf(code) >= 0) { // SHIFT, CONTROL, ALT, LEFT, RIGHT, UP, DOWN
-      keyCodeDown = code;
-      return _CODED;
     }
     // Symbols and their shift-symbols
     else {
