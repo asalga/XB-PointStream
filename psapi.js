@@ -1,12 +1,6 @@
 /*
   Copyright (c) 2010  Seneca College
   MIT LICENSE
-
-TODO:
-- add mouseScroll empty var?
-- change verts, norms, cols to webglarrays?
-- should mousewheel return single value or object?
-- add external js loading so mjs isn't present in html file
 */
 
 function PointStream(){
