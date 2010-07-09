@@ -9,7 +9,7 @@ var curCoords = [0,0];
 window.onresize = function(){
   ps.resize(window.innerWidth, window.innerHeight);
   ps.background([0,0,0,1]);
- // ps.pointSize(5);
+  ps.pointSize(5);
 };
 
 function zoom(amt){
