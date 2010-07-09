@@ -353,15 +353,19 @@ function PointStream(){
     
     // Number of frames rendered since script started running
     frameCount: 0,
+    
+    width: 0,
+    height: 0,
 
     /**
-      color
+      Set the background color.
     */
     background: function(color){
-      ctx.clearColor(color[0],color[1],color[2],color[3]);
+      ctx.clearColor(color[0], color[1], color[2], color[3]);
     },
 
     /**
+      Clear the color and depth buffer.
     */
     clear: function(){
       ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
@@ -389,8 +393,8 @@ function PointStream(){
       canvas.setAttribute("height", height);
 
       // check if style exists? how? can't just query it...
-      canvas.style.width = width;
-      canvas.style.height = height;
+      canvas.style.width = xb.width = width;
+      canvas.style.height = xb.height = height;
       
       ctx = canvas.getContext("experimental-webgl");
       ctx.viewport(0, 0, width, height);
@@ -429,20 +433,19 @@ function PointStream(){
       0, 0, C, D, 
       0, 0, -1, 0);
 
-      view = M4x4.$(1,0,0,0,0,1,0,0,0,0,1,  0,   0,0,0,1);
+      view = M4x4.$(1,0,0,0,0,1,0,0,0,0,1, 0,0,0,0,1);
       model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
       normalTransform = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);      
       
       // if VBOs already exist, recreate them
       if(VBOs) {
         VBOs = createVBOs(verts, cols, norms);
-      
-      
-      if(cols.length > 0){
-        uniformf(progObj, "lcolor", [1,1,1]);
-        uniformf(progObj, "lposition", [0,0,-1]);
-        uniformi(progObj, "lightCount", 1);
-      }
+            
+        if(cols.length > 0){
+          uniformf(progObj, "lcolor", [1,1,1]);
+          uniformf(progObj, "lposition", [0,0,-1]);
+          uniformi(progObj, "lightCount", 1);
+        }
       }
       
       uniformMatrix(progObj, "view", false, M4x4.transpose(view));
@@ -498,7 +501,7 @@ function PointStream(){
     },
  
     /**
-      Update the cursor position everytime the mouse moves
+      Update the cursor position everytime the mouse moves.
     */
     mouseMove: function(e){
       xb.mouseX = e.pageX;
@@ -540,12 +543,18 @@ function PointStream(){
       }
     },
     
+    /**
+      @private
+    */
     _mousePressed: function(evt){
       if(xb.onMousePressed){
         xb.onMousePressed();
       }
     },
-    
+
+    /**
+      @private
+    */    
     _mouseReleased: function(){
       if(xb.onMouseReleased){
         xb.onMouseReleased();
