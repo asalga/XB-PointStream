@@ -55,6 +55,26 @@ function PointStream(){
   var normalTransform;
 
   var progObj;
+  
+  // Both key and keyCode will be equal to these values
+  const _BACKSPACE = 8;
+  const _TAB       = 9;
+  const _ENTER     = 10;
+  const _RETURN    = 13;
+  const _ESC       = 27;
+  const _DELETE    = 127;
+  const _CODED     = 0xffff;
+
+  // p.key will be CODED and p.keyCode will be this value
+  const _SHIFT     = 16;
+  const _CONTROL   = 17;
+  const _ALT       = 18;
+  const _UP        = 38;
+  const _RIGHT     = 39;
+  const _DOWN      = 40;
+  const _LEFT      = 37;
+
+  var codedKeys = [_SHIFT, _CONTROL, _ALT, _UP, _RIGHT, _DOWN, _LEFT];
         
   // Vertex shader for boxes and spheres
   var vertexShaderSource =
@@ -397,8 +417,8 @@ function PointStream(){
     }
     // Coded keys
     else if (codedKeys.indexOf(code) >= 0) { // SHIFT, CONTROL, ALT, LEFT, RIGHT, UP, DOWN
-      p.keyCode = code;
-      return p.CODED;
+      keyCodeDown = code;
+      return _CODED;
     }
     // Symbols and their shift-symbols
     else {
@@ -438,6 +458,15 @@ function PointStream(){
     }
     return code;
   };
+  
+  var keyFunc = function (evt, type){
+    if (evt.charCode){
+      key = keyCodeMap(evt.charCode, evt.shiftKey);
+    } else {
+      key = keyCodeMap(evt.keyCode, evt.shiftKey);
+    }
+    type();
+  }
 
   /**
   */
@@ -447,9 +476,8 @@ function PointStream(){
     */
     mouseX: 0,
     mouseY: 0,
-    keyDownCode: null,
-    keyUpCode: null,
-    keyPressCode: null,
+    keyCode: null,
+    key: null,
     
     // Number of frames per seconds rendered in the last second.
     frameRate: 0,
@@ -624,6 +652,8 @@ function PointStream(){
       //
       if(element.addEventListener){
         element.addEventListener(type, func, false);
+      } else {
+        element.attachEvent("on" + type, fn);
       }
     },
     
@@ -669,26 +699,20 @@ function PointStream(){
     },
     
     _keyDown: function(evt){
-      keyDownCode = keyCodeMap(evt.keyCode, evt.shiftKey);
       if(typeof xb.keyDown === "function"){
-        xb.keyDown();
+        keyFunc(evt, xb.keyDown);
       }
     },
     
     _keyPressed: function(evt){
-      if (evt.charCode){
-        keyPressCode = keyCodeMap(evt.charCode, evt.shiftKey);
-      } else {
-        keyPressCode = keyCodeMap(evt.keyCode, evt.shiftKey);
-      }
       if(typeof xb.keyPressed === "function"){
-        xb.keyPressed();
+        keyFunc(evt, xb.keyPressed);
       }
     },
     
     _keyUp: function(evt){
       if(typeof xb.keyUp === "function"){
-        xb.keyUp();
+        keyFunc(evt, xb.keyUp);
       }
     },
     
@@ -713,9 +737,9 @@ function PointStream(){
       xb.attach(cvs, "mousemove", xb.mouseMove);      
       xb.attach(cvs, "DOMMouseScroll", xb._mouseScroll);
       xb.attach(cvs, "mousewheel", xb._mouseScroll);
-      xb.attach(cvs, "keydown", xb._keyDown);
-      xb.attach(cvs, "keypress", xb._keyPressed);
-      xb.attach(cvs, "keyup", xb._keyUp);
+      xb.attach(document, "keydown", xb._keyDown);
+      xb.attach(document, "keypress", xb._keyPressed);
+      xb.attach(document, "keyup", xb._keyUp);
     },
     
     /**

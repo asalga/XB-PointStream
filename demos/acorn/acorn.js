@@ -25,8 +25,8 @@ function mouseReleased(){
   buttonDown = false;
 }
 
-function keyTest(){
-  alert("Test");
+function keyDown(){
+  alert(key);
 }
 
 function render() {
@@ -72,7 +72,7 @@ function start(){
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
-  ps.keyDown = keyTest;
+  ps.keyDown = keyDown;
   
   ps.loadFile({path:"acorn.asc", autoCenter: true});
 }
