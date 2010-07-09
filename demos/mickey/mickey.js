@@ -10,7 +10,7 @@ var size = 500;
 
 window.onresize = function(){
   ps.resize(window.innerWidth, window.innerHeight);
-  ps.background([0.3,0.5,0.7,1]);
+  ps.background([0.3,0.5,0.7,0.2]);
 };
 
 function zoom(amt){
@@ -59,7 +59,7 @@ function start(){
   ps.setup(document.getElementById('canvas'), render);
   
   ps.pointSize(8);
-  ps.background([0.3,0.5,0.7,1]);
+  ps.background([0.3,0.5,0.7,0.2]);
 
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
