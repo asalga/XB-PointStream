@@ -348,6 +348,9 @@ function PointStream(){
     mouseX: 0,
     mouseY: 0,
     
+    width: 0,
+    height: 0,
+    
     // Number of frames per seconds rendered in the last second.
     frameRate: 0,
     
@@ -355,13 +358,14 @@ function PointStream(){
     frameCount: 0,
 
     /**
-      color
+      Set the background color.
     */
     background: function(color){
       ctx.clearColor(color[0],color[1],color[2],color[3]);
     },
 
     /**
+      Clear the color and depth buffer.
     */
     clear: function(){
       ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
@@ -376,7 +380,7 @@ function PointStream(){
     
     /**
       Resize the viewport.
-      This can be called after setup
+      This can be called after setup.
       
       width
       height
@@ -384,6 +388,8 @@ function PointStream(){
     resize: function(width, height){
       // delete old program object?
       // delete old context?
+      xb.width = width;
+      xb.height = height;
       
       canvas.setAttribute("width", width);
       canvas.setAttribute("height", height);
@@ -436,13 +442,12 @@ function PointStream(){
       // if VBOs already exist, recreate them
       if(VBOs) {
         VBOs = createVBOs(verts, cols, norms);
-      
-      
-      if(cols.length > 0){
-        uniformf(progObj, "lcolor", [1,1,1]);
-        uniformf(progObj, "lposition", [0,0,-1]);
-        uniformi(progObj, "lightCount", 1);
-      }
+              
+        if(cols.length > 0){
+          uniformf(progObj, "lcolor", [1,1,1]);
+          uniformf(progObj, "lposition", [0,0,-1]);
+          uniformi(progObj, "lightCount", 1);
+        }
       }
       
       uniformMatrix(progObj, "view", false, M4x4.transpose(view));
@@ -498,7 +503,7 @@ function PointStream(){
     },
  
     /**
-      Update the cursor position everytime the mouse moves
+      Update the cursor position everytime the mouse moves.
     */
     mouseMove: function(e){
       xb.mouseX = e.pageX;
@@ -539,13 +544,19 @@ function PointStream(){
         xb.onMouseScroll(delta);
       }
     },
-    
+
+    /**
+      @private
+    */    
     _mousePressed: function(evt){
       if(xb.onMousePressed){
         xb.onMousePressed();
       }
     },
     
+    /**
+      @private
+    */
     _mouseReleased: function(){
       if(xb.onMouseReleased){
         xb.onMouseReleased();

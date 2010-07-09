@@ -31,8 +31,9 @@ function render() {
   var deltaY = ps.mouseY - curCoords[1];
   
   if(buttonDown){
-    rot[0] += deltaX / 250;
-    rot[1] += deltaY / 250;
+    rot[0] += deltaX / ps.width * 5;
+    rot[1] += deltaY / ps.height * 5;
+    
     curCoords[0] = ps.mouseX;
     curCoords[1] = ps.mouseY;
   }
