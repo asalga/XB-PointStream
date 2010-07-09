@@ -1,7 +1,7 @@
 var ps;
 
 var buttonDown = false;
-var zoomed = 0;
+var zoomed = -50;
 
 var rot =[0,0];
 var curCoords = [0,0];
@@ -57,6 +57,8 @@ function start(){
   ps = new PointStream();
   
   ps.setup(document.getElementById('canvas'), render);
+  
+  ps.pointSize(8);
   ps.background([0.3,0.5,0.7,0.2]);
 
   ps.onMouseScroll = zoom;
