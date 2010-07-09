@@ -657,7 +657,39 @@ function PointStream(){
     rotateZ: function(radians){
       model = M4x4.rotate(radians,V3.$(0,0,1),model);
     },
+    
+    /**
+    */
+    getPNG: function(){
+      var arr = ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE);
+
+      var cvs = document.createElement('canvas');
+      cvs.width = ps.width;
+      cvs.height = ps.height;
+      var ctx2d = cvs.getContext('2d');
+      var image = ctx2d.createImageData(cvs.width, cvs.height);
+
+      for (var y = 0; y < cvs.height; y++) {
+        for (var x = 0; x < cvs.width; x++) {   
         
+          var index = (y * cvs.height + x) * 4;
+          var index2 = ((cvs.height-y) * cvs.height  + x) * 4;
+          
+          for(var p = 0; p < 4; p++){
+            image.data[index + p] = arr[index2 + p];
+          }
+        }
+      }
+      ctx2d.putImageData(image, 0, 0);
+      return cvs.toDataURL();
+    },
+    
+    /**
+    */
+    readPixels: function(){
+      return ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE);
+    },
+    
     /**
       o - object such as {path:"acorn.asc", autoCenter: true}
     */

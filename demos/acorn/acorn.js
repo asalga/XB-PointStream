@@ -12,8 +12,19 @@ window.onresize = function(){
   ps.pointSize(5);
 };
 
+function addPNG(){
+  var img = document.createElement('img');
+  document.getElementById('test').appendChild(img);
+  img.src = ps.getPNG();
+  img.width = 100;
+  img.height = 100;
+}
+
 function zoom(amt){
   zoomed += amt * 2;
+  if(buttonDown){
+    addPNG();
+  }
 }
 
 function mousePressed(){
@@ -63,7 +74,7 @@ function start(){
   
   ps.setup(document.getElementById('canvas'), render);
   
-  ps.background([0,0,0,1]);
+  ps.background([0,0,0,0.5]);
   ps.pointSize(5);
 
   ps.onMouseScroll = zoom;
