@@ -673,7 +673,7 @@ function PointStream(){
         for (var x = 0; x < cvs.width; x++) {   
         
           var index = (y * cvs.height + x) * 4;
-          var index2 = ((cvs.height-y) * cvs.height  + x) * 4;
+          var index2 = ((cvs.height-y) * cvs.height + x) * 4;
           
           for(var p = 0; p < 4; p++){
             image.data[index + p] = arr[index2 + p];
@@ -685,6 +685,7 @@ function PointStream(){
     },
     
     /**
+      Get the raw rgb values.
     */
     readPixels: function(){
       return ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE);
