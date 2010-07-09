@@ -11,7 +11,7 @@ TODO:
 
 function PointStream(){
 
-  const version  = 0.2;
+  const version  = 0.3;
   const XHR_DONE = 4;
     
   // to calculate fps
