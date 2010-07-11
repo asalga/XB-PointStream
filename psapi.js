@@ -837,17 +837,25 @@ function PointStream(){
             code = 6;
             normalsPresent = true;
           }
-          else if(code ==2 ){
+          else if(code == 2 ){
             code = 6;
             colorsPresent = true;
           }
-          if(code ==9){
+          if(code == 9){
              normalsPresent = true;
-           colorsPresent = true;
-
+             colorsPresent = true;
           }
           
-          var values = AJAX.responseText.split(/\s+/);
+          // trim leading and trailing whitespace
+          var values = AJAX.responseText;
+                    
+          // trim trailing spaces
+          values = values.replace(/\s+$/,"");
+          
+          // trim leading spaces
+          values = values.replace(/^\s+/,"");
+          
+          values = values.split(/\s+/);
            
           const numVerts = values.length/code;
            
