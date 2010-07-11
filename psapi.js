@@ -21,7 +21,7 @@ function PointStream(){
   var attn = [0.01, 0.0, 0.003];
     
   // browser detection to handle differences such as mouse scrolling
-  var browser     = -1 ;
+  var browser     = -1;
   const MINEFIELD = 0;
   const CHROME    = 1;
   const CHROMIUM  = 2;
@@ -49,6 +49,26 @@ function PointStream(){
   var normalTransform;
 
   var progObj;
+  
+  // Both key and keyCode will be equal to these values
+  const _BACKSPACE = 8;
+  const _TAB       = 9;
+  const _ENTER     = 10;
+  const _RETURN    = 13;
+  const _ESC       = 27;
+  const _DELETE    = 127;
+  const _CODED     = 0xffff;
+
+  // p.key will be CODED and p.keyCode will be this value
+  const _SHIFT     = 16;
+  const _CONTROL   = 17;
+  const _ALT       = 18;
+  const _UP        = 38;
+  const _RIGHT     = 39;
+  const _DOWN      = 40;
+  const _LEFT      = 37;
+
+  var codedKeys = [_SHIFT, _CONTROL, _ALT, _UP, _RIGHT, _DOWN, _LEFT];
         
   // Vertex shader for boxes and spheres
   var vertexShaderSource =
@@ -72,22 +92,25 @@ function PointStream(){
   "uniform mat4 projection;" +
   "uniform mat4 normalTransform;" +
 
+  "struct LightStruct{" +
+  "  vec3 col;" + 
+  "  vec3 pos;" +
+  "};" +
+  "uniform LightStruct light;" +
+
   "uniform int lightCount;" +
 
-  "  uniform vec3 lposition;" +
-  "  uniform vec3 lcolor;" +
-
   "void DirectionalLight( inout vec3 col, in vec3 ecPos, in vec3 vertNormal ) {" +
-  "  float nDotVP = max(0.0, dot( vertNormal, lposition ));" +
-  "  float nDotVH = max(0.0, dot( vertNormal, normalize( lposition-ecPos )));" +
-  "  col += lcolor * 2.0 * nDotVP;" +
+  "  float nDotVP = max(0.0, dot( vertNormal, light.pos ));" +
+  "  float nDotVH = max(0.0, dot( vertNormal, normalize( light.pos-ecPos )));" +
+  "  col += light.col * 2.0 * nDotVP;" +
   "}" +
 
   "void PointLight( inout vec3 col, in vec3 ecPos,  in vec3 vertNormal, in vec3 eye ) {" +
   // "  float powerfactor;" +
 
   // Get the vector from the light to the vertex
-  "   vec3 VP = lposition - ecPos;" +
+  "   vec3 VP = light.pos - ecPos;" +
 
   // Get the distance from the current vector to the light position
   "  float d = length( VP ); " +
@@ -102,7 +125,7 @@ function PointStream(){
   "  float nDotHV = max( 0.0, dot( vertNormal, halfVector ));" +
 
   // "  spec += specular * powerfactor * attenuation;" +
-  "  col += lcolor * nDotVP * 2.0;" +
+  "  col += light.col * nDotVP * 2.0;" +
   "}" +
 
   "void main(void) {" +
@@ -349,6 +372,96 @@ function PointStream(){
   };
 
   /**
+    Used by keyboard event handlers
+  */
+  function keyCodeMap(code, shift) {
+    // Letters
+    if (code >= 65 && code <= 90) { // A-Z
+      // Keys return ASCII for upcased letters.
+      // Convert to downcase if shiftKey is not pressed.
+      if (shift) {
+        return code;
+      }
+      else {
+        return code + 32;
+      }
+    }
+    // Numbers and their shift-symbols
+    else if (code >= 48 && code <= 57) { // 0-9
+      if (shift) {
+        switch (code) {
+        case 49:
+          return 33; // !
+        case 50:
+          return 64; // @
+        case 51:
+          return 35; // #
+        case 52:
+          return 36; // $
+        case 53:
+          return 37; // %
+        case 54:
+          return 94; // ^
+        case 55:
+          return 38; // &
+        case 56:
+          return 42; // *
+        case 57:
+          return 40; // (
+        case 48:
+          return 41; // )
+        }
+      }
+    }
+    // Symbols and their shift-symbols
+    else {
+      if (shift) {
+        switch (code) {
+        case 107:
+          return 43; // +
+        case 219:
+          return 123; // {
+        case 221:
+          return 125; // }
+        case 222:
+          return 34; // "
+        }
+      } else {
+        switch (code) {
+        case 188:
+          return 44; // ,
+        case 109:
+          return 45; // -
+        case 190:
+          return 46; // .
+        case 191:
+          return 47; // /
+        case 192:
+          return 96; // ~
+        case 219:
+          return 91; // [
+        case 220:
+          return 92; // \
+        case 221:
+          return 93; // ]
+        case 222:
+          return 39; // '
+        }
+      }
+    }
+    return code;
+  };
+  
+  var keyFunc = function (evt, type){
+    if (evt.charCode){
+      key = keyCodeMap(evt.charCode, evt.shiftKey);
+    } else {
+      key = keyCodeMap(evt.keyCode, evt.shiftKey);
+    }
+    type();
+  }
+
+  /**
   */
   var xb = {
 
@@ -356,6 +469,8 @@ function PointStream(){
     */
     mouseX: 0,
     mouseY: 0,
+    keyCode: null,
+    key: null,
     
     // Number of frames per seconds rendered in the last second.
     frameRate: 0,
@@ -451,8 +566,9 @@ function PointStream(){
         VBOs = createVBOs(verts, cols, norms);
             
         if(cols.length > 0){
-          uniformf(progObj, "lcolor", [1,1,1]);
-          uniformf(progObj, "lposition", [0,0,-1]);
+          uniformf(progObj, "light.pos", [0,0,-1]);
+          uniformf(progObj, "light.col", [1,1,1]);
+          
           uniformi(progObj, "lightCount", 1);
         }
       }
@@ -484,9 +600,8 @@ function PointStream(){
         
         if(VBOs.normBuffer){
           vertexAttribPointer(progObj, "aNormal", 3, VBOs.normBuffer);
-          
-          uniformf(progObj, "lcolor", [1,1,1]);
-          uniformf(progObj, "lposition", [0,0,-1]);
+          uniformf(progObj, "light.col", [1,1,1]);
+          uniformf(progObj, "light.pos", [0,0,-1]);
           uniformi(progObj, "lightCount", 1);
         }
         else{
@@ -530,6 +645,8 @@ function PointStream(){
       //
       if(element.addEventListener){
         element.addEventListener(type, func, false);
+      } else {
+        element.attachEvent("on" + type, fn);
       }
     },
     
@@ -551,7 +668,7 @@ function PointStream(){
         delta = -evt.wheelDelta / 360;
       }
     
-      if(xb.onMouseScroll){
+      if(typeof xb.onMouseScroll === "function"){
         xb.onMouseScroll(delta);
       }
     },
@@ -560,7 +677,7 @@ function PointStream(){
       @private
     */
     _mousePressed: function(evt){
-      if(xb.onMousePressed){
+      if(typeof xb.onMousePressed === "function"){
         xb.onMousePressed();
       }
     },
@@ -569,8 +686,26 @@ function PointStream(){
       @private
     */    
     _mouseReleased: function(){
-      if(xb.onMouseReleased){
+      if(typeof xb.onMouseReleased === "function"){
         xb.onMouseReleased();
+      }
+    },
+    
+    _keyDown: function(evt){
+      if(typeof xb.keyDown === "function"){
+        keyFunc(evt, xb.keyDown);
+      }
+    },
+    
+    _keyPressed: function(evt){
+      if(typeof xb.keyPressed === "function"){
+        keyFunc(evt, xb.keyPressed);
+      }
+    },
+    
+    _keyUp: function(evt){
+      if(typeof xb.keyUp === "function"){
+        keyFunc(evt, xb.keyUp);
       }
     },
     
@@ -595,6 +730,9 @@ function PointStream(){
       xb.attach(cvs, "mousemove", xb.mouseMove);      
       xb.attach(cvs, "DOMMouseScroll", xb._mouseScroll);
       xb.attach(cvs, "mousewheel", xb._mouseScroll);
+      xb.attach(document, "keydown", xb._keyDown);
+      xb.attach(document, "keypress", xb._keyPressed);
+      xb.attach(document, "keyup", xb._keyUp);
     },
     
     /**
@@ -732,17 +870,25 @@ function PointStream(){
             code = 6;
             normalsPresent = true;
           }
-          else if(code ==2 ){
+          else if(code == 2 ){
             code = 6;
             colorsPresent = true;
           }
-          if(code ==9){
+          if(code == 9){
              normalsPresent = true;
-           colorsPresent = true;
-
+             colorsPresent = true;
           }
           
-          var values = AJAX.responseText.split(/\s+/);
+          // trim leading and trailing whitespace
+          var values = AJAX.responseText;
+                    
+          // trim trailing spaces
+          values = values.replace(/\s+$/,"");
+          
+          // trim leading spaces
+          values = values.replace(/^\s+/,"");
+          
+          values = values.split(/\s+/);
            
           const numVerts = values.length/code;
            
