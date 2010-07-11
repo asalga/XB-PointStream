@@ -60,6 +60,8 @@ function render() {
   // redraw
   ps.clear();
   ps.render();
+  
+  window.status = ps.frameRate;
 }
 
 function start(){

@@ -92,22 +92,25 @@ function PointStream(){
   "uniform mat4 projection;" +
   "uniform mat4 normalTransform;" +
 
+  "struct LightStruct{" +
+  "  vec3 col;" + 
+  "  vec3 pos;" +
+  "};" +
+  "uniform LightStruct light;" +
+
   "uniform int lightCount;" +
 
-  "  uniform vec3 lposition;" +
-  "  uniform vec3 lcolor;" +
-
   "void DirectionalLight( inout vec3 col, in vec3 ecPos, in vec3 vertNormal ) {" +
-  "  float nDotVP = max(0.0, dot( vertNormal, lposition ));" +
-  "  float nDotVH = max(0.0, dot( vertNormal, normalize( lposition-ecPos )));" +
-  "  col += lcolor * 2.0 * nDotVP;" +
+  "  float nDotVP = max(0.0, dot( vertNormal, light.pos ));" +
+  "  float nDotVH = max(0.0, dot( vertNormal, normalize( light.pos-ecPos )));" +
+  "  col += light.col * 2.0 * nDotVP;" +
   "}" +
 
   "void PointLight( inout vec3 col, in vec3 ecPos,  in vec3 vertNormal, in vec3 eye ) {" +
   // "  float powerfactor;" +
 
   // Get the vector from the light to the vertex
-  "   vec3 VP = lposition - ecPos;" +
+  "   vec3 VP = light.pos - ecPos;" +
 
   // Get the distance from the current vector to the light position
   "  float d = length( VP ); " +
@@ -122,7 +125,7 @@ function PointStream(){
   "  float nDotHV = max( 0.0, dot( vertNormal, halfVector ));" +
 
   // "  spec += specular * powerfactor * attenuation;" +
-  "  col += lcolor * nDotVP * 2.0;" +
+  "  col += light.col * nDotVP * 2.0;" +
   "}" +
 
   "void main(void) {" +
@@ -563,8 +566,9 @@ function PointStream(){
         VBOs = createVBOs(verts, cols, norms);
             
         if(cols.length > 0){
-          uniformf(progObj, "lcolor", [1,1,1]);
-          uniformf(progObj, "lposition", [0,0,-1]);
+          uniformf(progObj, "light.pos", [0,0,-1]);
+          uniformf(progObj, "light.col", [1,1,1]);
+          
           uniformi(progObj, "lightCount", 1);
         }
       }
@@ -596,9 +600,8 @@ function PointStream(){
         
         if(VBOs.normBuffer){
           vertexAttribPointer(progObj, "aNormal", 3, VBOs.normBuffer);
-          
-          uniformf(progObj, "lcolor", [1,1,1]);
-          uniformf(progObj, "lposition", [0,0,-1]);
+          uniformf(progObj, "light.col", [1,1,1]);
+          uniformf(progObj, "light.pos", [0,0,-1]);
           uniformi(progObj, "lightCount", 1);
         }
         else{
