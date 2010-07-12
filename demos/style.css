@@ -1,10 +1,12 @@
+
+/* prevent the window scrollbars from appearing
+which conflict with zooming.*/
 html {
   overflow-x: hidden;
   overflow-y: hidden;
 }
 
 span{
-  vertical-align: top;
   font-family: monospace;
 }
 
@@ -20,8 +22,12 @@ body{
   color: green;
 }
 
+img{
+  vertical-align: top;
+  border: 1px solid #000;
+}
+
 canvas{
-  border: 0px solid #0000FF;
   width: 500;
   height: 500;
 }

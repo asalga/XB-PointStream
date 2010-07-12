@@ -6,11 +6,11 @@ var zoomed = -50;
 var rot =[0,0];
 var curCoords = [0,0];
 
-window.onresize = function(){
+/*window.onresize = function(){
   ps.resize(window.innerWidth, window.innerHeight);
   ps.background([0,0,0,1]);
   ps.pointSize(5);
-};
+};*/
 
 function addPNG(){
   var img = document.createElement('img');
@@ -18,6 +18,17 @@ function addPNG(){
   img.src = ps.getPNG();
   img.width = 100;
   img.height = 100;
+}
+
+/*
+  Remove all screenshots
+*/
+function clearPNG(){
+  var test = document.getElementById('test');
+  
+  while(test.childNodes){
+    test.removeChild(test.childNodes[0]);
+  }
 }
 
 function zoom(amt){
@@ -38,7 +49,7 @@ function mouseReleased(){
 }
 
 function keyDown(){
-  alert(key);
+    document.getElementById('key').innerHTML = key;
 }
 
 function render() {
