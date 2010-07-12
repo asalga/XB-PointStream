@@ -807,14 +807,14 @@ function PointStream(){
       var ctx2d = cvs.getContext('2d');
       var image = ctx2d.createImageData(cvs.width, cvs.height);
 
-      for (var y = 0; y < cvs.height; y++) {
-        for (var x = 0; x < cvs.width; x++) {   
+      for (var y = 0; y < cvs.height; y++){
+        for (var x = 0; x < cvs.width; x++){
         
-          var index = (y * cvs.height + x) * 4;
-          var index2 = ((cvs.height-y) * cvs.height + x) * 4;
+          var index = (y * cvs.width + x) * 4;          
+          var index2 = ((cvs.height-1-y) * cvs.width + x) * 4;
           
           for(var p = 0; p < 4; p++){
-            image.data[index + p] = arr[index2 + p];
+            image.data[index2 + p] = arr[index + p];
           }
         }
       }

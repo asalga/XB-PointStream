@@ -12,19 +12,19 @@ var curCoords = [0,0];
   ps.pointSize(5);
 };*/
 
+
 function addPNG(){
   var img = document.createElement('img');
-  document.getElementById('test').appendChild(img);
+  img.setAttribute("width", "100");  
+  document.getElementById('thumbnails').appendChild(img);
   img.src = ps.getPNG();
-  img.width = 100;
-  img.height = 100;
 }
 
 /*
   Remove all screenshots
 */
 function clearPNG(){
-  var test = document.getElementById('test');
+  var test = document.getElementById('thumbnails');
   
   while(test.childNodes){
     test.removeChild(test.childNodes[0]);
