@@ -882,7 +882,7 @@ function PointStream(){
           
           // trim leading and trailing whitespace
           var values = AJAX.responseText;
-                    
+          
           // trim trailing spaces
           values = values.replace(/\s+$/,"");
           
@@ -898,8 +898,6 @@ function PointStream(){
           norms = new WebGLFloatArray(numVerts*3); 
            
           var objCenter = [0,0,0];
-          
-          var time = new Date().getSeconds();
           
           // xyz  rgb  normals
           for(var i = 0, j = 0, len = values.length; i < len; i += code, j+=3){
@@ -930,11 +928,7 @@ function PointStream(){
               norms[j+1] = parseFloat(values[i+7]);
               norms[j+2] = parseFloat(values[i+8]);
             }
-            
-            jj+=3;
           }
-          alert(new Date().getSeconds() - time);
-          
           
           // if the user wants to center the point cloud
           if(autoCenter){
