@@ -33,9 +33,10 @@ function PointStream(){
   const SAFARI    = 6;
   const IE        = 7;
   
-  var verts = [];
-  var cols = [];
-  var norms = [];
+  // will hold GLFloatArrays
+  var verts;
+  var cols;
+  var norms;
 
   var canvas;
   var ctx;
@@ -277,7 +278,7 @@ function PointStream(){
       
       var newBuffer = ctx.createBuffer();
       ctx.bindBuffer(ctx.ARRAY_BUFFER, newBuffer);
-      ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(xyz), ctx.STATIC_DRAW);
+      ctx.bufferData(ctx.ARRAY_BUFFER, xyz, ctx.STATIC_DRAW);
       o.posBuffer = newBuffer;
       o.id =  bufferIDCounter;
       o.size = xyz.length;
@@ -285,14 +286,14 @@ function PointStream(){
       if(rgb.length > 0){
         var newColBuffer = ctx.createBuffer();
         ctx.bindBuffer(ctx.ARRAY_BUFFER, newColBuffer);
-        ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(rgb), ctx.STATIC_DRAW);
+        ctx.bufferData(ctx.ARRAY_BUFFER, rgb, ctx.STATIC_DRAW);
         o.colBuffer = newColBuffer;
-        }
+      }
 
       if(norm.length > 0){
         var newNormBuffer = ctx.createBuffer();
         ctx.bindBuffer(ctx.ARRAY_BUFFER, newNormBuffer);
-        ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(norm), ctx.STATIC_DRAW);
+        ctx.bufferData(ctx.ARRAY_BUFFER, norm, ctx.STATIC_DRAW);
         o.normBuffer = newNormBuffer;
       }
 
@@ -565,7 +566,7 @@ function PointStream(){
       if(VBOs) {
         VBOs = createVBOs(verts, cols, norms);
             
-        if(cols.length > 0){
+        if(cols){
           uniformf(progObj, "light.pos", [0,0,-1]);
           uniformf(progObj, "light.col", [1,1,1]);
           
@@ -891,18 +892,25 @@ function PointStream(){
           values = values.split(/\s+/);
            
           const numVerts = values.length/code;
+          
+          verts = new WebGLFloatArray(numVerts*3);
+          cols = new WebGLFloatArray(numVerts*3);
+          norms = new WebGLFloatArray(numVerts*3); 
            
           var objCenter = [0,0,0];
-           
+          
+          var time = new Date().getSeconds();
+          
           // xyz  rgb  normals
-          for(var i = 0, len = values.length; i < len; i += code){
+          for(var i = 0, j = 0, len = values.length; i < len; i += code, j+=3){
+          
             var currX = parseFloat(values[i]);
             var currY = parseFloat(values[i+1]);
             var currZ = parseFloat(values[i+2]);
 
-            verts.push(currX);
-            verts.push(currY);
-            verts.push(currZ);
+            verts[j] = currX;
+            verts[j+1] = currY;
+            verts[j+2] = currZ;
             
             // don't waste cycles if the user didn't want it centered.
             if(autoCenter){
@@ -912,17 +920,21 @@ function PointStream(){
             }
 
             if(colorsPresent){
-              cols.push(parseInt(values[i+3])/255);
-              cols.push(parseInt(values[i+4])/255);
-              cols.push(parseInt(values[i+5])/255);
+              cols[j] = parseInt(values[i+3])/255;
+              cols[j+1] = parseInt(values[i+4])/255;
+              cols[j+2] = parseInt(values[i+5])/255;
             }
             
             if(normalsPresent){
-              norms.push(parseFloat(values[i+6]));
-              norms.push(parseFloat(values[i+7]));
-              norms.push(parseFloat(values[i+8]));
+              norms[j] = parseFloat(values[i+6]);
+              norms[j+1] = parseFloat(values[i+7]);
+              norms[j+2] = parseFloat(values[i+8]);
             }
+            
+            jj+=3;
           }
+          alert(new Date().getSeconds() - time);
+          
           
           // if the user wants to center the point cloud
           if(autoCenter){
