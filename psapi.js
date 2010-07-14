@@ -801,6 +801,11 @@ function PointStream(){
     getPNG: function(){
       var arr = ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE);
 
+      if(!arr){
+        arr = new WebGLUnsignedByteArray(xb.width * xb.height * 4);
+        ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE, arr);
+      }
+      
       var cvs = document.createElement('canvas');
       cvs.width = ps.width;
       cvs.height = ps.height;
