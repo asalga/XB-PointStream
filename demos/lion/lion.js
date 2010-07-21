@@ -45,7 +45,8 @@ function render() {
 
   ps.rotateY(rot[0]);
   ps.rotateX(rot[1]);
-
+  ps.translate(281.32617943646534,205.61656736098982,290.55082983174293);
+  
   // redraw
   ps.clear();
   ps.render();

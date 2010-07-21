@@ -29,7 +29,7 @@ function mouseReleased(){
 }
 
 function render() {
-
+//document.getElementById('debug').innerHTML +="r";
   var deltaX = ps.mouseX - curCoords[0];
   var deltaY = ps.mouseY - curCoords[1];
   

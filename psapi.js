@@ -1,3 +1,8 @@
+var allVerts = 0;
+          var objCenter = [0,0,0];
+var remainder = "";
+var lastPlace = 0;
+var again = true;
 /*
   Copyright (c) 2010  Seneca College
   MIT LICENSE
@@ -15,7 +20,7 @@ function PointStream(){
   var renderCallback;
   
   var bk = [1,1,1,1];
-  var VBOs;
+  var VBOs = [];
   
   // defaults
   var attn = [0.01, 0.0, 0.003];
@@ -563,7 +568,7 @@ function PointStream(){
       
       // if VBOs already exist, recreate them
       if(VBOs) {
-        VBOs = createVBOs(verts, cols, norms);
+//        VBOs = createVBOs(verts, cols, norms);
             
         if(cols.length > 0){
           uniformf(progObj, "light.pos", [0,0,-1]);
@@ -587,19 +592,21 @@ function PointStream(){
       frames++;
       xb.frameCount++;
       var now = new Date();
-      
+
+      for(var k = 0; k < VBOs.length; k++){
+
       if(ctx && VBOs){
-        vertexAttribPointer(progObj, "aVertex", 3, VBOs.posBuffer);
+        vertexAttribPointer(progObj, "aVertex", 3, VBOs[k].posBuffer);
         
-        if(VBOs.colBuffer){
-          vertexAttribPointer(progObj, "aColor", 3, VBOs.colBuffer);
+        if(VBOs[k].colBuffer){
+          vertexAttribPointer(progObj, "aColor", 3, VBOs[k].colBuffer);
         }
         else{
           disableVertexAttribPointer(progObj, "aColor");
         }
         
-        if(VBOs.normBuffer){
-          vertexAttribPointer(progObj, "aNormal", 3, VBOs.normBuffer);
+        if(VBOs[k].normBuffer){
+          vertexAttribPointer(progObj, "aNormal", 3, VBOs[k].normBuffer);
           uniformf(progObj, "light.col", [1,1,1]);
           uniformf(progObj, "light.pos", [0,0,-1]);
           uniformi(progObj, "lightCount", 1);
@@ -614,7 +621,8 @@ function PointStream(){
         
         uniformMatrix(progObj, "model", false, model);
 
-        ctx.drawArrays(ctx.POINTS, 0, VBOs.size/3);
+        ctx.drawArrays(ctx.POINTS, 0, VBOs[k].size/3);
+      }
       }
 
       // if more than 1 second has elapsed, recalculate fps
@@ -860,27 +868,28 @@ function PointStream(){
         }
 
         if(AJAX.readyState === XHR_DONE){
+           objCenter[0] /= allVerts;
+           objCenter[1] /= allVerts;
+           objCenter[2] /= allVerts;
+           //alert(objCenter);
+        }
+        
+        if(AJAX.responseText && again == true){
+        
+          var code = 9;
+          var normalsPresent = true;
+          var colorsPresent = true;
           
-          var code = getDataLayout(AJAX.responseText);
+          var lastNewLineIndex = AJAX.responseText.lastIndexOf("\n");
           
-          var normalsPresent = false;
-          var colorsPresent = false;
+          remaining = AJAX.responseText.substring(lastNewLineIndex+1, AJAX.responseText.length);
+
+          var chunk = AJAX.responseText.substring(lastPlace, lastNewLineIndex);
           
-          if(code == 1 ){
-            code = 6;
-            normalsPresent = true;
-          }
-          else if(code == 2 ){
-            code = 6;
-            colorsPresent = true;
-          }
-          if(code == 9){
-             normalsPresent = true;
-             colorsPresent = true;
-          }
+          lastPlace = lastNewLineIndex;
           
           // trim leading and trailing whitespace
-          var values = AJAX.responseText;
+          var values = chunk;//AJAX.responseText;
                     
           // trim trailing spaces
           values = values.replace(/\s+$/,"");
@@ -889,10 +898,13 @@ function PointStream(){
           values = values.replace(/^\s+/,"");
           
           values = values.split(/\s+/);
-           
+          
           const numVerts = values.length/code;
-           
-          var objCenter = [0,0,0];
+           allVerts += numVerts;
+
+           verts = [];
+           cols = [];
+           norms = [];
            
           // xyz  rgb  normals
           for(var i = 0, len = values.length; i < len; i += code){
@@ -925,25 +937,27 @@ function PointStream(){
           }
           
           // if the user wants to center the point cloud
-          if(autoCenter){
-            objCenter[0] /= numVerts;
-            objCenter[1] /= numVerts;
-            objCenter[2] /= numVerts;
-          }
+         // if(autoCenter){
+          //  objCenter[0] /= numVerts;
+          //  objCenter[1] /= numVerts;
+          //  objCenter[2] /= numVerts;
+         // }
           
           // if the user wanted to autocenter the point cloud,
           // iterate over all the verts and subtract by the 
           // point cloud's current center.
-          if(autoCenter){
+         /* if(autoCenter){
             for(var i = 0; i < numVerts; i++){
               verts[i*3]   -= objCenter[0];
               verts[i*3+1] -= objCenter[1];
               verts[i*3+2] -= objCenter[2]; 
             }
-          }
+          }*/
           
-          VBOs = createVBOs(verts, cols, norms);
           
+//          VBOs[0] = createVBOs(verts, cols, norms);
+            VBOs.push(createVBOs(verts, cols, norms));
+//          document.getElementById('debug').innerHTML +="d";        
           file.status = 4;
         }
       }

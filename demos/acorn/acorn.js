@@ -65,11 +65,14 @@ function render() {
     curCoords[1] = ps.mouseY;
   }
 
+
   // transform point cloud
   ps.translate(0,0,zoomed);
     
   ps.rotateY(rot[0]);
   ps.rotateX(rot[1]);
+
+ps.translate(-2.4899933996557677,-0.6635081899594929,-3.009662628949344);
   
   ps.attenuation( $("#constant").slider("value"),
                   $("#linear").slider("value"),
