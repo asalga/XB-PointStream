@@ -503,6 +503,45 @@ function PointStream(){
     },
     
     /**
+      Sets variables to default values.
+    */
+    runDefault: function(){
+    
+      var fovy = 60;
+      var aspect = this.width/this.height;
+      var znear = 0.001;
+      var zfar = 1000;
+
+      var ymax = znear * Math.tan(fovy * Math.PI / 360.0);
+      var ymin = -ymax;
+      var xmin = ymin * aspect;
+      var xmax = ymax * aspect;
+
+      var left = xmin;
+      var right = xmax;
+      var top =  ymax;
+      var bottom = ymin;
+
+      var X = 2 * znear / (right - left);
+      var Y = 2 * znear / (top - bottom);
+      var A = (right + left) / (right - left);
+      var B = (top + bottom) / (top - bottom);
+      var C = -(zfar + znear) / (zfar - znear);
+      var D = -2 * zfar * znear / (zfar - znear);
+      
+      projection = M4x4.$(
+      X, 0, A, 0, 
+      0, Y, B, 0, 
+      0, 0, C, D, 
+      0, 0, -1, 0);
+
+      view = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+      model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+      normalTransform = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+      
+    },
+    
+    /**
       Resize the viewport.
       This can be called after setup
       
@@ -529,37 +568,7 @@ function PointStream(){
       progObj = createProgramObject(ctx, vertexShaderSource, fragmentShaderSource);
       ctx.useProgram(progObj);
             
-      var fovy = 60;
-      var aspect = width/height;
-      var znear = 0.001;
-      var zfar = 1000;
-
-      var ymax = znear * Math.tan(fovy * Math.PI / 360.0);
-      var ymin = -ymax;
-      var xmin = ymin * aspect;
-      var xmax = ymax * aspect;
-
-      var left = xmin;
-      var right = xmax;
-      var top =  ymax;
-      var bottom = ymin;
-
-      var X = 2 * znear / (right - left);
-      var Y = 2 * znear / (top - bottom);
-      var A = (right + left) / (right - left);
-      var B = (top + bottom) / (top - bottom);
-      var C = -(zfar + znear) / (zfar - znear);
-      var D = -2 * zfar * znear / (zfar - znear);
-
-      projection = M4x4.$(
-      X, 0, A, 0, 
-      0, Y, B, 0, 
-      0, 0, C, D, 
-      0, 0, -1, 0);
-
-      view = M4x4.$(1,0,0,0,0,1,0,0,0,0,1, 0,0,0,0,1);
-      model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
-      normalTransform = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);      
+      xb.runDefault();      
       
       // if VBOs already exist, recreate them
       if(VBOs) {
