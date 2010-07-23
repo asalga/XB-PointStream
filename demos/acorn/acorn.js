@@ -50,6 +50,7 @@ function mouseReleased(){
 
 function keyDown(){
     document.getElementById('key').innerHTML = key;
+    ps.println(key);
 }
 
 function render() {
