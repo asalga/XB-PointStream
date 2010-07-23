@@ -1,8 +1,5 @@
-var allVerts = 0;
-          var objCenter = [0,0,0];
-var remainder = "";
-var lastPlace = 0;
-var again = true;
+var objCenter = [0,0,0];
+var startOfNextChunk = 0;
 /*
   Copyright (c) 2010  Seneca College
   MIT LICENSE
@@ -10,8 +7,14 @@ var again = true;
 
 function PointStream(){
 
-  const version  = 0.3;
+  const VERSION  = 0.3;
   const XHR_DONE = 4;
+  
+  // file status
+  const FILE_NOT_FOUND = -1;
+  const STARTED = 1;
+  const STREAMING = 2;
+  const COMPLETE = 3;
     
   // to calculate fps
   var frames = 0;
@@ -38,10 +41,6 @@ function PointStream(){
   const SAFARI    = 6;
   const IE        = 7;
   
-  var verts = [];
-  var cols = [];
-  var norms = [];
-
   var canvas;
   var ctx;
 
@@ -112,8 +111,6 @@ function PointStream(){
   "}" +
 
   "void PointLight( inout vec3 col, in vec3 ecPos,  in vec3 vertNormal, in vec3 eye ) {" +
-  // "  float powerfactor;" +
-
   // Get the vector from the light to the vertex
   "   vec3 VP = light.pos - ecPos;" +
 
@@ -124,13 +121,10 @@ function PointStream(){
   "  VP = normalize( VP );" +
 
   "  float attenuation = 1.0 / ( 1.0 + ( d ) + ( d * d ));" +
-
   "  float nDotVP = max( 0.0, dot( vertNormal, VP ));" +
   "  vec3 halfVector = normalize( VP + eye );" +
   "  float nDotHV = max( 0.0, dot( vertNormal, halfVector ));" +
-
-  // "  spec += specular * powerfactor * attenuation;" +
-  "  col += light.col * nDotVP * 2.0;" +
+  "  col += light.col * nDotVP;" +
   "}" +
 
   "void main(void) {" +
@@ -570,12 +564,12 @@ function PointStream(){
       if(VBOs) {
 //        VBOs = createVBOs(verts, cols, norms);
             
-        if(cols.length > 0){
+       // if(VBOs[0].colBuffer.length > 0){
           uniformf(progObj, "light.pos", [0,0,-1]);
           uniformf(progObj, "light.col", [1,1,1]);
           
           uniformi(progObj, "lightCount", 1);
-        }
+        //}
       }
       
       uniformf(progObj, "pointSize", 1);
@@ -838,15 +832,14 @@ function PointStream(){
     },
     
     /**
-      o - object such as {path:"acorn.asc", autoCenter: true}
+      o - object such as {path:"acorn.asc"}
     */
     loadFile: function(o){
       var path = o.path;
       
-      // need ||?
-      var autoCenter = o.autoCenter || false;
-
       var AJAX = new XMLHttpRequest();
+      
+
       
       // this doesn't work
       // AJAX.addEventListener("progress", f,false);
@@ -854,116 +847,130 @@ function PointStream(){
       AJAX.open("GET", path, true);
       AJAX.send(null);
       
+      // object which will be returned to the user
       var file = {
         status: 0,
         progress: 0,
-        numPoints: 0,
+        pointCount: 0,
+        center: [0,0,0],
+        
+        getCenter: function(){
+          return this.center;
+        },
+        
+        getPointCount: function(){
+          return this.pointCount;
+        },
       };
       
-      AJAX.onreadystatechange = 
-      function(){        
-        //??
+      AJAX.onreadystatechange = function(){
         if(AJAX.status === 200){
           file.status = 1;
         }
-
-        if(AJAX.readyState === XHR_DONE){
-           objCenter[0] /= allVerts;
-           objCenter[1] /= allVerts;
-           objCenter[2] /= allVerts;
-           //alert(objCenter);
-        }
         
-        if(AJAX.responseText && again == true){
-        
+        if(AJAX.responseText){
+          file.status = STREAMING;
           var code = 9;
           var normalsPresent = true;
           var colorsPresent = true;
           
-          var lastNewLineIndex = AJAX.responseText.lastIndexOf("\n");
+          var chunk;
+          var doParse = true;
           
-          remaining = AJAX.responseText.substring(lastNewLineIndex+1, AJAX.responseText.length);
+          var ascData = AJAX.responseText;
 
-          var chunk = AJAX.responseText.substring(lastPlace, lastNewLineIndex);
+          // We likely stopped getting data somewhere in the middle of 
+          // a line in the ASC file
           
-          lastPlace = lastNewLineIndex;
+          // 5.813 2.352 6.500 0 0 0 2.646 3.577 2.516\n
+          // 1.079 1.296 9.360 0 0 0 4.307 1.181 5.208\n
+          // 3.163 2.225 6.139 0 0 0 0.6<-- stopped here
           
-          // trim leading and trailing whitespace
-          var values = chunk;//AJAX.responseText;
-                    
-          // trim trailing spaces
-          values = values.replace(/\s+$/,"");
+          // So find the last known newline. Everything from the last
+          // request to this last newline can be placed in a buffer.
+          var lastNewLineIndex = ascData.lastIndexOf("\n");
           
-          // trim leading spaces
-          values = values.replace(/^\s+/,"");
-          
-          values = values.split(/\s+/);
-          
-          const numVerts = values.length/code;
-           allVerts += numVerts;
+          // If the status just changed and we finished downloading the
+          // file, grab everyting until the end. If there is only a bunch
+          // of whitespace, make a note of that and don't bother parsing.
+          if(AJAX.readyState === XHR_DONE){
+            chunk = ascData.substring(startOfNextChunk, ascData.length);
 
-           verts = [];
-           cols = [];
-           norms = [];
-           
-          // xyz  rgb  normals
-          for(var i = 0, len = values.length; i < len; i += code){
-            var currX = parseFloat(values[i]);
-            var currY = parseFloat(values[i+1]);
-            var currZ = parseFloat(values[i+2]);
+            // If the last chunk doesn't have any digits (just spaces)
+            // don't parse it.
+            if(!chunk.match(/[0-9]/) ){
+              doParse = false;
+            }
+          }
+          else{
+            // Start of the next chunk starts after the newline.
+            chunk = ascData.substring(startOfNextChunk, lastNewLineIndex+1);
+            startOfNextChunk = lastNewLineIndex+1;
+          }
 
-            verts.push(currX);
-            verts.push(currY);
-            verts.push(currZ);
+          if(doParse){
+            // trim trailing spaces
+            chunk = chunk.replace(/\s+$/,"");
+          
+            // trim leading spaces
+            chunk = chunk.replace(/^\s+/,"");
+
+            chunk = chunk.split(/\s+/);
             
-            // don't waste cycles if the user didn't want it centered.
-            if(autoCenter){
+            const numVerts = chunk.length/code;
+
+            file.pointCount += numVerts;
+            
+            var verts = [];
+            var cols = [];
+            var norms = [];
+             
+            // xyz  rgb  normals
+            for(var i = 0, len = chunk.length; i < len; i += code){
+              var currX = parseFloat(chunk[i]);
+              var currY = parseFloat(chunk[i+1]);
+              var currZ = parseFloat(chunk[i+2]);
+
+              verts.push(currX);
+              verts.push(currY);
+              verts.push(currZ);
+
               objCenter[0] += currX;
               objCenter[1] += currY;
               objCenter[2] += currZ;
+
+              if(colorsPresent){
+                cols.push(parseInt(chunk[i+3])/255);
+                cols.push(parseInt(chunk[i+4])/255);
+                cols.push(parseInt(chunk[i+5])/255);
+              }
+              
+              if(normalsPresent){
+                norms.push(parseFloat(chunk[i+6]));
+                norms.push(parseFloat(chunk[i+7]));
+                norms.push(parseFloat(chunk[i+8]));
+              }
             }
 
-            if(colorsPresent){
-              cols.push(parseInt(values[i+3])/255);
-              cols.push(parseInt(values[i+4])/255);
-              cols.push(parseInt(values[i+5])/255);
-            }
-            
-            if(normalsPresent){
-              norms.push(parseFloat(values[i+6]));
-              norms.push(parseFloat(values[i+7]));
-              norms.push(parseFloat(values[i+8]));
-            }
-          }
-          
-          // if the user wants to center the point cloud
-         // if(autoCenter){
-          //  objCenter[0] /= numVerts;
-          //  objCenter[1] /= numVerts;
-          //  objCenter[2] /= numVerts;
-         // }
-          
-          // if the user wanted to autocenter the point cloud,
-          // iterate over all the verts and subtract by the 
-          // point cloud's current center.
-         /* if(autoCenter){
-            for(var i = 0; i < numVerts; i++){
-              verts[i*3]   -= objCenter[0];
-              verts[i*3+1] -= objCenter[1];
-              verts[i*3+2] -= objCenter[2]; 
-            }
-          }*/
-          
-          
-//          VBOs[0] = createVBOs(verts, cols, norms);
             VBOs.push(createVBOs(verts, cols, norms));
-//          document.getElementById('debug').innerHTML +="d";        
-          file.status = 4;
+          }
         }
-      }
+
+        // Only when the entire point cloud is finished downloading
+        // can we calculate the center
+        if(AJAX.readyState === XHR_DONE){
+          objCenter[0] /= file.pointCount;
+          objCenter[1] /= file.pointCount;
+          objCenter[2] /= file.pointCount;
+          file.center = [objCenter[0], objCenter[1], objCenter[2]];
+          file.status = COMPLETE;
+        }
+      };
+      
+      
+      
       return file;
     }
-
   }
   return xb;
 };

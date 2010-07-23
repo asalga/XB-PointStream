@@ -1,4 +1,5 @@
 var ps;
+var mickey;
 
 var buttonDown = false;
 var zoomed = -50;
@@ -46,11 +47,15 @@ function render() {
   ps.rotateY(rot[0]);
   ps.rotateX(rot[1]);
   
+  var c = mickey.getCenter();
+  
+  ps.translate(-c[0],-c[1],-c[2]);
+  
   // redraw
   ps.clear();
   ps.render();
-  
-  window.status = ps.frameRate;
+
+  window.status = mickey.getPointCount() + " points @ " + Math.floor(ps.frameRate) + "FPS";
 }
 
 function start(){
@@ -65,5 +70,5 @@ function start(){
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
   
-  ps.loadFile({path:"mickey.asc", autoCenter: true});
+  mickey = ps.loadFile({path:"mickey.asc", autoCenter: true});
 }

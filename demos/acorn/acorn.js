@@ -1,3 +1,4 @@
+var acorn;
 var ps;
 
 var buttonDown = false;
@@ -6,11 +7,11 @@ var zoomed = -50;
 var rot =[0,0];
 var curCoords = [0,0];
 
-/*window.onresize = function(){
+window.onresize = function(){
   ps.resize(window.innerWidth, window.innerHeight);
   ps.background([0,0,0,1]);
   ps.pointSize(5);
-};*/
+};
 
 
 function addPNG(){
@@ -72,7 +73,8 @@ function render() {
   ps.rotateY(rot[0]);
   ps.rotateX(rot[1]);
 
-ps.translate(-2.4899933996557677,-0.6635081899594929,-3.009662628949344);
+  var c = acorn.getCenter();
+  ps.translate(-c[0],-c[1],-c[2]);
   
   ps.attenuation( $("#constant").slider("value"),
                   $("#linear").slider("value"),
@@ -86,7 +88,7 @@ ps.translate(-2.4899933996557677,-0.6635081899594929,-3.009662628949344);
   ps.clear();
   ps.render();
   
-  window.status = ps.frameRate;
+  window.status = acorn.getPointCount() + " points @ " + Math.floor(ps.frameRate) + "FPS";
 }
 
 function start(){
@@ -102,5 +104,5 @@ function start(){
   ps.onMouseReleased = mouseReleased;
   ps.keyDown = keyDown;
   
-  ps.loadFile({path:"acorn.asc", autoCenter: true});
+  acorn = ps.loadFile({path:"acorn.asc", autoCenter: true});
 }
