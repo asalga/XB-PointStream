@@ -80,7 +80,12 @@ function render() {
   ps.clear();
   ps.render();
   
-  window.status = acorn.getPointCount() + " points @ " + Math.floor(ps.frameRate) + "FPS";
+  var fps = Math.floor(ps.frameRate);
+  if(fps < 1){
+    fps = "< 1";
+  }
+  
+  window.status = acorn.getPointCount() + " points @ " + fps + " FPS";
 }
 
 function start(){

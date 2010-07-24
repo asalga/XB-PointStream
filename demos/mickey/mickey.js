@@ -54,8 +54,13 @@ function render() {
 
   ps.clear();
   ps.render();
+  
+  var fps = Math.floor(ps.frameRate);
+  if(fps < 1){
+    fps = "< 1";
+  }
 
-  window.status = mickey.getPointCount() + " points @ " + Math.floor(ps.frameRate) + "FPS";
+  window.status = mickey.getPointCount() + " points @ " + fps + " FPS";
 }
 
 function start(){
@@ -70,5 +75,5 @@ function start(){
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
   
-  mickey = ps.loadFile({path:"mickey.asc");
+  mickey = ps.loadFile({path:"mickey.asc"});
 }
