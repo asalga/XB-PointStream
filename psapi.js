@@ -899,7 +899,6 @@ function PointStream(){
          
         if(AJAX.responseText){
           file.status = STREAMING;
-          var code = 9;
           var normalsPresent = true;
           var colorsPresent = true;
           
@@ -933,8 +932,8 @@ function PointStream(){
           }
           else{
             // Start of the next chunk starts after the newline.
-            chunk = ascData.substring(startOfNextChunk, lastNewLineIndex+1);
-            startOfNextChunk = lastNewLineIndex+1;
+            chunk = ascData.substring(startOfNextChunk, lastNewLineIndex + 1);
+            startOfNextChunk = lastNewLineIndex + 1;
           }
 
           if(doParse){
@@ -946,7 +945,7 @@ function PointStream(){
 
             chunk = chunk.split(/\s+/);
             
-            var numVerts = chunk.length/code;
+            var numVerts = chunk.length/9;
 
             file.pointCount += numVerts;
 
@@ -955,7 +954,7 @@ function PointStream(){
             var norms = new WebGLFloatArray(numVerts*3);
 
             // xyz  rgb  normals
-            for(var i = 0, j = 0, len = chunk.length; i < len; i += code, j+=3){
+            for(var i = 0, j = 0, len = chunk.length; i < len; i += 9, j+=3){
               verts[j] = parseFloat(chunk[i]);
               verts[j+1] = parseFloat(chunk[i+1]);
               verts[j+2] = parseFloat(chunk[i+2]);
