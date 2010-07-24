@@ -59,7 +59,7 @@ function start(){
   
   ps.setup(document.getElementById('canvas'), render);
   
-  ps.background([0,0,0,1]);
+  ps.background([1,1,1,1]);
   ps.pointSize(8);
 
   ps.onMouseScroll = zoom;

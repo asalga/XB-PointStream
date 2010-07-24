@@ -1,5 +1,3 @@
-var objCenter = [0,0,0];
-var startOfNextChunk = 0;
 /*
   Copyright (c) 2010  Seneca College
   MIT LICENSE
@@ -25,6 +23,11 @@ function PointStream(){
   var bk = [1,1,1,1];
   var VBOs = [];
   
+  var objCenter = [0,0,0];
+  var startOfNextChunk = 0;
+  var pointCloudComplete = false;
+  var VBOsMerged = false;
+  
   // defaults
   var attn = [0.01, 0.0, 0.003];
     
@@ -43,8 +46,6 @@ function PointStream(){
   
   var canvas;
   var ctx;
-
-  var bufferIDCounter = 0;
 
   // shader matrices
   var projection;
@@ -273,29 +274,28 @@ function PointStream(){
   function createVBOs(xyz, rgb, norm){
     if(ctx){
       var o = {};
-      
       var newBuffer = ctx.createBuffer();
       ctx.bindBuffer(ctx.ARRAY_BUFFER, newBuffer);
-      ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(xyz), ctx.STATIC_DRAW);
+      ctx.bufferData(ctx.ARRAY_BUFFER, xyz, ctx.STATIC_DRAW);
+      o.posArray = xyz;
       o.posBuffer = newBuffer;
-      o.id =  bufferIDCounter;
       o.size = xyz.length;
  
       if(rgb.length > 0){
         var newColBuffer = ctx.createBuffer();
         ctx.bindBuffer(ctx.ARRAY_BUFFER, newColBuffer);
-        ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(rgb), ctx.STATIC_DRAW);
+        ctx.bufferData(ctx.ARRAY_BUFFER, rgb, ctx.STATIC_DRAW);
         o.colBuffer = newColBuffer;
-        }
+        o.colArray = rgb;
+      }
 
       if(norm.length > 0){
         var newNormBuffer = ctx.createBuffer();
         ctx.bindBuffer(ctx.ARRAY_BUFFER, newNormBuffer);
-        ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(norm), ctx.STATIC_DRAW);
+        ctx.bufferData(ctx.ARRAY_BUFFER, norm, ctx.STATIC_DRAW);
         o.normBuffer = newNormBuffer;
+        o.normArray = norm;
       }
-
-      bufferIDCounter++;
 
       return o;
     }
@@ -587,6 +587,35 @@ function PointStream(){
       xb.frameCount++;
       var now = new Date();
 
+      if(pointCloudComplete && !VBOsMerged){
+        var totalSize = 0;
+        
+        for(var k = 0; k < VBOs.length; k++){
+          totalSize += VBOs[k].size;
+        }
+        
+        var verts = new WebGLFloatArray(totalSize);
+        var cols  = new WebGLFloatArray(totalSize);
+        var norms = new WebGLFloatArray(totalSize);
+
+        var c = 0;
+
+        for(var j = 0; j < VBOs.length; j++){
+          for(var i = 0; i < VBOs[j].size; i++,c++){
+            verts[c] = VBOs[j].posArray[i];
+            cols[c] = VBOs[j].colArray[i];
+            norms[c] = VBOs[j].normArray[i]; 
+          }
+        }
+        
+        // delete old VBOS
+        VBOs = [];
+        VBOs.push(createVBOs(verts, cols, norms));
+        
+        VBOsMerged = true;
+      }
+
+
       for(var k = 0; k < VBOs.length; k++){
 
       if(ctx && VBOs){
@@ -838,12 +867,6 @@ function PointStream(){
       var path = o.path;
       
       var AJAX = new XMLHttpRequest();
-      
-
-      
-      // this doesn't work
-      // AJAX.addEventListener("progress", f,false);
-
       AJAX.open("GET", path, true);
       AJAX.send(null);
       
@@ -864,10 +887,11 @@ function PointStream(){
       };
       
       AJAX.onreadystatechange = function(){
+      
         if(AJAX.status === 200){
           file.status = 1;
         }
-        
+         
         if(AJAX.responseText){
           file.status = STREAMING;
           var code = 9;
@@ -917,41 +941,36 @@ function PointStream(){
 
             chunk = chunk.split(/\s+/);
             
-            const numVerts = chunk.length/code;
+            var numVerts = chunk.length/code;
 
             file.pointCount += numVerts;
-            
-            var verts = [];
-            var cols = [];
-            var norms = [];
-             
+
+            var verts = new WebGLFloatArray(numVerts*3);
+            var cols  = new WebGLFloatArray(numVerts*3);
+            var norms = new WebGLFloatArray(numVerts*3);
+
             // xyz  rgb  normals
-            for(var i = 0, len = chunk.length; i < len; i += code){
-              var currX = parseFloat(chunk[i]);
-              var currY = parseFloat(chunk[i+1]);
-              var currZ = parseFloat(chunk[i+2]);
+            for(var i = 0, j = 0, len = chunk.length; i < len; i += code, j+=3){
+              verts[j] = parseFloat(chunk[i]);
+              verts[j+1] = parseFloat(chunk[i+1]);
+              verts[j+2] = parseFloat(chunk[i+2]);
 
-              verts.push(currX);
-              verts.push(currY);
-              verts.push(currZ);
-
-              objCenter[0] += currX;
-              objCenter[1] += currY;
-              objCenter[2] += currZ;
+              objCenter[0] += verts[j]
+              objCenter[1] += verts[j+1]
+              objCenter[2] += verts[j+2]
 
               if(colorsPresent){
-                cols.push(parseInt(chunk[i+3])/255);
-                cols.push(parseInt(chunk[i+4])/255);
-                cols.push(parseInt(chunk[i+5])/255);
+                cols[j] = parseInt(chunk[i+3])/255;
+                cols[j+1] = parseInt(chunk[i+4])/255;
+                cols[j+2] = parseInt(chunk[i+5])/255;
               }
-              
+
               if(normalsPresent){
-                norms.push(parseFloat(chunk[i+6]));
-                norms.push(parseFloat(chunk[i+7]));
-                norms.push(parseFloat(chunk[i+8]));
+                norms[j] = parseFloat(chunk[i+6]);
+                norms[j+1] = parseFloat(chunk[i+7]);
+                norms[j+2] = parseFloat(chunk[i+8]);
               }
             }
-
             VBOs.push(createVBOs(verts, cols, norms));
           }
         }
@@ -964,11 +983,9 @@ function PointStream(){
           objCenter[2] /= file.pointCount;
           file.center = [objCenter[0], objCenter[1], objCenter[2]];
           file.status = COMPLETE;
+          pointCloudComplete = true;
         }
       };
-      
-      
-      
       return file;
     }
   }

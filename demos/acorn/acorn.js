@@ -76,14 +76,6 @@ function render() {
   var c = acorn.getCenter();
   ps.translate(-c[0],-c[1],-c[2]);
   
-  ps.attenuation( $("#constant").slider("value"),
-                  $("#linear").slider("value"),
-                  $("#quadratic").slider("value"));
-   
-  document.getElementById('const').innerHTML = $("#constant").slider("value");
-  document.getElementById('lin').innerHTML = $("#linear").slider("value");
-  document.getElementById('quad').innerHTML = $("#quadratic").slider("value");
-
   // redraw
   ps.clear();
   ps.render();

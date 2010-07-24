@@ -50,8 +50,7 @@ function render() {
   var c = mickey.getCenter();
   
   ps.translate(-c[0],-c[1],-c[2]);
-  
-  // redraw
+
   ps.clear();
   ps.render();
 
