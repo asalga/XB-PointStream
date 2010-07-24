@@ -15,7 +15,8 @@ window.onresize = function(){
 };
 
 function zoom(amt){
-  zoomed += amt * 2;
+  var invert = document.getElementById('invertScroll').checked ? -1 : 1;
+  zoomed += amt * 2 * invert;
   size += amt * 10;
 }
 

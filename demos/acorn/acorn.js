@@ -33,7 +33,7 @@ function clearPNG(){
 }
 
 function zoom(amt){
-  invert = document.getElementById('invertScroll').checked ? -1: 1;
+  var invert = document.getElementById('invertScroll').checked ? -1: 1;
   zoomed += amt * 2 * invert;
   if(buttonDown){
     addPNG();
