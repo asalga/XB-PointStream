@@ -51,7 +51,7 @@ function mouseReleased(){
 }
 
 function keyDown(){
-    document.getElementById('key').innerHTML = key;
+  document.getElementById('key').innerHTML = key;
 }
 
 function render() {
@@ -66,7 +66,6 @@ function render() {
     curCoords[0] = ps.mouseX;
     curCoords[1] = ps.mouseY;
   }
-
 
   // transform point cloud
   ps.translate(0,0,zoomed);

@@ -1,4 +1,5 @@
 var ps;
+var lion;
 
 var buttonDown = false;
 var zoomed = -50;
@@ -46,13 +47,20 @@ function render() {
 
   ps.rotateY(rot[0]);
   ps.rotateX(rot[1]);
+  
+  // !!! fix me
   ps.translate(281.32617943646534,205.61656736098982,290.55082983174293);
   
   // redraw
   ps.clear();
   ps.render();
   
-  window.status = ps.frameRate;
+  var fps = Math.floor(ps.frameRate);
+  if(fps < 1){
+    fps = "< 1";
+  }
+  
+  window.status = lion.getPointCount() + " points @ " + fps + " FPS";
 }
 
 function start(){
@@ -67,5 +75,5 @@ function start(){
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
   
-  ps.loadFile({path:"lion.asc", autoCenter: true});
+  lion = ps.loadFile({path:"lion.asc"});
 }

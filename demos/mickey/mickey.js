@@ -70,5 +70,5 @@ function start(){
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
   
-  mickey = ps.loadFile({path:"mickey.asc", autoCenter: true});
+  mickey = ps.loadFile({path:"mickey.asc");
 }
