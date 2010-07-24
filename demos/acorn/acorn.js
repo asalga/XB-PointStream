@@ -33,7 +33,8 @@ function clearPNG(){
 }
 
 function zoom(amt){
-  zoomed += amt * 2;
+  invert = document.getElementById('invertScroll').checked ? -1: 1;
+  zoomed += amt * 2 * invert;
   if(buttonDown){
     addPNG();
   }
@@ -85,6 +86,7 @@ function render() {
 
 function start(){
   ps = new PointStream();
+  document.getElementById('debug').innerHTML += "XB PointStream Version: " + ps.getVersion();
   
   ps.setup(document.getElementById('canvas'), render);
   
@@ -97,4 +99,6 @@ function start(){
   ps.keyDown = keyDown;
   
   acorn = ps.loadFile({path:"acorn.asc", autoCenter: true});
+  
+  
 }

@@ -142,11 +142,11 @@ function PointStream(){
   // If there were no lights this draw call, just use the
   // assigned fill color of the shape and the specular value
   "  if( lightCount == 0 ) {" +
-  "      gl_FrontColor = vec4(col[0], col[1], col[2], 1.0);" +
+  "    gl_FrontColor = vec4(col[0], col[1], col[2], 1.0);" +
   "  }" +
   "  else {" +
-  "      PointLight(finalDiffuse, ecPos, norm, eye );" +
-  "      gl_FrontColor = vec4(finalDiffuse[0] * col[0], finalDiffuse[1] * col[1], finalDiffuse[2] * col[2], 1.0);" +
+  "    PointLight(finalDiffuse, ecPos, norm, eye );" +
+  "    gl_FrontColor = vec4(finalDiffuse[0] * col[0], finalDiffuse[1] * col[1], finalDiffuse[2] * col[2], 1.0);" +
   "  }" +
 
   "  float dist = length( view * model * vec4(aVertex, 1.0));" +
@@ -270,6 +270,9 @@ function PointStream(){
   }
   
   /**
+    xyz - WebGLFloatArray
+    rgb - WebGLFloatArray
+    norm - WebGLFloatArray
   */
   function createVBOs(xyz, rgb, norm){
     if(ctx){
@@ -451,6 +454,8 @@ function PointStream(){
     return code;
   };
   
+  /**
+  */
   var keyFunc = function (evt, type){
     if (evt.charCode){
       key = keyCodeMap(evt.charCode, evt.shiftKey);
@@ -498,7 +503,7 @@ function PointStream(){
       Get the version of the library.
     */
     getVersion: function(){
-      return version;
+      return VERSION;
     },
     
     /**
