@@ -1,4 +1,5 @@
 var ps;
+var lion;
 
 var buttonDown = false;
 var zoomed = -50;
@@ -14,7 +15,8 @@ window.onresize = function(){
 };
 
 function zoom(amt){
-  zoomed += amt * 2;
+  var invert = document.getElementById('invertScroll').checked ? -1: 1;
+  zoomed += amt * 2 * invert;
   size += amt * 10;
 }
 
@@ -45,12 +47,20 @@ function render() {
 
   ps.rotateY(rot[0]);
   ps.rotateX(rot[1]);
-
+  
+  // !!! fix me
+  ps.translate(281.32617943646534,205.61656736098982,290.55082983174293);
+  
   // redraw
   ps.clear();
   ps.render();
   
-  window.status = ps.frameRate;
+  var fps = Math.floor(ps.frameRate);
+  if(fps < 1){
+    fps = "< 1";
+  }
+  
+  window.status = lion.getPointCount() + " points @ " + fps + " FPS";
 }
 
 function start(){
@@ -58,12 +68,12 @@ function start(){
   
   ps.setup(document.getElementById('canvas'), render);
   
-  ps.background([0,0,0,1]);
+  ps.background([1,1,1,1]);
   ps.pointSize(8);
 
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
   
-  ps.loadFile({path:"lion.asc", autoCenter: true});
+  lion = ps.loadFile({path:"lion.asc"});
 }

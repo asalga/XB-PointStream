@@ -1,4 +1,5 @@
 var ps;
+var mickey;
 
 var buttonDown = false;
 var zoomed = -50;
@@ -14,7 +15,8 @@ window.onresize = function(){
 };
 
 function zoom(amt){
-  zoomed += amt * 2;
+  var invert = document.getElementById('invertScroll').checked ? -1 : 1;
+  zoomed += amt * 2 * invert;
   size += amt * 10;
 }
 
@@ -29,7 +31,7 @@ function mouseReleased(){
 }
 
 function render() {
-
+//document.getElementById('debug').innerHTML +="r";
   var deltaX = ps.mouseX - curCoords[0];
   var deltaY = ps.mouseY - curCoords[1];
   
@@ -46,11 +48,19 @@ function render() {
   ps.rotateY(rot[0]);
   ps.rotateX(rot[1]);
   
-  // redraw
+  var c = mickey.getCenter();
+  
+  ps.translate(-c[0],-c[1],-c[2]);
+
   ps.clear();
   ps.render();
   
-  window.status = ps.frameRate;
+  var fps = Math.floor(ps.frameRate);
+  if(fps < 1){
+    fps = "< 1";
+  }
+
+  window.status = mickey.getPointCount() + " points @ " + fps + " FPS";
 }
 
 function start(){
@@ -65,5 +75,5 @@ function start(){
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
   
-  ps.loadFile({path:"mickey.asc", autoCenter: true});
+  mickey = ps.loadFile({path:"mickey.asc"});
 }

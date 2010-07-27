@@ -2,8 +2,8 @@
 /* prevent the window scrollbars from appearing
 which conflict with zooming.*/
 html {
-  overflow-x: hidden;
-  overflow-y: hidden;
+ // overflow-x: hidden;
+ // overflow-y: hidden;
 }
 
 span{

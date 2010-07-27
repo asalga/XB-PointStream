@@ -5,8 +5,14 @@
 
 function PointStream(){
 
-  const version  = 0.3;
+  const VERSION  = 0.3;
   const XHR_DONE = 4;
+  
+  // file status
+  const FILE_NOT_FOUND = -1;
+  const STARTED = 1;
+  const STREAMING = 2;
+  const COMPLETE = 3;
     
   // to calculate fps
   var frames = 0;
@@ -15,7 +21,12 @@ function PointStream(){
   var renderCallback;
   
   var bk = [1,1,1,1];
-  var VBOs;
+  var VBOs = [];
+  
+  var objCenter = [0,0,0];
+  var startOfNextChunk = 0;
+  var pointCloudComplete = false;
+  var VBOsMerged = false;
   
   // defaults
   var attn = [0.01, 0.0, 0.003];
@@ -34,14 +45,8 @@ function PointStream(){
   const SAFARI    = 6;
   const IE        = 7;
   
-  var verts = [];
-  var cols = [];
-  var norms = [];
-
   var canvas;
   var ctx;
-
-  var bufferIDCounter = 0;
 
   // shader matrices
   var projection;
@@ -108,8 +113,6 @@ function PointStream(){
   "}" +
 
   "void PointLight( inout vec3 col, in vec3 ecPos,  in vec3 vertNormal, in vec3 eye ) {" +
-  // "  float powerfactor;" +
-
   // Get the vector from the light to the vertex
   "   vec3 VP = light.pos - ecPos;" +
 
@@ -120,13 +123,10 @@ function PointStream(){
   "  VP = normalize( VP );" +
 
   "  float attenuation = 1.0 / ( 1.0 + ( d ) + ( d * d ));" +
-
   "  float nDotVP = max( 0.0, dot( vertNormal, VP ));" +
   "  vec3 halfVector = normalize( VP + eye );" +
   "  float nDotHV = max( 0.0, dot( vertNormal, halfVector ));" +
-
-  // "  spec += specular * powerfactor * attenuation;" +
-  "  col += light.col * nDotVP * 2.0;" +
+  "  col += light.col * nDotVP;" +
   "}" +
 
   "void main(void) {" +
@@ -143,11 +143,11 @@ function PointStream(){
   // If there were no lights this draw call, just use the
   // assigned fill color of the shape and the specular value
   "  if( lightCount == 0 ) {" +
-  "      gl_FrontColor = vec4(col[0], col[1], col[2], 1.0);" +
+  "    gl_FrontColor = vec4(col[0], col[1], col[2], 1.0);" +
   "  }" +
   "  else {" +
-  "      PointLight(finalDiffuse, ecPos, norm, eye );" +
-  "      gl_FrontColor = vec4(finalDiffuse[0] * col[0], finalDiffuse[1] * col[1], finalDiffuse[2] * col[2], 1.0);" +
+  "    PointLight(finalDiffuse, ecPos, norm, eye );" +
+  "    gl_FrontColor = vec4(finalDiffuse[0] * col[0], finalDiffuse[1] * col[1], finalDiffuse[2] * col[2], 1.0);" +
   "  }" +
 
   "  float dist = length( view * model * vec4(aVertex, 1.0));" +
@@ -271,33 +271,35 @@ function PointStream(){
   }
   
   /**
+    xyz - WebGLFloatArray
+    rgb - WebGLFloatArray
+    norm - WebGLFloatArray
   */
   function createVBOs(xyz, rgb, norm){
     if(ctx){
       var o = {};
-      
       var newBuffer = ctx.createBuffer();
       ctx.bindBuffer(ctx.ARRAY_BUFFER, newBuffer);
-      ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(xyz), ctx.STATIC_DRAW);
+      ctx.bufferData(ctx.ARRAY_BUFFER, xyz, ctx.STATIC_DRAW);
+      o.posArray = xyz;
       o.posBuffer = newBuffer;
-      o.id =  bufferIDCounter;
       o.size = xyz.length;
  
       if(rgb.length > 0){
         var newColBuffer = ctx.createBuffer();
         ctx.bindBuffer(ctx.ARRAY_BUFFER, newColBuffer);
-        ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(rgb), ctx.STATIC_DRAW);
+        ctx.bufferData(ctx.ARRAY_BUFFER, rgb, ctx.STATIC_DRAW);
         o.colBuffer = newColBuffer;
-        }
+        o.colArray = rgb;
+      }
 
       if(norm.length > 0){
         var newNormBuffer = ctx.createBuffer();
         ctx.bindBuffer(ctx.ARRAY_BUFFER, newNormBuffer);
-        ctx.bufferData(ctx.ARRAY_BUFFER, new WebGLFloatArray(norm), ctx.STATIC_DRAW);
+        ctx.bufferData(ctx.ARRAY_BUFFER, norm, ctx.STATIC_DRAW);
         o.normBuffer = newNormBuffer;
+        o.normArray = norm;
       }
-
-      bufferIDCounter++;
 
       return o;
     }
@@ -453,6 +455,8 @@ function PointStream(){
     return code;
   };
   
+  /**
+  */
   var keyFunc = function (evt, type){
     if (evt.charCode){
       key = keyCodeMap(evt.charCode, evt.shiftKey);
@@ -760,7 +764,7 @@ function PointStream(){
       Get the version of the library.
     */
     getVersion: function(){
-      return version;
+      return VERSION;
     },
     
     /**
@@ -770,7 +774,8 @@ function PointStream(){
     
       var fovy = 60;
       var aspect = this.width/this.height;
-      var znear = 0.001;
+      var znear = 0.1;
+
       var zfar = 1000;
 
       var ymax = znear * Math.tan(fovy * Math.PI / 360.0);
@@ -799,7 +804,6 @@ function PointStream(){
       view = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
       model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
       normalTransform = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
-      
     },
     
     /**
@@ -831,16 +835,11 @@ function PointStream(){
             
       xb.runDefault();      
       
-      // if VBOs already exist, recreate them
-      if(VBOs) {
-        VBOs = createVBOs(verts, cols, norms);
-            
-        if(cols.length > 0){
-          uniformf(progObj, "light.pos", [0,0,-1]);
-          uniformf(progObj, "light.col", [1,1,1]);
-          
-          uniformi(progObj, "lightCount", 1);
-        }
+      // if VBOs already exist, recreate them?
+      if(VBOs) {            
+        uniformf(progObj, "light.pos", [0,0,-1]);
+        uniformf(progObj, "light.col", [1,1,1]);
+        uniformi(progObj, "lightCount", 1);
       }
       
       uniformf(progObj, "pointSize", 1);
@@ -853,38 +852,41 @@ function PointStream(){
     /**
     */
     render: function(){
-          
+
       frames++;
       xb.frameCount++;
       var now = new Date();
-      
-      if(ctx && VBOs){
-        vertexAttribPointer(progObj, "aVertex", 3, VBOs.posBuffer);
-        
-        if(VBOs.colBuffer){
-          vertexAttribPointer(progObj, "aColor", 3, VBOs.colBuffer);
-        }
-        else{
-          disableVertexAttribPointer(progObj, "aColor");
-        }
-        
-        if(VBOs.normBuffer){
-          vertexAttribPointer(progObj, "aNormal", 3, VBOs.normBuffer);
-          uniformf(progObj, "light.col", [1,1,1]);
-          uniformf(progObj, "light.pos", [0,0,-1]);
-          uniformi(progObj, "lightCount", 1);
-        }
-        else{
-          disableVertexAttribPointer(progObj, "aNormal");
-        }
 
-        var mvm = M4x4.mul(view, model);
-        normalTransform = M4x4.inverseOrthonormal(mvm);
-        uniformMatrix(progObj, "normalTransform", false, M4x4.transpose(normalTransform));
-        
-        uniformMatrix(progObj, "model", false, model);
+      for(var k = 0; k < VBOs.length; k++){
 
-        ctx.drawArrays(ctx.POINTS, 0, VBOs.size/3);
+        if(ctx && VBOs){
+          vertexAttribPointer(progObj, "aVertex", 3, VBOs[k].posBuffer);
+          
+          if(VBOs[k].colBuffer){
+            vertexAttribPointer(progObj, "aColor", 3, VBOs[k].colBuffer);
+          }
+          else{
+            disableVertexAttribPointer(progObj, "aColor");
+          }
+          
+          if(VBOs[k].normBuffer){
+            vertexAttribPointer(progObj, "aNormal", 3, VBOs[k].normBuffer);
+            uniformf(progObj, "light.col", [1,1,1]);
+            uniformf(progObj, "light.pos", [0,0,-1]);
+            uniformi(progObj, "lightCount", 1);
+          }
+          else{
+            disableVertexAttribPointer(progObj, "aNormal");
+          }
+
+          var mvm = M4x4.mul(view, model);
+          normalTransform = M4x4.inverseOrthonormal(mvm);
+          uniformMatrix(progObj, "normalTransform", false, M4x4.transpose(normalTransform));
+          
+          uniformMatrix(progObj, "model", false, model);
+
+          ctx.drawArrays(ctx.POINTS, 0, VBOs[k].size/3);
+        }
       }
 
       // if more than 1 second has elapsed, recalculate fps
@@ -1128,126 +1130,151 @@ function PointStream(){
     },
     
     /**
-      o - object such as {path:"acorn.asc", autoCenter: true}
+      o - object such as {path:"acorn.asc"}
     */
     loadFile: function(o){
       var path = o.path;
       
-      // need ||?
-      var autoCenter = o.autoCenter || false;
-
       var AJAX = new XMLHttpRequest();
-      
-      // this doesn't work
-      // AJAX.addEventListener("progress", f,false);
-
       AJAX.open("GET", path, true);
       AJAX.send(null);
       
+      // object which will be returned to the user
       var file = {
         status: 0,
         progress: 0,
-        numPoints: 0,
+        pointCount: 0,
+        center: [0,0,0],
+        
+        getCenter: function(){
+          return this.center;
+        },
+        
+        getPointCount: function(){
+          return this.pointCount;
+        },
       };
       
-      AJAX.onreadystatechange = 
-      function(){        
-        //??
+      AJAX.onreadystatechange = function(){
+      
         if(AJAX.status === 200){
-          file.status = 1;
+          file.status = STARTED;
+        }
+         
+        if(AJAX.responseText){
+          file.status = STREAMING;
+          var normalsPresent = true;
+          var colorsPresent = true;
+          
+          var chunk;
+          var doParse = true;
+          
+          var ascData = AJAX.responseText;
+
+          // We likely stopped getting data somewhere in the middle of 
+          // a line in the ASC file
+          
+          // 5.813 2.352 6.500 0 0 0 2.646 3.577 2.516\n
+          // 1.079 1.296 9.360 0 0 0 4.307 1.181 5.208\n
+          // 3.163 2.225 6.139 0 0 0 0.6<-- stopped here
+          
+          // So find the last known newline. Everything from the last
+          // request to this last newline can be placed in a buffer.
+          var lastNewLineIndex = ascData.lastIndexOf("\n");
+          
+          // If the status just changed and we finished downloading the
+          // file, grab everyting until the end. If there is only a bunch
+          // of whitespace, make a note of that and don't bother parsing.
+          if(AJAX.readyState === XHR_DONE){
+            chunk = ascData.substring(startOfNextChunk, ascData.length);
+
+            // If the last chunk doesn't have any digits (just spaces)
+            // don't parse it.
+            if(!chunk.match(/[0-9]/) ){
+              doParse = false;
+            }
+          }
+          else{
+            // Start of the next chunk starts after the newline.
+            chunk = ascData.substring(startOfNextChunk, lastNewLineIndex + 1);
+            startOfNextChunk = lastNewLineIndex + 1;
+          }
+
+          if(doParse){
+            // trim trailing spaces
+            chunk = chunk.replace(/\s+$/,"");
+          
+            // trim leading spaces
+            chunk = chunk.replace(/^\s+/,"");
+            
+            chunk = chunk.split(/\s+/);
+            
+            var numVerts = chunk.length/9;
+
+            file.pointCount += numVerts;
+
+            var verts = new WebGLFloatArray(numVerts*3);
+            var cols  = new WebGLFloatArray(numVerts*3);
+            var norms = new WebGLFloatArray(numVerts*3);
+
+            // xyz  rgb  normals
+            for(var i = 0, j = 0, len = chunk.length; i < len; i += 9, j+=3){
+              verts[j] = parseFloat(chunk[i]);
+              verts[j+1] = parseFloat(chunk[i+1]);
+              verts[j+2] = parseFloat(chunk[i+2]);
+
+              objCenter[0] += verts[j]
+              objCenter[1] += verts[j+1]
+              objCenter[2] += verts[j+2]
+
+              if(colorsPresent){
+                cols[j] = parseInt(chunk[i+3])/255;
+                cols[j+1] = parseInt(chunk[i+4])/255;
+                cols[j+2] = parseInt(chunk[i+5])/255;
+              }
+
+              if(normalsPresent){
+                norms[j] = parseFloat(chunk[i+6]);
+                norms[j+1] = parseFloat(chunk[i+7]);
+                norms[j+2] = parseFloat(chunk[i+8]);
+              }
+            }
+            VBOs.push(createVBOs(verts, cols, norms));
+          }
         }
 
+        // Only when the entire point cloud is finished downloading
+        // can we calculate the center
         if(AJAX.readyState === XHR_DONE){
-          
-          var code = getDataLayout(AJAX.responseText);
-          
-          var normalsPresent = false;
-          var colorsPresent = false;
-          
-          if(code == 1 ){
-            code = 6;
-            normalsPresent = true;
-          }
-          else if(code == 2 ){
-            code = 6;
-            colorsPresent = true;
-          }
-          if(code == 9){
-             normalsPresent = true;
-             colorsPresent = true;
-          }
-          
-          // trim leading and trailing whitespace
-          var values = AJAX.responseText;
-                    
-          // trim trailing spaces
-          values = values.replace(/\s+$/,"");
-          
-          // trim leading spaces
-          values = values.replace(/^\s+/,"");
-          
-          values = values.split(/\s+/);
-           
-          const numVerts = values.length/code;
-           
-          var objCenter = [0,0,0];
-           
-          // xyz  rgb  normals
-          for(var i = 0, len = values.length; i < len; i += code){
-            var currX = parseFloat(values[i]);
-            var currY = parseFloat(values[i+1]);
-            var currZ = parseFloat(values[i+2]);
+        
+          objCenter[0] /= file.pointCount;
+          objCenter[1] /= file.pointCount;
+          objCenter[2] /= file.pointCount;
 
-            verts.push(currX);
-            verts.push(currY);
-            verts.push(currZ);
-            
-            // don't waste cycles if the user didn't want it centered.
-            if(autoCenter){
-              objCenter[0] += currX;
-              objCenter[1] += currY;
-              objCenter[2] += currZ;
-            }
+          file.center = [objCenter[0], objCenter[1], objCenter[2]];
+          file.status = COMPLETE;
+          
+          var verts = new WebGLFloatArray(file.pointCount*3);
+          var cols  = new WebGLFloatArray(file.pointCount*3);
+          var norms = new WebGLFloatArray(file.pointCount*3);
 
-            if(colorsPresent){
-              cols.push(parseInt(values[i+3])/255);
-              cols.push(parseInt(values[i+4])/255);
-              cols.push(parseInt(values[i+5])/255);
-            }
-            
-            if(normalsPresent){
-              norms.push(parseFloat(values[i+6]));
-              norms.push(parseFloat(values[i+7]));
-              norms.push(parseFloat(values[i+8]));
+          var c = 0;
+
+          for(var j = 0; j < VBOs.length; j++){
+            for(var i = 0; i < VBOs[j].size; i++,c++){
+              verts[c] = VBOs[j].posArray[i];
+              cols[c] = VBOs[j].colArray[i];
+              norms[c] = VBOs[j].normArray[i]; 
             }
           }
           
-          // if the user wants to center the point cloud
-          if(autoCenter){
-            objCenter[0] /= numVerts;
-            objCenter[1] /= numVerts;
-            objCenter[2] /= numVerts;
-          }
-          
-          // if the user wanted to autocenter the point cloud,
-          // iterate over all the verts and subtract by the 
-          // point cloud's current center.
-          if(autoCenter){
-            for(var i = 0; i < numVerts; i++){
-              verts[i*3]   -= objCenter[0];
-              verts[i*3+1] -= objCenter[1];
-              verts[i*3+2] -= objCenter[2]; 
-            }
-          }
-          
-          VBOs = createVBOs(verts, cols, norms);
-          
-          file.status = 4;
+          // delete old VBOs
+          VBOs = [];
+          VBOs.push(createVBOs(verts, cols, norms));
         }
-      }
+      };
       return file;
     }
-
   }
   return xb;
 };

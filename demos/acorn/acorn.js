@@ -1,3 +1,4 @@
+var acorn;
 var ps;
 
 var buttonDown = false;
@@ -7,7 +8,7 @@ var rot =[0,0];
 var curCoords = [0,0];
 
 /*window.onresize = function(){
-  ps.resize(window.innerWidth, window.innerHeight);
+  ps.resize(window.innerWidth/2, window.innerHeight/2);
   ps.background([0,0,0,1]);
   ps.pointSize(5);
 };*/
@@ -32,7 +33,8 @@ function clearPNG(){
 }
 
 function zoom(amt){
-  zoomed += amt * 2;
+  var invert = document.getElementById('invertScroll').checked ? -1: 1;
+  zoomed += amt * 2 * invert;
   if(buttonDown){
     addPNG();
   }
@@ -49,8 +51,8 @@ function mouseReleased(){
 }
 
 function keyDown(){
-    document.getElementById('key').innerHTML = key;
-    ps.println(key);
+  document.getElementById('key').innerHTML = key;
+  ps.println(key);
 }
 
 function render() {
@@ -71,24 +73,35 @@ function render() {
     
   ps.rotateY(rot[0]);
   ps.rotateX(rot[1]);
-  
-  ps.attenuation( $("#constant").slider("value"),
-                  $("#linear").slider("value"),
-                  $("#quadratic").slider("value"));
-   
-  document.getElementById('const').innerHTML = $("#constant").slider("value");
-  document.getElementById('lin').innerHTML = $("#linear").slider("value");
-  document.getElementById('quad').innerHTML = $("#quadratic").slider("value");
 
+  var c = acorn.getCenter();
+  ps.translate(-c[0],-c[1],-c[2]);
+  
   // redraw
   ps.clear();
   ps.render();
+      
+  var status = document.getElementById('fileStatus');
+
+  switch(acorn.status){
+    case 1: status.innerHTML = "status: STARTED";break;
+    case 2: status.innerHTML = "status: STREAMING";break;
+    case 3: status.innerHTML = "status: COMPLETE";break;
+    default:break;
+  }
+
   
-  window.status = ps.frameRate;
+  var fps = Math.floor(ps.frameRate);
+  if(fps < 1){
+    fps = "< 1";
+  }
+  
+  window.status = acorn.getPointCount() + " points @ " + fps + " FPS";
 }
 
 function start(){
   ps = new PointStream();
+  document.getElementById('debug').innerHTML += "XB PointStream Version: " + ps.getVersion();
   
   ps.setup(document.getElementById('canvas'), render);
   
@@ -100,5 +113,5 @@ function start(){
   ps.onMouseReleased = mouseReleased;
   ps.keyDown = keyDown;
   
-  ps.loadFile({path:"acorn.asc", autoCenter: true});
+  acorn = ps.loadFile({path:"acorn.asc", autoCenter: true});
 }
