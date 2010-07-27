@@ -113,5 +113,5 @@ function start(){
   ps.onMouseReleased = mouseReleased;
   ps.keyDown = keyDown;
   
-  acorn = ps.loadFile({path:"acorn.asc", autoCenter: true});
+  acorn = ps.loadFile({path:"acorn.asc"});
 }
