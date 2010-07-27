@@ -7,11 +7,11 @@ var zoomed = -50;
 var rot =[0,0];
 var curCoords = [0,0];
 
-window.onresize = function(){
-  ps.resize(window.innerWidth, window.innerHeight);
+/*window.onresize = function(){
+  ps.resize(window.innerWidth/2, window.innerHeight/2);
   ps.background([0,0,0,1]);
   ps.pointSize(5);
-};
+};*/
 
 
 function addPNG(){
@@ -79,6 +79,16 @@ function render() {
   // redraw
   ps.clear();
   ps.render();
+      
+  var status = document.getElementById('fileStatus');
+
+  switch(acorn.status){
+    case 1: status.innerHTML = "status: STARTED";break;
+    case 2: status.innerHTML = "status: STREAMING";break;
+    case 3: status.innerHTML = "status: COMPLETE";break;
+    default:break;
+  }
+
   
   var fps = Math.floor(ps.frameRate);
   if(fps < 1){
@@ -103,6 +113,4 @@ function start(){
   ps.keyDown = keyDown;
   
   acorn = ps.loadFile({path:"acorn.asc", autoCenter: true});
-  
-  
 }

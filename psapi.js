@@ -535,7 +535,7 @@ function PointStream(){
             
       var fovy = 60;
       var aspect = width/height;
-      var znear = 0.001;
+      var znear = 0.1;
       var zfar = 1000;
 
       var ymax = znear * Math.tan(fovy * Math.PI / 360.0);
@@ -565,16 +565,11 @@ function PointStream(){
       model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
       normalTransform = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);      
       
-      // if VBOs already exist, recreate them
-      if(VBOs) {
-//        VBOs = createVBOs(verts, cols, norms);
-            
-       // if(VBOs[0].colBuffer.length > 0){
-          uniformf(progObj, "light.pos", [0,0,-1]);
-          uniformf(progObj, "light.col", [1,1,1]);
-          
-          uniformi(progObj, "lightCount", 1);
-        //}
+      // if VBOs already exist, recreate them?
+      if(VBOs) {            
+        uniformf(progObj, "light.pos", [0,0,-1]);
+        uniformf(progObj, "light.col", [1,1,1]);
+        uniformi(progObj, "lightCount", 1);
       }
       
       uniformf(progObj, "pointSize", 1);
@@ -587,70 +582,41 @@ function PointStream(){
     /**
     */
     render: function(){
-          
+
       frames++;
       xb.frameCount++;
       var now = new Date();
 
-      if(pointCloudComplete && !VBOsMerged){
-        var totalSize = 0;
-        
-        for(var k = 0; k < VBOs.length; k++){
-          totalSize += VBOs[k].size;
-        }
-        
-        var verts = new WebGLFloatArray(totalSize);
-        var cols  = new WebGLFloatArray(totalSize);
-        var norms = new WebGLFloatArray(totalSize);
-
-        var c = 0;
-
-        for(var j = 0; j < VBOs.length; j++){
-          for(var i = 0; i < VBOs[j].size; i++,c++){
-            verts[c] = VBOs[j].posArray[i];
-            cols[c] = VBOs[j].colArray[i];
-            norms[c] = VBOs[j].normArray[i]; 
-          }
-        }
-        
-        // delete old VBOS
-        VBOs = [];
-        VBOs.push(createVBOs(verts, cols, norms));
-        
-        VBOsMerged = true;
-      }
-
-
       for(var k = 0; k < VBOs.length; k++){
 
-      if(ctx && VBOs){
-        vertexAttribPointer(progObj, "aVertex", 3, VBOs[k].posBuffer);
-        
-        if(VBOs[k].colBuffer){
-          vertexAttribPointer(progObj, "aColor", 3, VBOs[k].colBuffer);
-        }
-        else{
-          disableVertexAttribPointer(progObj, "aColor");
-        }
-        
-        if(VBOs[k].normBuffer){
-          vertexAttribPointer(progObj, "aNormal", 3, VBOs[k].normBuffer);
-          uniformf(progObj, "light.col", [1,1,1]);
-          uniformf(progObj, "light.pos", [0,0,-1]);
-          uniformi(progObj, "lightCount", 1);
-        }
-        else{
-          disableVertexAttribPointer(progObj, "aNormal");
-        }
+        if(ctx && VBOs){
+          vertexAttribPointer(progObj, "aVertex", 3, VBOs[k].posBuffer);
+          
+          if(VBOs[k].colBuffer){
+            vertexAttribPointer(progObj, "aColor", 3, VBOs[k].colBuffer);
+          }
+          else{
+            disableVertexAttribPointer(progObj, "aColor");
+          }
+          
+          if(VBOs[k].normBuffer){
+            vertexAttribPointer(progObj, "aNormal", 3, VBOs[k].normBuffer);
+            uniformf(progObj, "light.col", [1,1,1]);
+            uniformf(progObj, "light.pos", [0,0,-1]);
+            uniformi(progObj, "lightCount", 1);
+          }
+          else{
+            disableVertexAttribPointer(progObj, "aNormal");
+          }
 
-        var mvm = M4x4.mul(view, model);
-        normalTransform = M4x4.inverseOrthonormal(mvm);
-        uniformMatrix(progObj, "normalTransform", false, M4x4.transpose(normalTransform));
-        
-        uniformMatrix(progObj, "model", false, model);
+          var mvm = M4x4.mul(view, model);
+          normalTransform = M4x4.inverseOrthonormal(mvm);
+          uniformMatrix(progObj, "normalTransform", false, M4x4.transpose(normalTransform));
+          
+          uniformMatrix(progObj, "model", false, model);
 
-        ctx.drawArrays(ctx.POINTS, 0, VBOs[k].size/3);
-      }
+          ctx.drawArrays(ctx.POINTS, 0, VBOs[k].size/3);
+        }
       }
 
       // if more than 1 second has elapsed, recalculate fps
@@ -894,7 +860,7 @@ function PointStream(){
       AJAX.onreadystatechange = function(){
       
         if(AJAX.status === 200){
-          file.status = 1;
+          file.status = STARTED;
         }
          
         if(AJAX.responseText){
@@ -942,7 +908,7 @@ function PointStream(){
           
             // trim leading spaces
             chunk = chunk.replace(/^\s+/,"");
-
+            
             chunk = chunk.split(/\s+/);
             
             var numVerts = chunk.length/9;
@@ -982,12 +948,31 @@ function PointStream(){
         // Only when the entire point cloud is finished downloading
         // can we calculate the center
         if(AJAX.readyState === XHR_DONE){
+        
           objCenter[0] /= file.pointCount;
           objCenter[1] /= file.pointCount;
           objCenter[2] /= file.pointCount;
+
           file.center = [objCenter[0], objCenter[1], objCenter[2]];
           file.status = COMPLETE;
-          pointCloudComplete = true;
+          
+          var verts = new WebGLFloatArray(file.pointCount*3);
+          var cols  = new WebGLFloatArray(file.pointCount*3);
+          var norms = new WebGLFloatArray(file.pointCount*3);
+
+          var c = 0;
+
+          for(var j = 0; j < VBOs.length; j++){
+            for(var i = 0; i < VBOs[j].size; i++,c++){
+              verts[c] = VBOs[j].posArray[i];
+              cols[c] = VBOs[j].colArray[i];
+              norms[c] = VBOs[j].normArray[i]; 
+            }
+          }
+          
+          // delete old VBOs
+          VBOs = [];
+          VBOs.push(createVBOs(verts, cols, norms));
         }
       };
       return file;
