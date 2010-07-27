@@ -9,10 +9,10 @@ var curCoords = [0,0];
 
 var size = 500;
 
-window.onresize = function(){
+/*window.onresize = function(){
   ps.resize(window.innerWidth, window.innerHeight);
   ps.background([0,0,0,1]);
-};
+};*/
 
 function zoom(amt){
   var invert = document.getElementById('invertScroll').checked ? -1: 1;
