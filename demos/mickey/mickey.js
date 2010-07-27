@@ -9,10 +9,10 @@ var curCoords = [0,0];
 
 var size = 500;
 
-window.onresize = function(){
+/*window.onresize = function(){
   ps.resize(window.innerWidth, window.innerHeight);
   ps.background([0.3,0.5,0.7,0.2]);
-};
+};*/
 
 function zoom(amt){
   var invert = document.getElementById('invertScroll').checked ? -1 : 1;
@@ -31,7 +31,6 @@ function mouseReleased(){
 }
 
 function render() {
-//document.getElementById('debug').innerHTML +="r";
   var deltaX = ps.mouseX - curCoords[0];
   var deltaY = ps.mouseY - curCoords[1];
   
