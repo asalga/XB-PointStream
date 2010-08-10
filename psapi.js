@@ -5,7 +5,14 @@
 
 function PointStream(){
 
-  const VERSION  = 0.3;
+  try{
+    WebGLFloatArray;
+  }catch(ex){
+    WebGLFloatArray = Float32Array;
+  }
+  const TYPED_ARRAY_FLOAT = WebGLFloatArray;
+
+  const VERSION  = 0.4;
   const XHR_DONE = 4;
   
   // file status
@@ -25,8 +32,6 @@ function PointStream(){
   
   var objCenter = [0,0,0];
   var startOfNextChunk = 0;
-  var pointCloudComplete = false;
-  var VBOsMerged = false;
   
   // defaults
   var attn = [0.01, 0.0, 0.003];
@@ -271,37 +276,37 @@ function PointStream(){
   }
   
   /**
-    xyz - WebGLFloatArray
-    rgb - WebGLFloatArray
-    norm - WebGLFloatArray
+    xyz - typed float array
+    rgb - typed float array
+    norm - typed float array
   */
   function createVBOs(xyz, rgb, norm){
     if(ctx){
-      var o = {};
+      var obj = {};
       var newBuffer = ctx.createBuffer();
       ctx.bindBuffer(ctx.ARRAY_BUFFER, newBuffer);
       ctx.bufferData(ctx.ARRAY_BUFFER, xyz, ctx.STATIC_DRAW);
-      o.posArray = xyz;
-      o.posBuffer = newBuffer;
-      o.size = xyz.length;
+      obj.posArray = xyz;
+      obj.posBuffer = newBuffer;
+      obj.size = xyz.length;
  
       if(rgb.length > 0){
         var newColBuffer = ctx.createBuffer();
         ctx.bindBuffer(ctx.ARRAY_BUFFER, newColBuffer);
         ctx.bufferData(ctx.ARRAY_BUFFER, rgb, ctx.STATIC_DRAW);
-        o.colBuffer = newColBuffer;
-        o.colArray = rgb;
+        obj.colBuffer = newColBuffer;
+        obj.colArray = rgb;
       }
 
       if(norm.length > 0){
         var newNormBuffer = ctx.createBuffer();
         ctx.bindBuffer(ctx.ARRAY_BUFFER, newNormBuffer);
         ctx.bufferData(ctx.ARRAY_BUFFER, norm, ctx.STATIC_DRAW);
-        o.normBuffer = newNormBuffer;
-        o.normArray = norm;
+        obj.normBuffer = newNormBuffer;
+        obj.normArray = norm;
       }
 
-      return o;
+      return obj;
     }
   };
 
@@ -1213,28 +1218,28 @@ function PointStream(){
 
             file.pointCount += numVerts;
 
-            var verts = new WebGLFloatArray(numVerts*3);
-            var cols  = new WebGLFloatArray(numVerts*3);
-            var norms = new WebGLFloatArray(numVerts*3);
+            var verts = new TYPED_ARRAY_FLOAT(numVerts*3);
+            var cols  = new TYPED_ARRAY_FLOAT(numVerts*3);
+            var norms = new TYPED_ARRAY_FLOAT(numVerts*3);
 
             // xyz  rgb  normals
-            for(var i = 0, j = 0, len = chunk.length; i < len; i += 9, j+=3){
-              verts[j] = parseFloat(chunk[i]);
+            for(var i = 0, j = 0, len = chunk.length; i < len; i += 9, j += 3){
+              verts[j]   = parseFloat(chunk[i]);
               verts[j+1] = parseFloat(chunk[i+1]);
               verts[j+2] = parseFloat(chunk[i+2]);
-
-              objCenter[0] += verts[j]
-              objCenter[1] += verts[j+1]
-              objCenter[2] += verts[j+2]
+              
+              objCenter[0] += verts[j];
+              objCenter[1] += verts[j+1];
+              objCenter[2] += verts[j+2];
 
               if(colorsPresent){
-                cols[j] = parseInt(chunk[i+3])/255;
+                cols[j]   = parseInt(chunk[i+3])/255;
                 cols[j+1] = parseInt(chunk[i+4])/255;
                 cols[j+2] = parseInt(chunk[i+5])/255;
               }
 
               if(normalsPresent){
-                norms[j] = parseFloat(chunk[i+6]);
+                norms[j]   = parseFloat(chunk[i+6]);
                 norms[j+1] = parseFloat(chunk[i+7]);
                 norms[j+2] = parseFloat(chunk[i+8]);
               }
@@ -1246,24 +1251,24 @@ function PointStream(){
         // Only when the entire point cloud is finished downloading
         // can we calculate the center
         if(AJAX.readyState === XHR_DONE){
-        
           objCenter[0] /= file.pointCount;
           objCenter[1] /= file.pointCount;
           objCenter[2] /= file.pointCount;
-
+          
           file.center = [objCenter[0], objCenter[1], objCenter[2]];
+          
           file.status = COMPLETE;
           
-          var verts = new WebGLFloatArray(file.pointCount*3);
-          var cols  = new WebGLFloatArray(file.pointCount*3);
-          var norms = new WebGLFloatArray(file.pointCount*3);
+          var verts = new TYPED_ARRAY_FLOAT(file.pointCount*3);
+          var cols  = new TYPED_ARRAY_FLOAT(file.pointCount*3);
+          var norms = new TYPED_ARRAY_FLOAT(file.pointCount*3);
 
           var c = 0;
 
           for(var j = 0; j < VBOs.length; j++){
-            for(var i = 0; i < VBOs[j].size; i++,c++){
+            for(var i = 0; i < VBOs[j].size; i++, c++){
               verts[c] = VBOs[j].posArray[i];
-              cols[c] = VBOs[j].colArray[i];
+              cols[c]  = VBOs[j].colArray[i];
               norms[c] = VBOs[j].normArray[i]; 
             }
           }

@@ -54,12 +54,20 @@ function render() {
   ps.clear();
   ps.render();
   
+  var status = document.getElementById('fileStatus');
+  switch(mickey.status){
+    case 1: status.innerHTML = "status: STARTED";break;
+    case 2: status.innerHTML = "status: STREAMING";break;
+    case 3: status.innerHTML = "status: COMPLETE";break;
+    default:break;
+  }
+
   var fps = Math.floor(ps.frameRate);
   if(fps < 1){
     fps = "< 1";
   }
-
-  window.status = mickey.getPointCount() + " points @ " + fps + " FPS";
+  
+  status.innerHTML += "<br />" + mickey.getPointCount() + " points @ " + fps + " FPS";
 }
 
 function start(){
