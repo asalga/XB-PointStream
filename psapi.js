@@ -1101,11 +1101,21 @@ function PointStream(){
     /**
     */
     getPNG: function(){
-      var arr = ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE);
+      // Minefield throws and exception
+      try{
+        var arr = ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE);
 
-      if(!arr){
-        arr = new WebGLUnsignedByteArray(xb.width * xb.height * 4);
-        ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE, arr);
+        // Chrome posts an error
+        if(ctx.getError()){
+          arr = new WebGLUnsignedByteArray(xb.width * xb.height * 4);
+          ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE, arr); 
+        }
+      }
+      catch(e){
+        if(!arr){
+          arr = new WebGLUnsignedByteArray(xb.width * xb.height * 4);
+          ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE, arr);
+        }
       }
       
       var cvs = document.createElement('canvas');
