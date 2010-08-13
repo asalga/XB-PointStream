@@ -83,6 +83,7 @@ function PointStream(){
         
   // Vertex shader for boxes and spheres
   var vertexShaderSource =
+  "varying vec4 frontColor;" +
   "attribute vec3 aVertex;" +
   "attribute vec3 aNormal;" +
   "attribute vec4 aColor;" +
@@ -148,11 +149,11 @@ function PointStream(){
   // If there were no lights this draw call, just use the
   // assigned fill color of the shape and the specular value
   "  if( lightCount == 0 ) {" +
-  "    gl_FrontColor = vec4(col[0], col[1], col[2], 1.0);" +
+  "    frontColor = vec4(col[0], col[1], col[2], 1.0);" +
   "  }" +
   "  else {" +
   "    PointLight(finalDiffuse, ecPos, norm, eye );" +
-  "    gl_FrontColor = vec4(finalDiffuse[0] * col[0], finalDiffuse[1] * col[1], finalDiffuse[2] * col[2], 1.0);" +
+  "    frontColor = vec4(finalDiffuse[0] * col[0], finalDiffuse[1] * col[1], finalDiffuse[2] * col[2], 1.0);" +
   "  }" +
 
   "  float dist = length( view * model * vec4(aVertex, 1.0));" +
@@ -169,8 +170,9 @@ function PointStream(){
   "}";
 
   var fragmentShaderSource =
+  "varying vec4 frontColor;" +
   "void main(void){" +
-  "  gl_FragColor = gl_Color;" +
+  "  gl_FragColor = frontColor;" +
   "}";
 
   /**
