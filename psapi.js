@@ -12,7 +12,7 @@ function PointStream(){
   }
   const TYPED_ARRAY_FLOAT = WebGLFloatArray;
 
-  const VERSION  = 0.4.5;
+  const VERSION  = "0.4.5";
   const XHR_DONE = 4;
   
   // file status
