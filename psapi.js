@@ -6,11 +6,13 @@
 function PointStream(){
 
   try{
-    WebGLFloatArray;
+    Float32Array;
   }catch(ex){
-    WebGLFloatArray = Float32Array;
+    Float32Array = WebGLFloatArray;
+    Uint8Array = WebGLUnsignedByteArray;
   }
-  const TYPED_ARRAY_FLOAT = WebGLFloatArray;
+  const TYPED_ARRAY_FLOAT = Float32Array;
+  const TYPED_ARRAY_BYTE = Uint8Array;
 
   const VERSION  = "0.4.5";
   const XHR_DONE = 4;
@@ -1105,21 +1107,20 @@ function PointStream(){
     /**
     */
     getPNG: function(){
-      // Minefield throws and exception
+      var arr;
       try{
-        var arr = ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE);
+        arr = ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE);
 
         // Chrome posts an error
         if(ctx.getError()){
-          arr = new WebGLUnsignedByteArray(xb.width * xb.height * 4);
+          arr = new TYPED_ARRAY_BYTE(xb.width * xb.height * 4);
           ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE, arr); 
         }
       }
       catch(e){
-        if(!arr){
-          arr = new WebGLUnsignedByteArray(xb.width * xb.height * 4);
-          ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE, arr);
-        }
+        // Minefield throws and exception
+        arr = new TYPED_ARRAY_BYTE(xb.width * xb.height * 4);
+        ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE, arr);
       }
       
       var cvs = document.createElement('canvas');
