@@ -1113,8 +1113,7 @@ function PointStream(){
 
         // Chrome posts an error
         if(ctx.getError()){
-          arr = new TYPED_ARRAY_BYTE(xb.width * xb.height * 4);
-          ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE, arr); 
+          throw new Error("readPixels() API has changed.");
         }
       }
       catch(e){
