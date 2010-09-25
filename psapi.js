@@ -225,62 +225,7 @@ function PointStream(){
       ctx.enableVertexAttribArray(varLocation);
     }
   }
-  
-  /**
-  */
-  function getDataLayout(values){
-    var normalsPresent = false;
-    var colorsPresent = false;
     
-    // first check if there are 9 values, which would mean we have
-    // xyz rgb and normals
-    
-    // We can do this by counting the number of whitespace on the first line
-    var i = 0;
-    var numSpaces = 0;
-    do{
-      i++;
-      if(values[i] == " "){
-        numSpaces++;
-      }
-    }while( values[i] != '\n');
-    
-    // 1.916 -2.421 -4.0339 64 32 16 -0.3727 -0.2476 -0.8942
-    if(numSpaces === 8){
-      return 9;
-    }
-    
-    // 1.916 -2.421 -4.0339
-    if(numSpaces == 2){
-      return 3;
-    }
-    
-    var str = "";
-    
-    for(i = 0; i < 500; i++){
-      str += values[i];
-    }
-    
-    var str_split = str.split(/\s+/);
-    var data = [];
-    
-    for(var i=3; i < str_split.length;){
-      data.push(str_split[i++]);
-      data.push(str_split[i++]);
-      data.push(str_split[i++]);
-      i+=3;
-    }
-    
-    for(var i=0; i < data.length; i++){
-      if(data[i] < 0 || data[i] > 255){
-        normalsPresent = true;
-        return 1;
-      }
-    }
-    
-    return 2;
-  }
-  
   /**
     xyz - typed float array
     rgb - typed float array
