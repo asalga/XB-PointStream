@@ -1,0 +1,33 @@
+
+/* prevent the window scrollbars from appearing
+which conflict with zooming.*/
+html {
+ // overflow-x: hidden;
+ // overflow-y: hidden;
+}
+
+span{
+  font-family: monospace;
+}
+
+body{
+  margin: 0px 0px;
+}
+
+.progress{
+  color:purple;
+}
+
+.filename{
+  color: green;
+}
+
+img{
+  vertical-align: top;
+  border: 1px solid #000;
+}
+
+canvas{
+  width: 500;
+  height: 500;
+}

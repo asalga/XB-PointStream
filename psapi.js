@@ -89,6 +89,8 @@ function PointStream(){
   "attribute vec3 aVertex;" +
   "attribute vec3 aNormal;" +
   "attribute vec4 aColor;" +
+  
+  "uniform bool colorsPresent;" +
 
   "uniform bool usingMat;" +
   "uniform vec3 specular;" +
@@ -120,7 +122,7 @@ function PointStream(){
   "  col += light.col * 2.0 * nDotVP;" +
   "}" +
 
-  "void PointLight( inout vec3 col, in vec3 ecPos,  in vec3 vertNormal, in vec3 eye ) {" +
+  "void PointLight( inout vec3 col, in vec3 ecPos, in vec3 vertNormal, in vec3 eye ) {" +
   // Get the vector from the light to the vertex
   "   vec3 VP = light.pos - ecPos;" +
 
@@ -140,8 +142,12 @@ function PointStream(){
   "void main(void) {" +
   "  vec3 finalDiffuse = vec3( 0.0, 0.0, 0.0 );" +
 
+  // If no color data is present, use 1's so normals get lit.
   "  vec4 col = aColor;" +
-
+  "  if(colorsPresent == false){" +
+  "    col = vec4(1.0, 1.0, 1.0, 1.0);" +
+  "  }" +
+  
   "  vec3 norm = vec3( normalTransform * vec4( aNormal, 0.0 ) );" +
 
   "  vec4 ecPos4 = view * model * vec4(aVertex,1.0);" +
@@ -159,7 +165,7 @@ function PointStream(){
   "  }" +
 
   "  float dist = length( view * model * vec4(aVertex, 1.0));" +
-    "float attn = attenuation[0] + (attenuation[1] * dist) + (attenuation[2] * dist * dist);" +
+  "  float attn = attenuation[0] + (attenuation[1] * dist) + (attenuation[2] * dist * dist);" +
 
   "  if(attn > 0.0){" +
   "    gl_PointSize = pointSize * sqrt(1.0/attn);" +
@@ -229,10 +235,26 @@ function PointStream(){
   }
   
   /**
+    ASC files can either contain
+    X, Y, Z
+    X, Y, Z, R,  G,  B
+    X, Y, Z, NX, NY, NZ
+    X, Y, Z, R,  G,  B, NX, NY, NZ
+    
+    @Returns
+    0 first case
+    1 second case
+    2 third case
+    3 fourth case
   */
   function getDataLayout(values){
     var normalsPresent = false;
     var colorsPresent = false;
+    
+    var VERTS = 0;
+    var VERTS_COLS = 1;
+    var VERTS_NORMS = 2;
+    var VERTS_COLS_NORMS = 3;
     
     // first check if there are 9 values, which would mean we have
     // xyz rgb and normals
@@ -245,20 +267,24 @@ function PointStream(){
       if(values[i] == " "){
         numSpaces++;
       }
-    }while( values[i] != '\n');
+    }while(values[i] != '\n');
     
-    // 1.916 -2.421 -4.0339 64 32 16 -0.3727 -0.2476 -0.8942
+    // Vertices, Colors, Normals:
+    // 1.916 -2.421 -4.0   64 32 16   -0.3727 -0.2476 -0.8942
     if(numSpaces === 8){
-      return 9;
+      return VERTS_COLS_NORMS;
     }
     
+    // Just vertices:
     // 1.916 -2.421 -4.0339
     if(numSpaces == 2){
-      return 3;
+      return VERTS;
     }
     
     var str = "";
     
+    //
+    //
     for(i = 0; i < 500; i++){
       str += values[i];
     }
@@ -276,11 +302,13 @@ function PointStream(){
     for(var i=0; i < data.length; i++){
       if(data[i] < 0 || data[i] > 255){
         normalsPresent = true;
-        return 1;
+        return VERTS_NORMS;
       }
     }
     
-    return 2;
+    // Vertices and Normals:
+    // 1.916 -2.421 -4.0   -0.3727 -0.2476 -0.8942
+    return VERTS_COLS;
   }
   
   /**
@@ -298,7 +326,7 @@ function PointStream(){
       obj.posBuffer = newBuffer;
       obj.size = xyz.length;
  
-      if(rgb.length > 0){
+      if(rgb && rgb.length > 0){
         var newColBuffer = ctx.createBuffer();
         ctx.bindBuffer(ctx.ARRAY_BUFFER, newColBuffer);
         ctx.bufferData(ctx.ARRAY_BUFFER, rgb, ctx.STATIC_DRAW);
@@ -306,7 +334,7 @@ function PointStream(){
         obj.colArray = rgb;
       }
 
-      if(norm.length > 0){
+      if(norm && norm.length > 0){
         var newNormBuffer = ctx.createBuffer();
         ctx.bindBuffer(ctx.ARRAY_BUFFER, newNormBuffer);
         ctx.bufferData(ctx.ARRAY_BUFFER, norm, ctx.STATIC_DRAW);
@@ -877,9 +905,11 @@ function PointStream(){
           
           if(VBOs[k].colBuffer){
             vertexAttribPointer(progObj, "aColor", 3, VBOs[k].colBuffer);
+            uniformi(progObj, "colorsPresent", true);
           }
           else{
             disableVertexAttribPointer(progObj, "aColor");
+            uniformi(progObj, "colorsPresent", false);
           }
           
           if(VBOs[k].normBuffer){
@@ -890,6 +920,7 @@ function PointStream(){
           }
           else{
             disableVertexAttribPointer(progObj, "aNormal");
+            uniformi(progObj, "lightCount", 0);
           }
 
           var mvm = M4x4.mul(view, model);
@@ -1156,6 +1187,11 @@ function PointStream(){
     loadFile: function(o){
       var path = o.path;
       
+      var normalsPresent = false;
+      var colorsPresent = false;
+      var layout = -1;
+      var numValuesPerLine = -1;
+      
       var AJAX = new XMLHttpRequest();
       AJAX.open("GET", path, true);
       AJAX.send(null);
@@ -1181,12 +1217,9 @@ function PointStream(){
         if(AJAX.status === 200){
           file.status = STARTED;
         }
-         
+        
         if(AJAX.responseText){
           file.status = STREAMING;
-          var normalsPresent = true;
-          var colorsPresent = true;
-          
           var chunk;
           var doParse = true;
           
@@ -1221,6 +1254,27 @@ function PointStream(){
             startOfNextChunk = lastNewLineIndex + 1;
           }
 
+          if(layout === -1){
+            layout = getDataLayout(chunk);
+            numValuesPerLine = -1;
+            
+            switch(layout){
+              case 0: numValuesPerLine = 3;
+                      break;
+              case 1: numValuesPerLine = 6;
+                      colorsPresent = true;
+                      break;
+              case 2: numValuesPerLine = 6;
+                      normalsPresent = true;
+                      break;
+              case 3: numValuesPerLine = 9;
+                      normalsPresent = true;
+                      colorsPresent = true;
+                      break;
+            }
+            gotLayout = true;
+          }
+          
           if(doParse){
             // trim trailing spaces
             chunk = chunk.replace(/\s+$/,"");
@@ -1230,16 +1284,38 @@ function PointStream(){
             
             chunk = chunk.split(/\s+/);
             
-            var numVerts = chunk.length/9;
+            var numVerts = chunk.length/numValuesPerLine;
 
             file.pointCount += numVerts;
 
             var verts = new TYPED_ARRAY_FLOAT(numVerts*3);
-            var cols  = new TYPED_ARRAY_FLOAT(numVerts*3);
-            var norms = new TYPED_ARRAY_FLOAT(numVerts*3);
+            var cols = null;
+            var norms = null;
+
+            if(colorsPresent){
+              cols = new TYPED_ARRAY_FLOAT(numVerts*3);
+            }
+            
+            if(normalsPresent){
+              norms = new TYPED_ARRAY_FLOAT(numVerts*3);
+            }
+
+            // Depending if there are colors, 
+            // we'll need to read different indices.
+            // if there aren't:
+            // x  y  z  r  g  b  nx ny nz
+            // 0  1  2  3  4  5  6  7  8 <- normals start at index 6
+            //
+            // if there are:
+            // x  y  z  nx ny nz
+            // 0  1  2  3  4  5 <- normals start at index 3
+            var valueOffset = 0;
+            if(colorsPresent){
+              valueOffset = 3;
+            }
 
             // xyz  rgb  normals
-            for(var i = 0, j = 0, len = chunk.length; i < len; i += 9, j += 3){
+            for(var i = 0, j = 0, len = chunk.length; i < len; i += numValuesPerLine, j += 3){
               verts[j]   = parseFloat(chunk[i]);
               verts[j+1] = parseFloat(chunk[i+1]);
               verts[j+2] = parseFloat(chunk[i+2]);
@@ -1248,21 +1324,23 @@ function PointStream(){
               objCenter[1] += verts[j+1];
               objCenter[2] += verts[j+2];
 
-              if(colorsPresent){
+              if(cols){
                 cols[j]   = parseInt(chunk[i+3])/255;
                 cols[j+1] = parseInt(chunk[i+4])/255;
                 cols[j+2] = parseInt(chunk[i+5])/255;
               }
 
-              if(normalsPresent){
-                norms[j]   = parseFloat(chunk[i+6]);
-                norms[j+1] = parseFloat(chunk[i+7]);
-                norms[j+2] = parseFloat(chunk[i+8]);
+              if(norms){
+                norms[j]   = parseFloat(chunk[i + 3 + valueOffset]);
+                norms[j+1] = parseFloat(chunk[i + 4 + valueOffset]);
+                norms[j+2] = parseFloat(chunk[i + 5 + valueOffset]);
               }
             }
+            
             VBOs.push(createVBOs(verts, cols, norms));
           }
         }
+       
 
         // Only when the entire point cloud is finished downloading
         // can we calculate the center
@@ -1276,24 +1354,29 @@ function PointStream(){
           file.status = COMPLETE;
           
           var verts = new TYPED_ARRAY_FLOAT(file.pointCount*3);
-          var cols  = new TYPED_ARRAY_FLOAT(file.pointCount*3);
-          var norms = new TYPED_ARRAY_FLOAT(file.pointCount*3);
+          var cols  = colorsPresent ? new TYPED_ARRAY_FLOAT(file.pointCount*3): null;
+          var norms = normalsPresent ? new TYPED_ARRAY_FLOAT(file.pointCount*3) : null;
 
           var c = 0;
-
+          
           for(var j = 0; j < VBOs.length; j++){
             for(var i = 0; i < VBOs[j].size; i++, c++){
               verts[c] = VBOs[j].posArray[i];
-              cols[c]  = VBOs[j].colArray[i];
-              norms[c] = VBOs[j].normArray[i]; 
+              if(cols){
+                cols[c]  = VBOs[j].colArray[i];
+              }
+              if(norms){
+                norms[c] = VBOs[j].normArray[i];
+              }
             }
           }
-          
+           
           // delete old VBOs
           VBOs = [];
           VBOs.push(createVBOs(verts, cols, norms));
         }
       };
+
       return file;
     }
   }
