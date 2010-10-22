@@ -111,5 +111,5 @@ function start(){
   ps.onMouseReleased = mouseReleased;
   ps.keyDown = keyDown;
   
-  acorn = ps.loadFile({path:"acorn_vc.asc"});
+  acorn = ps.loadFile({path:"mickey_vc.asc"});
 }
