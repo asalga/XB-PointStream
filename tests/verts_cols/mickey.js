@@ -104,7 +104,7 @@ function start(){
   ps.setup(document.getElementById('canvas'), render);
   
   ps.background([0,0,0,0.5]);
-  ps.pointSize(5);
+  ps.pointSize(9);
 
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
