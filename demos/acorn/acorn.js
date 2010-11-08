@@ -25,10 +25,10 @@ function addPNG(){
   Remove all screenshots
 */
 function clearPNG(){
-  var test = document.getElementById('thumbnails');
+  var thumbnails = document.getElementById('thumbnails');
   
-  while(test.childNodes){
-    test.removeChild(test.childNodes[0]);
+  while(thumbnails.childNodes.length > 0){
+    thumbnails.removeChild(thumbnails.childNodes[0]);
   }
 }
 
