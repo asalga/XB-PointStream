@@ -866,7 +866,12 @@ function PointStream(){
       canvas.style.height = xb.height = height;
       
       ctx = canvas.getContext("experimental-webgl");
-      ctx.viewport(0, 0, width, height);
+
+      // crazy hack for Chrome/Chromium
+      var w = parseInt(width);
+      var h = parseInt(height);
+      
+      ctx.viewport(0, 0, w, h);
       ctx.enable(ctx.DEPTH_TEST);
       
       xb.background(bk);

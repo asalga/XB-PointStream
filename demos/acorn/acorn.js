@@ -52,7 +52,6 @@ function mouseReleased(){
 
 function keyDown(){
   document.getElementById('key').innerHTML = key;
-  ps.println(key);
 }
 
 function render() {
@@ -81,11 +80,11 @@ function render() {
   ps.clear();
   ps.render();
       
-  var status = document.getElementById('fileStatus');
+  var status = document.getElementById("fileStatus");
   switch(acorn.status){
-    case 1: status.innerHTML = "status: STARTED";break;
-    case 2: status.innerHTML = "status: STREAMING";break;
-    case 3: status.innerHTML = "status: COMPLETE";break;
+    case 1: status.innerHTML = "STARTED";break;
+    case 2: status.innerHTML = "STREAMING";break;
+    case 3: status.innerHTML = "COMPLETE";break;
     default:break;
   }
 
@@ -94,7 +93,8 @@ function render() {
     fps = "< 1";
   }
   
-  status.innerHTML += "<br />" + acorn.getPointCount() + " points @ " + fps + " FPS";
+  var numPointsAndFPS = document.getElementById("numPointsAndFPS");
+  numPointsAndFPS.innerHTML = acorn.getPointCount() + " points @ " + fps + " FPS";
 }
 
 function start(){
