@@ -1,33 +1,32 @@
-
-/* prevent the window scrollbars from appearing
-which conflict with zooming.*/
-html {
- // overflow-x: hidden;
- // overflow-y: hidden;
+html, body {
+  background: #EEE;
+  font-family: Arial;
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
 }
 
-span{
-  font-family: monospace;
+h1 {
+  background: #385C85;
+  color: #FFF;
+  padding: 10px;
+  padding-left: 20px;
+  margin-top: 0px;
 }
 
-body{
-  margin: 0px 0px;
+h1 a {
+  color: #00AA00;
 }
 
-.progress{
-  color:purple;
+p {
+  padding-left: 20px;
+  line-height: 1.3em;
 }
 
-.filename{
-  color: green;
-}
-
-img{
-  vertical-align: top;
-  border: 1px solid #000;
+p a {
+  color: #385C85;
 }
 
 canvas{
-  width: 500;
-  height: 500;
+  border: solid black 1px;
 }

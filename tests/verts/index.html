@@ -2,15 +2,24 @@
 
   <head>
     <link rel="stylesheet" type="text/css" href="../style.css" />
+    <script src="verts.js"></script>
     <script src="../../pointstream.js"></script>
-    <script src="gis.js"></script>
   </head>
 
-  <body onLoad="start();" bgcolor="#222" text="#FFF">
-    <span id="fileStatus"></span><br />
-    <canvas id="canvas" width="500" height="500"></canvas><br />
-    <span id="debug"></span>
-    <br />
-  </body>
+  <body onLoad="start();">
+  
+    <h1><a href="http://zenit.senecac.on.ca/wiki/index.php/XB_PointStream">XB PointStream</a> Only Vertices Test</h1>
 
+    <p>
+      This test makes sure the ASC parser can read in files which only<br />
+      contain position values and lack normals and colors.<br />
+      If the point cloud downloads and renders in the canvas,<br />
+      the test has passed.<br />
+      <br />
+      
+      <canvas id="canvas" width="300" height="300"></canvas><br />
+      <span id="debug"></span>
+    </p>
+    
+  </body>
 </html>
