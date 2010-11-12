@@ -1145,7 +1145,7 @@ function PointStream(){
     getPNG: function(){
       var arr;
       try{
-        arr = ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE);
+        arr = ctx.readPixels(0, 0, parseInt(xb.width), parseInt(xb.height), ctx.RGBA, ctx.UNSIGNED_BYTE);
 
         // Chrome posts an error
         if(ctx.getError()){
@@ -1153,9 +1153,13 @@ function PointStream(){
         }
       }
       catch(e){
+        // Chrome is reporting errors unless we do this..
+        var w = parseInt(xb.width);
+        var h = parseInt(xb.height);
+        
         // Minefield throws and exception
-        arr = new TYPED_ARRAY_BYTE(xb.width * xb.height * 4);
-        ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE, arr);
+        arr = new TYPED_ARRAY_BYTE(w * h * 4);
+        ctx.readPixels(0, 0, w, h, ctx.RGBA, ctx.UNSIGNED_BYTE, arr);
       }
       
       var cvs = document.createElement('canvas');

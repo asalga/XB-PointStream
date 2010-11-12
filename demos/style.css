@@ -2,17 +2,13 @@
 /* prevent the window scrollbars from appearing
 which conflict with zooming.*/
 html {
- /* overflow-x: hidden;  */
- /* overflow-y: hidden;*/
+ /* overflow-x: hidden; */
+ /* overflow-y: hidden; */
 }
 
 span, div{
   font-family: monospace;
   color: #FFFFFF;
-}
-
-body{
-  //margin: 0px 0px;
 }
 
 .orangeText{
@@ -23,10 +19,10 @@ body{
   color: #000000;
 }
 
-.filename{
-  color: green;
-}
-
+/*
+  Make sure the screenshots taken in the
+  acorn demo appear at the top of the page.
+*/
 img{
   vertical-align: top;
   border: 1px solid #000;

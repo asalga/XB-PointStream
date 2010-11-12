@@ -68,7 +68,33 @@ function render() {
     fps = "< 1";
   }
   
-  status.innerHTML += "<br />" + lion.getPointCount() + " points @ " + fps + " FPS";
+  status.innerHTML += "<br />" + addCommas("" + lion.getPointCount()) + " points @ " + fps + " FPS";
+}
+
+/*
+  @param {Number} value Number to convert
+  @returns string
+*/
+function addCommas(value){
+  var withCommas = "";
+  var valueStr = "" + value;
+  
+  var counter = valueStr.length-1;
+  var i = 1;
+  for(;counter >= 0; counter--, i++){
+    withCommas += value[counter];
+
+    if(i%3 === 0 && counter > 0){
+      withCommas += ",";
+    }
+  }
+
+  var correctOrder = "";
+  for(i = 0;i < withCommas.length; i++){
+    correctOrder += withCommas[withCommas.length-1-i];
+  }
+
+  return correctOrder;
 }
 
 function start(){
@@ -76,7 +102,7 @@ function start(){
   
   ps.setup(document.getElementById('canvas'), render);
   
-  ps.background([1,1,1,1]);
+  ps.background([0.2,0.2,0.2,1]);
   ps.pointSize(8);
 
   ps.onMouseScroll = zoom;
