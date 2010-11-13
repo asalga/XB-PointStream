@@ -56,6 +56,7 @@ function render() {
   ps.render();
   
   var status = document.getElementById('fileStatus');
+  status.innerHTML = "";
   switch(lion.status){
     case 1: status.innerHTML = "status: STARTED";break;
     case 2: status.innerHTML = "status: STREAMING";break;

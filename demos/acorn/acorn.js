@@ -81,6 +81,7 @@ function render() {
   ps.render();
       
   var status = document.getElementById("fileStatus");
+  status.innerHTML = "";
   switch(acorn.status){
     case 1: status.innerHTML = "STARTED";break;
     case 2: status.innerHTML = "STREAMING";break;
