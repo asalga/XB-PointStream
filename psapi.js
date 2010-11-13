@@ -1201,10 +1201,6 @@ function PointStream(){
       var layout = -1;
       var numValuesPerLine = -1;
       
-      var AJAX = new XMLHttpRequest();
-      AJAX.open("GET", path, true);
-      AJAX.send(null);
-      
       // object which will be returned to the user
       var file = {
         status: 0,
@@ -1221,8 +1217,8 @@ function PointStream(){
         },
       };
       
-      AJAX.onreadystatechange = function(){
-      
+      var AJAX = new XMLHttpRequest();
+      AJAX.onload = AJAX.onprogress = function(){
         if(AJAX.status === 200){
           file.status = STARTED;
         }
@@ -1385,6 +1381,9 @@ function PointStream(){
           VBOs.push(createVBOs(verts, cols, norms));
         }
       };
+      
+      AJAX.open("GET", path, true);
+      AJAX.send(null);
 
       return file;
     }

@@ -35,50 +35,35 @@ function mouseReleased(){
 
 function render() {
 
-if(mickey.status === 3){
+  if(mickey.status === 3){
 
-  if(XHR_TimerDone === false){
-    document.getElementById('XHR_Timer').innerHTML = (new Date() - XHR_Timer)/1000 + " seconds";
-    XHR_TimerDone = true;
-  }
+    if(XHR_TimerDone === false){
+      document.getElementById('XHR_Timer').innerHTML = (new Date() - XHR_Timer)/1000 + " seconds";
+      XHR_TimerDone = true;
+    }
 
-  var deltaX = ps.mouseX - curCoords[0];
-  var deltaY = ps.mouseY - curCoords[1];
-  
-  if(buttonDown){
-    rot[0] += deltaX / 250;
-    rot[1] += deltaY / 250;
-    curCoords[0] = ps.mouseX;
-    curCoords[1] = ps.mouseY;
-  }
-
-  // transform point cloud
-  ps.translate(0,0,zoomed);
+    var deltaX = ps.mouseX - curCoords[0];
+    var deltaY = ps.mouseY - curCoords[1];
     
-  ps.rotateY(rot[0]);
-  ps.rotateX(rot[1]);
-  
-  var c = mickey.getCenter();
-  
-  ps.translate(-c[0],-c[1],-c[2]);
+    if(buttonDown){
+      rot[0] += deltaX / 250;
+      rot[1] += deltaY / 250;
+      curCoords[0] = ps.mouseX;
+      curCoords[1] = ps.mouseY;
+    }
 
-  ps.clear();
-  ps.render();
-  
-  var status = document.getElementById('fileStatus');
-  switch(mickey.status){
-    case 1: status.innerHTML = "status: STARTED";break;
-    case 2: status.innerHTML = "status: STREAMING";break;
-    case 3: status.innerHTML = "status: COMPLETE";break;
-    default:break;
-  }
+    // transform point cloud
+    ps.translate(0,0,zoomed);
+      
+    ps.rotateY(rot[0]);
+    ps.rotateX(rot[1]);
+    
+    var c = mickey.getCenter();
+    
+    ps.translate(-c[0],-c[1],-c[2]);
 
-  var fps = Math.floor(ps.frameRate);
-  if(fps < 1){
-    fps = "< 1";
-  }
-  
-  status.innerHTML += "<br />" + mickey.getPointCount() + " points @ " + fps + " FPS";
+    ps.clear();
+    ps.render(); 
   }
 }
 
