@@ -1201,6 +1201,10 @@ function PointStream(){
       var layout = -1;
       var numValuesPerLine = -1;
       
+      // keep track if onprogress event handler
+      // was called to handle Chrome/Minefield differences.
+      var onprogHappened = false;
+      
       // object which will be returned to the user
       var file = {
         status: 0,
@@ -1218,19 +1222,164 @@ function PointStream(){
       };
       
       var AJAX = new XMLHttpRequest();
-      AJAX.onload = AJAX.onprogress = function(){
-        if(AJAX.status === 200){
-          file.status = STARTED;
+      file.status = STARTED;
+      
+      // this function is called once, when the file is 
+      // done being downloaded.
+      AJAX.onload = function(evt){
+        file.status = COMPLETE;
+        
+        var ascData = AJAX.responseText;
+        var chunk = null;
+        
+        // if the onprogress event didn't get called--we simply got
+        // the file in one go, we can parse from start to finish.
+        if(onprogHappened === false){
+          chunk = ascData;
+        }
+        // otherwise the onprogress event was called at least once,
+        // that means we need to get the data from a specific point to the end.
+        else if(ascData.length - AJAX.lastNewLineIndex > 1){
+          chunk = ascData.substring(AJAX.lastNewLineIndex, ascData.length);
         }
         
+        // if the last chunk doesn't have any digits (just spaces)
+        // don't parse it.
+        if(chunk && chunk.match(/[0-9]/)){
+          AJAX.parseChunk(chunk);
+        }
+        
+        // only when the entire point cloud is finished downloading
+        // can we calculate the center
+        objCenter[0] /= file.pointCount;
+        objCenter[1] /= file.pointCount;
+        objCenter[2] /= file.pointCount;
+        file.center = [objCenter[0], objCenter[1], objCenter[2]];
+        
+        // 
+        var verts = new TYPED_ARRAY_FLOAT(file.pointCount*3);
+        var cols  = colorsPresent ? new TYPED_ARRAY_FLOAT(file.pointCount*3): null;
+        var norms = normalsPresent ? new TYPED_ARRAY_FLOAT(file.pointCount*3) : null;
+
+        var c = 0;
+        
+        for(var j = 0; j < VBOs.length; j++){
+          for(var i = 0; i < VBOs[j].size; i++, c++){
+            verts[c] = VBOs[j].posArray[i];
+            if(cols){
+              cols[c]  = VBOs[j].colArray[i];
+            }
+            if(norms){
+              norms[c] = VBOs[j].normArray[i];
+            }
+          }
+        }
+        
+        // delete old VBOs
+        VBOs = [];
+        VBOs.push(createVBOs(verts, cols, norms));
+      }
+      
+      //
+      AJAX.parseChunk = function(chunkData){
+        var chunk = chunkData;
+        
+        if(layout === -1){
+          layout = getDataLayout(chunk);
+          numValuesPerLine = -1;
+          
+          switch(layout){
+            case 0: numValuesPerLine = 3;
+                    break;
+            case 1: numValuesPerLine = 6;
+                    colorsPresent = true;
+                    break;
+            case 2: numValuesPerLine = 6;
+                    normalsPresent = true;
+                    break;
+            case 3: numValuesPerLine = 9;
+                    normalsPresent = true;
+                    colorsPresent = true;
+                    break;
+          }
+          gotLayout = true;
+        }
+        
+        // trim trailing spaces
+        chunk = chunk.replace(/\s+$/,"");
+        
+        // trim leading spaces
+        chunk = chunk.replace(/^\s+/,"");
+        
+        // split on white space
+        chunk = chunk.split(/\s+/);
+        
+        var numVerts = chunk.length/numValuesPerLine;
+
+        file.pointCount += numVerts;
+
+        var verts = new TYPED_ARRAY_FLOAT(numVerts*3);
+        var cols = null;
+        var norms = null;
+
+        if(colorsPresent){
+          cols = new TYPED_ARRAY_FLOAT(numVerts*3);
+        }
+        
+        if(normalsPresent){
+          norms = new TYPED_ARRAY_FLOAT(numVerts*3);
+        }
+
+        // depending if there are colors, 
+        // we'll need to read different indices.
+        // if there aren't:
+        // x  y  z  r  g  b  nx ny nz
+        // 0  1  2  3  4  5  6  7  8 <- normals start at index 6
+        //
+        // if there are:
+        // x  y  z  nx ny nz
+        // 0  1  2  3  4  5 <- normals start at index 3
+        var valueOffset = 0;
+        if(colorsPresent){
+          valueOffset = 3;
+        }
+
+        // xyz  rgb  normals
+        for(var i = 0, j = 0, len = chunk.length; i < len; i += numValuesPerLine, j += 3){
+          verts[j]   = parseFloat(chunk[i]);
+          verts[j+1] = parseFloat(chunk[i+1]);
+          verts[j+2] = parseFloat(chunk[i+2]);
+          
+          objCenter[0] += verts[j];
+          objCenter[1] += verts[j+1];
+          objCenter[2] += verts[j+2];
+
+          if(cols){
+            cols[j]   = parseInt(chunk[i+3])/255;
+            cols[j+1] = parseInt(chunk[i+4])/255;
+            cols[j+2] = parseInt(chunk[i+5])/255;
+          }
+
+          if(norms){
+            norms[j]   = parseFloat(chunk[i + 3 + valueOffset]);
+            norms[j+1] = parseFloat(chunk[i + 4 + valueOffset]);
+            norms[j+2] = parseFloat(chunk[i + 5 + valueOffset]);
+          }
+        }
+        
+        VBOs.push(createVBOs(verts, cols, norms));
+      };
+      
+      // may occur 0 or many times
+      AJAX.onprogress = function(){
+        onprogHappened = true;
+
+        // if we have something to actually parse
         if(AJAX.responseText){
           file.status = STREAMING;
-          var chunk;
-          var doParse = true;
-          
           var ascData = AJAX.responseText;
 
-          // We likely stopped getting data somewhere in the middle of 
+          // we likely stopped getting data somewhere in the middle of 
           // a line in the ASC file
           
           // 5.813 2.352 6.500 0 0 0 2.646 3.577 2.516\n
@@ -1240,145 +1389,26 @@ function PointStream(){
           // So find the last known newline. Everything from the last
           // request to this last newline can be placed in a buffer.
           var lastNewLineIndex = ascData.lastIndexOf("\n");
+          AJAX.lastNewLineIndex = lastNewLineIndex;
           
-          // If the status just changed and we finished downloading the
+          // if the status just changed and we finished downloading the
           // file, grab everyting until the end. If there is only a bunch
           // of whitespace, make a note of that and don't bother parsing.
           if(AJAX.readyState === XHR_DONE){
-            chunk = ascData.substring(startOfNextChunk, ascData.length);
-
+            var chunk = ascData.substring(startOfNextChunk, ascData.length);
             // If the last chunk doesn't have any digits (just spaces)
             // don't parse it.
-            if(!chunk.match(/[0-9]/) ){
-              doParse = false;
+            if(chunk.match(/[0-9]/)){
+              AJAX.parseChunk(chunk);
             }
           }
+          // if we still have more data to go
           else{
             // Start of the next chunk starts after the newline.
-            chunk = ascData.substring(startOfNextChunk, lastNewLineIndex + 1);
+            var chunk = ascData.substring(startOfNextChunk, lastNewLineIndex + 1);
             startOfNextChunk = lastNewLineIndex + 1;
+            AJAX.parseChunk(chunk);
           }
-
-          if(layout === -1){
-            layout = getDataLayout(chunk);
-            numValuesPerLine = -1;
-            
-            switch(layout){
-              case 0: numValuesPerLine = 3;
-                      break;
-              case 1: numValuesPerLine = 6;
-                      colorsPresent = true;
-                      break;
-              case 2: numValuesPerLine = 6;
-                      normalsPresent = true;
-                      break;
-              case 3: numValuesPerLine = 9;
-                      normalsPresent = true;
-                      colorsPresent = true;
-                      break;
-            }
-            gotLayout = true;
-          }
-          
-          if(doParse){
-            // trim trailing spaces
-            chunk = chunk.replace(/\s+$/,"");
-          
-            // trim leading spaces
-            chunk = chunk.replace(/^\s+/,"");
-            
-            chunk = chunk.split(/\s+/);
-            
-            var numVerts = chunk.length/numValuesPerLine;
-
-            file.pointCount += numVerts;
-
-            var verts = new TYPED_ARRAY_FLOAT(numVerts*3);
-            var cols = null;
-            var norms = null;
-
-            if(colorsPresent){
-              cols = new TYPED_ARRAY_FLOAT(numVerts*3);
-            }
-            
-            if(normalsPresent){
-              norms = new TYPED_ARRAY_FLOAT(numVerts*3);
-            }
-
-            // Depending if there are colors, 
-            // we'll need to read different indices.
-            // if there aren't:
-            // x  y  z  r  g  b  nx ny nz
-            // 0  1  2  3  4  5  6  7  8 <- normals start at index 6
-            //
-            // if there are:
-            // x  y  z  nx ny nz
-            // 0  1  2  3  4  5 <- normals start at index 3
-            var valueOffset = 0;
-            if(colorsPresent){
-              valueOffset = 3;
-            }
-
-            // xyz  rgb  normals
-            for(var i = 0, j = 0, len = chunk.length; i < len; i += numValuesPerLine, j += 3){
-              verts[j]   = parseFloat(chunk[i]);
-              verts[j+1] = parseFloat(chunk[i+1]);
-              verts[j+2] = parseFloat(chunk[i+2]);
-              
-              objCenter[0] += verts[j];
-              objCenter[1] += verts[j+1];
-              objCenter[2] += verts[j+2];
-
-              if(cols){
-                cols[j]   = parseInt(chunk[i+3])/255;
-                cols[j+1] = parseInt(chunk[i+4])/255;
-                cols[j+2] = parseInt(chunk[i+5])/255;
-              }
-
-              if(norms){
-                norms[j]   = parseFloat(chunk[i + 3 + valueOffset]);
-                norms[j+1] = parseFloat(chunk[i + 4 + valueOffset]);
-                norms[j+2] = parseFloat(chunk[i + 5 + valueOffset]);
-              }
-            }
-            
-            VBOs.push(createVBOs(verts, cols, norms));
-          }
-        }
-       
-
-        // Only when the entire point cloud is finished downloading
-        // can we calculate the center
-        if(AJAX.readyState === XHR_DONE){
-          objCenter[0] /= file.pointCount;
-          objCenter[1] /= file.pointCount;
-          objCenter[2] /= file.pointCount;
-          
-          file.center = [objCenter[0], objCenter[1], objCenter[2]];
-          
-          file.status = COMPLETE;
-          
-          var verts = new TYPED_ARRAY_FLOAT(file.pointCount*3);
-          var cols  = colorsPresent ? new TYPED_ARRAY_FLOAT(file.pointCount*3): null;
-          var norms = normalsPresent ? new TYPED_ARRAY_FLOAT(file.pointCount*3) : null;
-
-          var c = 0;
-          
-          for(var j = 0; j < VBOs.length; j++){
-            for(var i = 0; i < VBOs[j].size; i++, c++){
-              verts[c] = VBOs[j].posArray[i];
-              if(cols){
-                cols[c]  = VBOs[j].colArray[i];
-              }
-              if(norms){
-                norms[c] = VBOs[j].normArray[i];
-              }
-            }
-          }
-           
-          // delete old VBOs
-          VBOs = [];
-          VBOs.push(createVBOs(verts, cols, norms));
         }
       };
       

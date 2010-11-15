@@ -12,14 +12,8 @@ var curCoords = [0,0];
 
 var size = 500;
 
-/*window.onresize = function(){
-  ps.resize(window.innerWidth, window.innerHeight);
-  ps.background([0.3,0.5,0.7,0.2]);
-};*/
-
 function zoom(amt){
-  var invert = document.getElementById('invertScroll').checked ? -1 : 1;
-  zoomed += amt * 2 * invert;
+  zoomed += amt * 2;
   size += amt * 10;
 }
 
@@ -72,7 +66,7 @@ function start(){
   
   ps.setup(document.getElementById('canvas'), render);
   
-  ps.pointSize(8);
+  ps.pointSize(5);
   ps.background([1,1,1,1]);
 
   ps.onMouseScroll = zoom;
