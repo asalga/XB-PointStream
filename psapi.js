@@ -1198,7 +1198,7 @@ function PointStream(){
       
       pointClouds[0].center = [objCenter[0], objCenter[1], objCenter[2]];
       
-      pointClouds[0].status = 4;
+      pointClouds[0].status = 3;
     },
     
     /**

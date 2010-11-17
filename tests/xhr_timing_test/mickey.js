@@ -1,5 +1,5 @@
-var ps;
-var mickey;
+var ps = null;
+var mickey = null;
 
 var XHR_Timer;
 var XHR_TimerDone = false;
@@ -57,7 +57,7 @@ function render() {
     ps.translate(-c[0],-c[1],-c[2]);
 
     ps.clear();
-    ps.render(); 
+    ps.render(mickey); 
   }
 }
 
@@ -67,7 +67,7 @@ function start(){
   ps.setup(document.getElementById('canvas'), render);
   
   ps.pointSize(5);
-  ps.background([1,1,1,1]);
+  ps.background([1, 1, 1, 1]);
 
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;

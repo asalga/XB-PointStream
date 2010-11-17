@@ -8,7 +8,7 @@ function render() {
   ps.translate(-c[0], -c[1], -c[2]);
   
   ps.clear();
-  ps.render();
+  ps.render(onlyVerts);
 }
   
 function start(){

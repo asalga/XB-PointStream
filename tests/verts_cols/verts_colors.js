@@ -1,5 +1,5 @@
-var pointCloud;
-var ps;
+var pointCloud = null;
+var ps = null;
 
 function render() {
   ps.translate(0, 0, -30);
@@ -8,7 +8,7 @@ function render() {
   ps.translate(-c[0], -c[1], -c[2]);
   
   ps.clear();
-  ps.render();      
+  ps.render(pointCloud);
 }
 
 function start(){
