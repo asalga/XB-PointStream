@@ -1,5 +1,5 @@
-var acorn;
-var ps;
+var acorn = null;
+var ps = null;
 
 var buttonDown = false;
 var zoomed = -50;
@@ -78,7 +78,7 @@ function render() {
   
   // redraw
   ps.clear();
-  ps.render();
+  ps.render(acorn);
       
   var status = document.getElementById("fileStatus");
   status.innerHTML = "";
@@ -95,7 +95,7 @@ function render() {
   }
   
   var numPointsAndFPS = document.getElementById("numPointsAndFPS");
-  numPointsAndFPS.innerHTML = acorn.getPointCount() + " points @ " + fps + " FPS";
+  numPointsAndFPS.innerHTML = acorn.getNumParsedPoints() + " points @ " + fps + " FPS";
 }
 
 function start(){
@@ -104,7 +104,7 @@ function start(){
   
   ps.setup(document.getElementById('canvas'), render);
   
-  ps.background([0,0,0,0.5]);
+  ps.background([0, 0, 0, 0.5]);
   ps.pointSize(5);
 
   ps.onMouseScroll = zoom;

@@ -1,5 +1,5 @@
-var ps;
-var mickey;
+var ps = null;
+var mickey = null;
 
 var buttonDown = false;
 var zoomed = -50;
@@ -8,11 +8,6 @@ var rot =[0,0];
 var curCoords = [0,0];
 
 var size = 500;
-
-/*window.onresize = function(){
-  ps.resize(window.innerWidth, window.innerHeight);
-  ps.background([0.3,0.5,0.7,0.2]);
-};*/
 
 function zoom(amt){
   var invert = document.getElementById('invertScroll').checked ? -1 : 1;
@@ -42,33 +37,33 @@ function render() {
   }
 
   // transform point cloud
-  ps.translate(0,0,zoomed);
-    
+  ps.translate(0, 0, zoomed);
+  
   ps.rotateY(rot[0]);
   ps.rotateX(rot[1]);
   
   var c = mickey.getCenter();
-  
   ps.translate(-c[0],-c[1],-c[2]);
 
   ps.clear();
-  ps.render();
+  ps.render(mickey);
   
   var status = document.getElementById('fileStatus');
   status.innerHTML = "";
+  
   switch(mickey.status){
     case 1: status.innerHTML = "status: STARTED";break;
     case 2: status.innerHTML = "status: STREAMING";break;
     case 3: status.innerHTML = "status: COMPLETE";break;
     default:break;
   }
-
+  
   var fps = Math.floor(ps.frameRate);
   if(fps < 1){
     fps = "< 1";
   }
   
-  status.innerHTML += "<br />" + mickey.getPointCount() + " points @ " + fps + " FPS";
+  status.innerHTML += "<br />" + mickey.getNumParsedPoints() + " points @ " + fps + " FPS";
 }
 
 function start(){
@@ -77,7 +72,7 @@ function start(){
   ps.setup(document.getElementById('canvas'), render);
   
   ps.pointSize(8);
-  ps.background([0.3,0.5,0.7,0.2]);
+  ps.background([0.3, 0.5, 0.7, 0.2]);
 
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
