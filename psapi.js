@@ -952,20 +952,20 @@ function PointStream(){
     },
     
     _keyDown: function(evt){
-      if(typeof xb.keyDown === "function"){
-        keyFunc(evt, xb.keyDown);
+      if(typeof xb.onKeyDown === "function"){
+        keyFunc(evt, xb.onKeyDown);
       }
     },
     
     _keyPressed: function(evt){
-      if(typeof xb.keyPressed === "function"){
-        keyFunc(evt, xb.keyPressed);
+      if(typeof xb.onKeyPressed === "function"){
+        keyFunc(evt, xb.onKeyPressed);
       }
     },
     
     _keyUp: function(evt){
-      if(typeof xb.keyUp === "function"){
-        keyFunc(evt, xb.keyUp);
+      if(typeof xb.onKeyUp === "function"){
+        keyFunc(evt, xb.onKeyUp);
       }
     },
     

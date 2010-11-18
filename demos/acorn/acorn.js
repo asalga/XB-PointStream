@@ -118,9 +118,7 @@ function start(){
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
-  
-  // !! fix me
-  ps.keyDown = keyDown;
+  ps.onKeyDown = keyDown;
   
   acorn = ps.load("../../clouds/acorn.asc");
 }
