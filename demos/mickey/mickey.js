@@ -78,5 +78,5 @@ function start(){
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
   
-  mickey = ps.loadFile({path:"mickey.asc"});
+  mickey = ps.loadFile("../../clouds/mickey.asc");
 }

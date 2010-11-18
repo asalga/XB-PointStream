@@ -1,5 +1,5 @@
-var onlyVerts;
-var ps;
+var onlyVerts = null;
+var ps = null;
 
 function render() {
   ps.translate(0, 0, -20);
@@ -16,5 +16,5 @@ function start(){
   ps.setup(document.getElementById('canvas'), render);
   ps.background([0, 0, 0, 0.5]);
   ps.pointSize(5);  
-  onlyVerts = ps.loadFile({path:"acorn_v.asc"});
+  onlyVerts = ps.loadFile("../../clouds/acorn_only_verts.asc");
 }

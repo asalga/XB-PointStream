@@ -4,8 +4,8 @@ var ps = null;
 var buttonDown = false;
 var zoomed = -50;
 
-var rot =[0,0];
-var curCoords = [0,0];
+var rot =[0, 0];
+var curCoords = [0, 0];
 
 /*window.onresize = function(){
   ps.resize(window.innerWidth/2, window.innerHeight/2);
@@ -54,8 +54,7 @@ function keyDown(){
   document.getElementById('key').innerHTML = key;
 }
 
-function render() {
-
+function render(){
   var deltaX = ps.mouseX - curCoords[0];
   var deltaY = ps.mouseY - curCoords[1];
   
@@ -69,15 +68,16 @@ function render() {
 
   // transform point cloud
   ps.translate(0, 0, zoomed);
-    
+  
   ps.rotateY(rot[0]);
   ps.rotateX(rot[1]);
-
+  
+  // clear the canvas
+  ps.clear();
+  
+  // draw acorn
   var c = acorn.getCenter();
   ps.translate(-c[0], -c[1], -c[2]);
-  
-  // redraw
-  ps.clear();
   ps.render(acorn);
       
   var status = document.getElementById("fileStatus");
@@ -95,7 +95,14 @@ function render() {
   }
   
   var numPointsAndFPS = document.getElementById("numPointsAndFPS");
-  numPointsAndFPS.innerHTML = acorn.getNumParsedPoints() + " points @ " + fps + " FPS";
+  
+  // 
+  if(acorn.getNumParsedPoints() > 0){
+    numPointsAndFPS.innerHTML = acorn.getNumParsedPoints() + " points @ " + fps + " FPS";
+  }
+  else{
+    numPointsAndFPS.innerHTML = fps + " FPS";
+  }
 }
 
 function start(){
@@ -106,11 +113,14 @@ function start(){
   
   ps.background([0, 0, 0, 0.5]);
   ps.pointSize(5);
-
+  
+  // !!! fix me ps.onRender = 
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
+  
+  // !! fix me
   ps.keyDown = keyDown;
   
-  acorn = ps.loadFile({path:"acorn.asc"});
+  acorn = ps.loadFile("../../clouds/acorn.asc");
 }

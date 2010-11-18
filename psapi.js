@@ -4,7 +4,9 @@
 */
 
 function PointStream(){
-  var parser = null;
+
+  //
+  var parsers = [];
   var pointClouds = [];
   
   try{
@@ -31,11 +33,7 @@ function PointStream(){
   
   var usersRenderCallback = null;
   
-  var bk = [1,1,1,1];
-//  var VBOs = [];
-  
-  var objCenter = [0,0,0];
-  var startOfNextChunk = 0;
+  var bk = [1, 1, 1, 1];
   
   // defaults
   var attn = [0.01, 0.0, 0.003];
@@ -54,8 +52,8 @@ function PointStream(){
   const SAFARI    = 6;
   const IE        = 7;
   
-  var canvas;
-  var ctx;
+  var canvas = null;
+  var ctx = null;
 
   // shader matrices
   var projection;
@@ -236,41 +234,27 @@ function PointStream(){
     }
   }
   
-  /**
-    xyz - typed float array
-    rgb - typed float array
-    norm - typed float array
+  /*
   */
-  function createVBOs(xyz, rgb, norm){
+  function createBufferObject(arr){
+  
+    // !!! check if length > 0?
     if(ctx){
       var obj = {};
-      var newBuffer = ctx.createBuffer();
-      ctx.bindBuffer(ctx.ARRAY_BUFFER, newBuffer);
-      ctx.bufferData(ctx.ARRAY_BUFFER, xyz, ctx.STATIC_DRAW);
-      obj.posArray = xyz;
-      obj.posBuffer = newBuffer;
-      obj.size = xyz.length;
- 
-      if(rgb && rgb.length > 0){
-        var newColBuffer = ctx.createBuffer();
-        ctx.bindBuffer(ctx.ARRAY_BUFFER, newColBuffer);
-        ctx.bufferData(ctx.ARRAY_BUFFER, rgb, ctx.STATIC_DRAW);
-        obj.colBuffer = newColBuffer;
-        obj.colArray = rgb;
-      }
 
-      if(norm && norm.length > 0){
-        var newNormBuffer = ctx.createBuffer();
-        ctx.bindBuffer(ctx.ARRAY_BUFFER, newNormBuffer);
-        ctx.bufferData(ctx.ARRAY_BUFFER, norm, ctx.STATIC_DRAW);
-        obj.normBuffer = newNormBuffer;
-        obj.normArray = norm;
-      }
-
+      var newVBO = ctx.createBuffer();
+      ctx.bindBuffer(ctx.ARRAY_BUFFER, newVBO);
+      ctx.bufferData(ctx.ARRAY_BUFFER, arr, ctx.STATIC_DRAW);
+      
+      // !! change to length, remove?
+      obj.length = arr.length;
+      obj.VBO = newVBO;
+      obj.array = arr;
+      
       return obj;
     }
-  };
-
+  }
+  
   /**
   */
   function disableVertexAttribPointer(programObj, varName){
@@ -847,42 +831,58 @@ function PointStream(){
     
     /**
     */
-    render: function(pointCloud){      
+    render: function(pointCloud){
       // render all the vbos in the current point cloud
-      var currVBOs = pointCloud.VBOs;
-//!!!!tinylogLite.log(currVBOs.length);
-      for(var k = 0; k < currVBOs.length; k++){
+      //var currVBOs = pointCloud.VBOs;
 
-        if(ctx && currVBOs){
-          vertexAttribPointer(progObj, "aVertex", 3, currVBOs[k].posBuffer);
-          
-          if(currVBOs[k].colBuffer){
-            vertexAttribPointer(progObj, "aColor", 3, currVBOs[k].colBuffer);
-            uniformi(progObj, "colorsPresent", true);
-          }
-          else{
-            disableVertexAttribPointer(progObj, "aColor");
-            uniformi(progObj, "colorsPresent", false);
-          }
-          
-          if(currVBOs[k].normBuffer){
-            vertexAttribPointer(progObj, "aNormal", 3, currVBOs[k].normBuffer);
-            uniformf(progObj, "light.col", [1, 1, 1]);
-            uniformf(progObj, "light.pos", [0, 0, -1]);
-            uniformi(progObj, "lightCount", 1);
-          }
-          else{
-            disableVertexAttribPointer(progObj, "aNormal");
-            uniformi(progObj, "lightCount", 0);
-          }
+      // !!! comment      
+      if(pointCloud.attributes["VERTEX"]){
+      //if(pointCloud.status !== -1){
+        
+        var arrayOfBufferObjs = pointCloud.attributes["VERTEX"];
+        
+        var numBufferObjects = arrayOfBufferObjs.length;
 
-          var mvm = M4x4.mul(view, model);
-          normalTransform = M4x4.inverseOrthonormal(mvm);
-          uniformMatrix(progObj, "normalTransform", false, M4x4.transpose(normalTransform));
-          
-          uniformMatrix(progObj, "model", false, model);
+        // !! what if norms not same size as vertices
 
-          ctx.drawArrays(ctx.POINTS, 0, currVBOs[k].size/3);
+        // !! rename k
+        for(var k = 0; k < numBufferObjects; k++){
+
+          if(ctx && arrayOfBufferObjs){
+            vertexAttribPointer(progObj, "aVertex", 3, arrayOfBufferObjs[k].VBO);
+            
+            //
+            //
+            if(pointCloud.attributes["COLOR"]){
+              vertexAttribPointer(progObj, "aColor", 3, pointCloud.attributes["COLOR"][k].VBO);
+              uniformi(progObj, "colorsPresent", true);
+            }
+            else{
+              disableVertexAttribPointer(progObj, "aColor");
+              uniformi(progObj, "colorsPresent", false);
+            }
+            
+            //
+            //
+            if(pointCloud.attributes["NORMAL"]){
+              vertexAttribPointer(progObj, "aNormal", 3, pointCloud.attributes["NORMAL"][k].VBO);
+              uniformf(progObj, "light.col", [1, 1, 1]);
+              uniformf(progObj, "light.pos", [0, 0, -1]);
+              uniformi(progObj, "lightCount", 1);
+            }
+            else{
+              disableVertexAttribPointer(progObj, "aNormal");
+              uniformi(progObj, "lightCount", 0);
+            }
+
+            var mvm = M4x4.mul(view, model);
+            normalTransform = M4x4.inverseOrthonormal(mvm);
+            uniformMatrix(progObj, "normalTransform", false, M4x4.transpose(normalTransform));
+            
+            uniformMatrix(progObj, "model", false, model);
+
+            ctx.drawArrays(ctx.POINTS, 0, arrayOfBufferObjs[k].length/3);
+          }
         }
       }
     },
@@ -919,6 +919,7 @@ function PointStream(){
       var delta = 0;
      
        // which check to use?
+       // !!!
       //if(browser === MINEFIELD){
       if(evt.detail){
         delta = evt.detail / 3;
@@ -1131,97 +1132,150 @@ function PointStream(){
     /*
       Whenever a chunk of data is parsed, this function 
       will be called.
+      
+      sends in name value pairs
+      {
+        "VERTEX" : [.....],
+        "COLOR" :  [.....],
+        "UNKNOWN": [.....]
+      }
     */
-    parseCallback: function(id){
-      var a = arguments;
-      //tinylogLite.log("FileSize = " + parser.getFileSize());
+    parseCallback: function(attributes, parser){
+
+      var i;
+      for(i = 0; i < parsers.length; i++){
+        if(parsers[i] === parser){break;}
+      }
       
-      pointClouds[0].verts = a[0];
-      pointClouds[0].cols = a[1];
-      pointClouds[0].norms = a[2];
+      pointClouds[i].numParsedPoints = parsers[i].getNumParsedPoints();
       
-      pointClouds[0].numParsedPoints = parser.getNumParsedPoints();
+      // !! comment
+      for(var semantic in attributes){
       
-      var vbo = createVBOs(a[0], a[1], a[2]);
-      //VBOs.push(vbo);
-      pointClouds[0].VBOs.push(vbo);
+       // if not yet created  
+       if(!pointClouds[i].attributes[semantic]){
+          pointClouds[i].attributes[semantic] = [];
+        }
+        
+        var buffObj = createBufferObject(attributes[semantic]);
+        pointClouds[i].attributes[semantic].push(buffObj);
+      }
     },
-    
+        
     /*
       called when the file is done being downloaded
+      
+      // !! this function needs some serious documentation
+      
     */
     loadedCallback: function(parser){
-    
+      
+      var idx;
+      for(idx = 0; i < parsers.length; idx++){
+        if(parsers[idx] === parser){break;}
+      }
+      
       // once the point cloud is done being parsed,
       // we can merge the vbos    
-      var numPoints = pointClouds[0].numTotalPoints = parser.getNumTotalPoints();
+      var numPoints = pointClouds[idx].numTotalPoints = parsers[idx].getNumTotalPoints();
       
       // Merge the VBOs into one. Since we are slowly 
       // getting the points, we'll end up with many vbos
       // which is slow to render.
-      var verts = new TYPED_ARRAY_FLOAT(numPoints*3);
-      //var cols = colorsPresent ? new TYPED_ARRAY_FLOAT(57507*3): null;
-      // ......
-      var cols = new TYPED_ARRAY_FLOAT(numPoints*3);
-      var norms = new TYPED_ARRAY_FLOAT(numPoints*3);
-
-      var c = 0;
-      var p = pointClouds[0];
+      var verts = new TYPED_ARRAY_FLOAT(numPoints * 3);
+      var cols = null;
+      var norms = null;
       
-      for(var j = 0; j < p.VBOs.length; j++){
-        for(var i = 0; i < p.VBOs[j].size; i++, c++){
-          verts[c] = p.VBOs[j].posArray[i];
+      var c = 0;
+      var p = pointClouds[idx];
+      
+      //
+      if(p.attributes["COLOR"]){
+        cols = new TYPED_ARRAY_FLOAT(numPoints * 3);
+      }
+      if(p.attributes["NORMAL"]){
+        norms = new TYPED_ARRAY_FLOAT(numPoints * 3);
+      }
+      
+      var numVBOs = p.attributes["VERTEX"].length;
+      
+      //
+
+      //
+      //
+      // iterate over all the vbos
+      for(var j = 0; j < numVBOs; j++){
+      
+        // iterate over all the values in this vbo
+       /// for(var i = 0; i < p.VBOs[j].size; i++, c++){
+        
+        for(var i = 0; i < p.attributes["VERTEX"][j].length; i++, c++){
+        
+          //verts[c] = p.VBOs[j].posArray[i];
+          verts[c] = p.attributes["VERTEX"][j].array[i];
+          
           if(cols){
-            cols[c] = p.VBOs[j].colArray[i];
+            //cols[c] = p.VBOs[j].colArray[i];
+            cols[c] = p.attributes["COLOR"][j].array[i];
           }
           if(norms){
-            norms[c] = p.VBOs[j].normArray[i];
+            //norms[c] = p.VBOs[j].normArray[i];
+            norms[c] = p.attributes["NORMAL"][j].array[i];
           }
         }
       }
-            
+      
+      // !!! todo
       // delete the old VBOs
-      pointClouds[0].VBOs = [];
-      pointClouds[0].VBOs.push(createVBOs(verts, cols, norms));
+      //if(!pointClouds[0].attributes["VERTEX"] ){
+      //  pointClouds[0].attributes["VERTEX"] = [];
+      //}
+      /*
+      pointClouds[0].attributes["VERTEX"] = [];
+      pointClouds[0].attributes["VERTEX"] = createBufferObject(verts);
 
-      // find the center      
-      var objCenter = [0, 0, 0];
-      for(var i = 0; i < verts.length; i += 3){
-        objCenter[0] += verts[i];
-        objCenter[1] += verts[i+1];
-        objCenter[2] += verts[i+2];
-      }
+      pointClouds[0].attributes["COLOR"] = [];
+      pointClouds[0].attributes["COLOR"] = createBufferObject(cols);
+
+      pointClouds[0].attributes["NORMAL"] = [];
+      pointClouds[0].attributes["NORMAL"] = createBufferObject(norms);
+*/
       
-      objCenter[0] /= verts.length/3;
-      objCenter[1] /= verts.length/3;
-      objCenter[2] /= verts.length/3;
+  //    pointClouds[0].VBOs = [];
+//      pointClouds[0].VBOs.push(createVBOs(verts, cols, norms));
       
-      pointClouds[0].center = [objCenter[0], objCenter[1], objCenter[2]];
       
-      pointClouds[0].status = 3;
+      // !!! fix
+      pointClouds[idx].center = getAverage(verts);
+      
+      pointClouds[idx].status = 3;
     },
     
     /**
       o - object such as {path:"acorn.asc"}
     */
-    loadFile: function(o){
-    
-      parser = new ASCParser();
-      parser.load(o.path);
+    loadFile: function(path){    
+
+      parsers.push(new ASCParser());
       
-      parser.setParseCallback(this.parseCallback);
-      parser.setLoadedCallback(this.loadedCallback);
+      var numParsersIdx = parsers.length - 1;
+      
+      parsers[numParsersIdx].load(path);
+      
+      parsers[numParsersIdx].setParseCallback(this.parseCallback);
+      parsers[numParsersIdx].setLoadedCallback(this.loadedCallback);
       // parser.onload = this.onload; ??
       
       var newPointCloud = {
         status: -1,
         VBOs: [],
+        attributes: {},
         
         getStatus: function(){
           return status;
         },
         
-        center: [0, 0, 0,],
+        center: [0, 0, 0],
         getCenter: function(){
           return this.center;
         },
@@ -1243,4 +1297,20 @@ function PointStream(){
     }
   }
   return xb;
+}
+
+var getAverage = function(arr){
+  var objCenter = [0, 0, 0];
+
+  for(var i = 0; i < arr.length; i += 3){
+    objCenter[0] += arr[i];
+    objCenter[1] += arr[i+1];
+    objCenter[2] += arr[i+2];
+  }
+
+  objCenter[0] /= arr.length/3;
+  objCenter[1] /= arr.length/3;
+  objCenter[2] /= arr.length/3;
+  
+  return objCenter;
 }

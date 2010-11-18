@@ -1,15 +1,15 @@
-var acorn;
-var ps;
+var acorn = null;
+var ps = null;
 
 function render() {
   ps.translate(0, 0, -20);
   
   var c = acorn.getCenter();
-  ps.translate(-c[0],-c[1],-c[2]);
+  ps.translate(-c[0], -c[1], -c[2]);
   
   // redraw
   ps.clear();
-  ps.render();
+  ps.render(acorn);
 }
 
 function start(){
@@ -19,5 +19,5 @@ function start(){
   ps.background([0, 0, 0, 0.5]);
   ps.pointSize(5);
   
-  acorn = ps.loadFile({path:"acorn_vn.asc"});
+  acorn = ps.loadFile("../../clouds/acorn_verts_norms.asc");
 }

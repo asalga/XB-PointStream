@@ -23,13 +23,20 @@ var ASCParser = (function() {
     Constructor
   */
   function ASCParser() {
-    //
+  
+    const UNKNOWN = -1;
+    
+    const XHR_DONE = 4;
+    const STARTED = 1;
+    
+    // start callback
     var parseCallback = null;
     var loadedCallback = null;
-    var test = null;
+    
     var pathToFile = null;
     var fileSize = 0;
     
+    //
     var numParsedPoints = 0;
     var numTotalPoints = 0;
     
@@ -37,12 +44,17 @@ var ASCParser = (function() {
     var numValuesPerLine = -1;
     var normalsPresent = false;
     var colorsPresent = false;
-    var layout = -1;
+    var layoutCode = UNKNOWN;
     
     //
     var parsedVerts = [];
     var parsedCols = [];
     var parsedNorms = [];
+    
+    // keep track if onprogress event handler
+    // was called to handle Chrome/Minefield differences.
+    var onProgressCalled = false;
+    var AJAX = null;
     
     // WebGL compatibility wrapper
     try{
@@ -50,22 +62,6 @@ var ASCParser = (function() {
     }catch(ex){
       Float32Array = WebGLFloatArray;
     }
-    
-    const XHR_DONE = 4;
-    const STARTED = 1;
-    
-    // keep track if onprogress event handler
-    // was called to handle Chrome/Minefield differences.
-    var onprogHappened = false;
-    var AJAX = null;
-    var done = false;
-    
-    /**
-      true if the file is done being read and parsed
-    */
-    this.isDone = function(){
-      return done;
-    };
     
     /**
       @private
@@ -127,14 +123,14 @@ var ASCParser = (function() {
       var str_split = str.split(/\s+/);
       var data = [];
       
-      for(var i=3; i < str_split.length;){
+      for(var i = 3; i < str_split.length;){
         data.push(str_split[i++]);
         data.push(str_split[i++]);
         data.push(str_split[i++]);
         i+=3;
       }
       
-      for(var i=0; i < data.length; i++){
+      for(var i = 0; i < data.length; i++){
         if(data[i] < 0 || data[i] > 255){
           normalsPresent = true;
           return VERTS_NORMS;
@@ -173,9 +169,18 @@ var ASCParser = (function() {
       return numParsedPoints;
     };
     
+    /*
+    */
     this.getNumTotalPoints = function(){
       return numTotalPoints;
     }
+    
+    /*
+    */
+    this.getFileSize = function(){
+      return fileSize;
+    };
+
     
     /**
       pathToFile
@@ -183,8 +188,15 @@ var ASCParser = (function() {
     this.load = function(path){
       pathToFile = path;
 
+      // !!
       AJAX = new XMLHttpRequest();
-      AJAX.test = this;
+      var str = "";
+      for(var i in AJAX){
+        str += i + "\n";
+      }
+      
+      // !! comment
+      AJAX.parser = this;
 
       /**
       */
@@ -198,17 +210,12 @@ var ASCParser = (function() {
       // done being downloaded.
       AJAX.onload = function(evt){
       
-/*!!!        var str = "";
-        for(i in AJAX){
-          str += i +"\n";
-        }*/
-        
         var ascData = AJAX.responseText;
         var chunk = null;
 
         // if the onprogress event didn't get called--we simply got
         // the file in one go, we can parse from start to finish.
-        if(onprogHappened === false){
+        if(onProgressCalled === false){
           chunk = ascData;
         }
         // otherwise the onprogress event was called at least once,
@@ -222,20 +229,21 @@ var ASCParser = (function() {
         if(chunk && chunk.match(/[0-9]/)){
           AJAX.parseChunk(chunk);
         }
-        done = true;
+
         numTotalPoints = numParsedPoints;
-        loadedCallback(AJAX.test);
+        loadedCallback(AJAX.parser);
       }
       
       //
       AJAX.parseChunk = function(chunkData){
         var chunk = chunkData;
         
-        if(layout === -1){
-          layout = getDataLayout(chunk);
+        // !! fix this
+        if(layoutCode === UNKNOWN){
+          layoutCode = getDataLayout(chunk);
           numValuesPerLine = -1;
           
-          switch(layout){
+          switch(layoutCode){
             case 0: numValuesPerLine = 3;
                     break;
             case 1: numValuesPerLine = 6;
@@ -296,6 +304,7 @@ var ASCParser = (function() {
           verts[j+1] = parseFloat(chunk[i+1]);
           verts[j+2] = parseFloat(chunk[i+2]);
 
+          // XBPS spec for parsers requires colors to be normalized
           if(cols){
             cols[j]   = parseInt(chunk[i+3])/255;
             cols[j+1] = parseInt(chunk[i+4])/255;
@@ -309,24 +318,26 @@ var ASCParser = (function() {
           }
         }
         
+        // !! pushing on null?
         parsedVerts.push(verts);
         parsedCols.push(cols);
         parsedNorms.push(norms);
-        
-        parseCallback(verts, cols, norms);
-      };
-      
-      /*
-      */  
-      this.getFileSize = function(){
-        return fileSize;
+         
+        // !! needs test
+        // !! needs comment
+        var test = {};
+        if(verts){test["VERTEX"] = verts;}
+        if(cols){test["COLOR"] = cols;}
+        if(norms){test["NORMAL"] = norms;}
+
+        parseCallback(test, AJAX.parser);
       };
     
       /**
         may occur 0 or many times
       */
       AJAX.onprogress = function(evt){
-        onprogHappened = true;
+        onProgressCalled = true;
 
         // if we have something to actually parse
         if(AJAX.responseText){
@@ -367,7 +378,7 @@ var ASCParser = (function() {
       
       AJAX.open("GET", path, true);
       AJAX.send(null);
-    };
-  }
+    };// load
+  }//ctor
   return ASCParser;
 }());

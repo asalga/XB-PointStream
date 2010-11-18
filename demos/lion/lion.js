@@ -1,5 +1,5 @@
-var ps;
-var lion;
+var ps = null;
+var lion = null;
 
 var buttonDown = false;
 var zoomed = -50;
@@ -8,11 +8,6 @@ var rot =[0,0];
 var curCoords = [0,0];
 
 var size = 500;
-
-/*window.onresize = function(){
-  ps.resize(window.innerWidth, window.innerHeight);
-  ps.background([0,0,0,1]);
-};*/
 
 function zoom(amt){
   var invert = document.getElementById('invertScroll').checked ? -1: 1;
@@ -53,7 +48,7 @@ function render() {
   
   // redraw
   ps.clear();
-  ps.render();
+  ps.render(lion);
   
   var status = document.getElementById('fileStatus');
   status.innerHTML = "";
@@ -69,7 +64,9 @@ function render() {
     fps = "< 1";
   }
   
-  status.innerHTML += "<br />" + addCommas("" + lion.getPointCount()) + " points @ " + fps + " FPS";
+  status.innerHTML  += "<br />" 
+                    + addCommas(new String(lion.getNumParsedPoints()))
+                    + " points @ " + fps + " FPS";
 }
 
 /*
@@ -110,5 +107,5 @@ function start(){
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
   
-  lion = ps.loadFile({path:"lion.asc"});
+  lion = ps.loadFile("../../clouds/lion.asc");
 }
