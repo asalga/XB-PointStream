@@ -16,5 +16,5 @@ function start(){
   ps.setup(document.getElementById('canvas'), render);
   ps.background([0, 0, 0, 0.5]);
   ps.pointSize(5);
-  pointCloud = ps.loadFile("../../clouds/mickey_verts_cols.asc");
+  pointCloud = ps.load("../../clouds/mickey_verts_cols.asc");
 }

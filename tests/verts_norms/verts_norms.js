@@ -19,5 +19,5 @@ function start(){
   ps.background([0, 0, 0, 0.5]);
   ps.pointSize(5);
   
-  acorn = ps.loadFile("../../clouds/acorn_verts_norms.asc");
+  acorn = ps.load("../../clouds/acorn_verts_norms.asc");
 }

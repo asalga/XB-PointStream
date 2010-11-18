@@ -1254,7 +1254,7 @@ function PointStream(){
     /**
       o - object such as {path:"acorn.asc"}
     */
-    loadFile: function(path){    
+    load: function(path){
 
       parsers.push(new ASCParser());
       

@@ -16,5 +16,5 @@ function start(){
   ps.setup(document.getElementById('canvas'), render);
   ps.background([0, 0, 0, 0.5]);
   ps.pointSize(5);  
-  onlyVerts = ps.loadFile("../../clouds/acorn_only_verts.asc");
+  onlyVerts = ps.load("../../clouds/acorn_only_verts.asc");
 }

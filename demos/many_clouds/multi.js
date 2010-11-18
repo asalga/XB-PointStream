@@ -145,7 +145,7 @@ function start(){
   // !
   ps.keyDown = keyDown;
   
-  acorn = ps.loadFile("../../clouds/acorn.asc");
-  mickey = ps.loadFile("../../clouds/mickey.asc");
-  egg = ps.loadFile("../../clouds/eggenburg.asc");
+  acorn = ps.load("../../clouds/acorn.asc");
+  mickey = ps.load("../../clouds/mickey.asc");
+  egg = ps.load("../../clouds/eggenburg.asc");
 }

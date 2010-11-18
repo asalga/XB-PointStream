@@ -122,5 +122,5 @@ function start(){
   // !! fix me
   ps.keyDown = keyDown;
   
-  acorn = ps.loadFile("../../clouds/acorn.asc");
+  acorn = ps.load("../../clouds/acorn.asc");
 }

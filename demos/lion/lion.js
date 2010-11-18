@@ -100,12 +100,12 @@ function start(){
   
   ps.setup(document.getElementById('canvas'), render);
   
-  ps.background([0.2,0.2,0.2,1]);
+  ps.background([0.2, 0.2 ,0.2 ,1]);
   ps.pointSize(8);
 
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
   
-  lion = ps.loadFile("../../clouds/lion.asc");
+  lion = ps.load("../../clouds/lion.asc");
 }

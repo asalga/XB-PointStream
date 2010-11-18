@@ -74,5 +74,5 @@ function start(){
   ps.onMouseReleased = mouseReleased;
   
   XHR_Timer = new Date();
-  mickey = ps.loadFile("../../clouds/mickey.asc");
+  mickey = ps.load("../../clouds/mickey.asc");
 }
