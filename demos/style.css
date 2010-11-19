@@ -2,20 +2,25 @@
 /* prevent the window scrollbars from appearing
 which conflict with zooming.*/
 html {
- // overflow-x: hidden;
- // overflow-y: hidden;
+ /* overflow-x: hidden;  */
+ /* overflow-y: hidden;*/
 }
 
-span{
+span, div{
   font-family: monospace;
+  color: #FFFFFF;
 }
 
 body{
-  margin: 0px 0px;
+  //margin: 0px 0px;
 }
 
-.progress{
-  color:purple;
+.orangeText{
+  color: orange;
+}
+
+.blackText{
+  color: #000000;
 }
 
 .filename{
@@ -25,9 +30,4 @@ body{
 img{
   vertical-align: top;
   border: 1px solid #000;
-}
-
-canvas{
-  width: 500;
-  height: 500;
 }
