@@ -2,19 +2,23 @@
 
   <head>
     <link rel="stylesheet" type="text/css" href="../style.css" />
+    <script src="verts_norms.js"></script>
     <script src="../../pointstream.js"></script>
-    <script src="acorn.js"></script>
   </head>
 
-  <body onLoad="start();" bgcolor="#222" text="#FFF">
-    <input type="button" value="Take Screenshot" onClick="addPNG();"/>
-    <input type="button" value="clear" onClick="clearPNG();"/>
-    <span id="fileStatus"></span><br />
-    <canvas id="canvas" width="300" height="500"></canvas><span id="thumbnails"></span><br />
-    <span>Invert scroll wheel:</span> <input type="checkbox" id="invertScroll" /><br />
-    <span id="debug"></span>
-    <br />
-    <span>Last key Pressed:</span> <span id="key">None</span>
-  </body>
+  <body onLoad="start();">
+  
+    <h1><a href="http://zenit.senecac.on.ca/wiki/index.php/XB_PointStream">XB PointStream</a> No Color Test</h1>
 
+    <p>
+      This test makes sure the ASC parser can read in files which only<br />
+      contain position and normal values and lack colors.<br />
+      If the point cloud downloads and renders in the canvas,<br />
+      the test has passed.<br />
+      <br />
+      
+      <canvas id="canvas" width="300" height="300"></canvas><br />
+    </p>
+    
+  </body>
 </html>

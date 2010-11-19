@@ -68,19 +68,20 @@ function render() {
   }
 
   // transform point cloud
-  ps.translate(0,0,zoomed);
+  ps.translate(0, 0, zoomed);
     
   ps.rotateY(rot[0]);
   ps.rotateX(rot[1]);
 
   var c = acorn.getCenter();
-  ps.translate(-c[0],-c[1],-c[2]);
+  ps.translate(-c[0], -c[1], -c[2]);
   
   // redraw
   ps.clear();
   ps.render();
       
   var status = document.getElementById("fileStatus");
+  status.innerHTML = "";
   switch(acorn.status){
     case 1: status.innerHTML = "STARTED";break;
     case 2: status.innerHTML = "STREAMING";break;
