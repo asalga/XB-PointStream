@@ -10,7 +10,7 @@ function PointStream(){
   var parsers = [];
   var pointClouds = [];
   
-  // WebGL Compatibility wrapper
+  // WebGL compatibility wrapper
   try{
     Float32Array;
   }catch(ex){

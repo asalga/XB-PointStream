@@ -12,9 +12,9 @@
   files which have their data stored in one of the following ways:
 
   X, Y, Z
-  X, Y, Z, R,  G,  B
-  X, Y, Z, NX, NY, NZ
-  X, Y, Z, R,  G,  B, NX, NY, NZ
+  X, Y, Z, R, G, B
+  X, Y, Z, I, J, K
+  X, Y, Z, R, G, B, I, J, K
 */
 
 var ASCParser = (function() {
@@ -29,7 +29,7 @@ var ASCParser = (function() {
     const XHR_DONE = 4;
     const STARTED = 1;
     
-    // start callback
+    // !! add start callback
     var parseCallback = null;
     var loadedCallback = null;
     
@@ -51,8 +51,11 @@ var ASCParser = (function() {
     var parsedCols = [];
     var parsedNorms = [];
     
-    // keep track if onprogress event handler
-    // was called to handle Chrome/Minefield differences.
+    // keep track if onprogress event handler was called to 
+    // handle Chrome/WebKit vs. Minefield differences.
+    //
+    // Minefield will call onprogress zero or many times
+    // Chrome/WebKit will call onprogress one or many times
     var onProgressCalled = false;
     var AJAX = null;
     
@@ -72,7 +75,7 @@ var ASCParser = (function() {
       X, Y, Z, NX, NY, NZ
       X, Y, Z, R,  G,  B, NX, NY, NZ
       
-      @Returns
+      @returns {Number}
       0 first case
       1 second case
       2 third case
@@ -115,7 +118,7 @@ var ASCParser = (function() {
       var str = "";
       
       //
-      //
+      // !! fix me
       for(i = 0; i < 500; i++){
         str += values[i];
       }
@@ -127,7 +130,7 @@ var ASCParser = (function() {
         data.push(str_split[i++]);
         data.push(str_split[i++]);
         data.push(str_split[i++]);
-        i+=3;
+        i += 3;
       }
       
       for(var i = 0; i < data.length; i++){
@@ -145,7 +148,7 @@ var ASCParser = (function() {
     /*
       Returns the version of this parser
       
-      @returns String
+      @returns {String} parser version
     */
     this.getVersion = function(){
       return "0.1";
@@ -188,17 +191,17 @@ var ASCParser = (function() {
     this.load = function(path){
       pathToFile = path;
 
-      // !!
       AJAX = new XMLHttpRequest();
-      var str = "";
-      for(var i in AJAX){
-        str += i + "\n";
-      }
       
-      // !! comment
+      // put a reference to the parser in the AJAX object
+      // so we can give the library a reference to the
+      // parser within the AJAX event handler scope.
+      // !! eventually need to fix this
       AJAX.parser = this;
 
       /**
+        occurs exactly once when the resource begins
+        to be downloaded
       */
       AJAX.onloadstart = function(evt){
         if(evt.lengthComputable){
@@ -206,8 +209,10 @@ var ASCParser = (function() {
         }
       };
             
-      // this function is called once, when the file is 
-      // done being downloaded.
+      /*
+        occurs exactly once, when the file is done 
+        being downloaded
+      */
       AJAX.onload = function(evt){
       
         var ascData = AJAX.responseText;
@@ -234,7 +239,9 @@ var ASCParser = (function() {
         loadedCallback(AJAX.parser);
       }
       
-      //
+      /**
+        !! fix me
+      */
       AJAX.parseChunk = function(chunkData){
         var chunk = chunkData;
         
@@ -334,7 +341,8 @@ var ASCParser = (function() {
       };
     
       /**
-        may occur 0 or many times
+        On Minefield, this will occur zero or many times
+        On Chrome/WebKit this will occur one or many times
       */
       AJAX.onprogress = function(evt){
         onProgressCalled = true;
@@ -376,6 +384,7 @@ var ASCParser = (function() {
         }
       };//onprogress
       
+      // open an asynchronous request to the path
       AJAX.open("GET", path, true);
       AJAX.send(null);
     };// load
