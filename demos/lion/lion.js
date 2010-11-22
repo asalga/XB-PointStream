@@ -7,12 +7,9 @@ var zoomed = -50;
 var rot =[0,0];
 var curCoords = [0,0];
 
-var size = 500;
-
 function zoom(amt){
   var invert = document.getElementById('invertScroll').checked ? -1: 1;
   zoomed += amt * 2 * invert;
-  size += amt * 10;
 }
 
 function mousePressed(){
@@ -46,9 +43,11 @@ function render() {
   // !!! fix me
   ps.translate(281.32617943646534,205.61656736098982,290.55082983174293);
   
+  if(ps.mouseX > 200){
   // redraw
   ps.clear();
   ps.render(lion);
+  }
   
   var status = document.getElementById('fileStatus');
   status.innerHTML = "";
@@ -71,7 +70,7 @@ function render() {
 
 /*
   @param {Number} value Number to convert
-  @returns string
+  @returns {String} Number separated with commas
 */
 function addCommas(value){
   var withCommas = "";
@@ -82,13 +81,13 @@ function addCommas(value){
   for(;counter >= 0; counter--, i++){
     withCommas += value[counter];
 
-    if(i%3 === 0 && counter > 0){
+    if(i % 3 === 0 && counter > 0){
       withCommas += ",";
     }
   }
 
   var correctOrder = "";
-  for(i = 0;i < withCommas.length; i++){
+  for(i = 0; i < withCommas.length; i++){
     correctOrder += withCommas[withCommas.length-1-i];
   }
 

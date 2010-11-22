@@ -242,6 +242,18 @@ function PointStream(){
     }
   }
   
+  /**
+    !! fix this
+  */
+  function getParserIndex(parser){
+    var i;
+    for(i = 0; i < parsers.length; i++){
+      if(parsers[i] === parser){break;}
+    }
+    return i;
+  }
+
+  
   /*
     Create a buffer object which will contain
     the Vertex buffer object for the shader along
@@ -1174,6 +1186,13 @@ function PointStream(){
       return ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE);
     },
     
+    /**
+    */
+    startCallback: function(parser){
+      var i = getParserIndex(parser);
+      pointClouds[i].status = STARTED;
+    },
+    
     /*
       Whenever a chunk of data is parsed, this function 
       will be called.
@@ -1187,11 +1206,8 @@ function PointStream(){
     */
     parseCallback: function(attributes, parser){
 
-      var i;
-      for(i = 0; i < parsers.length; i++){
-        if(parsers[i] === parser){break;}
-      }
-      
+      var i = getParserIndex(parser);
+      pointClouds[i].status = STREAMING;
       pointClouds[i].numParsedPoints = parsers[i].getNumParsedPoints();
       
       // !! comment
@@ -1214,11 +1230,7 @@ function PointStream(){
       
     */
     loadedCallback: function(parser){
-      
-      var idx;
-      for(idx = 0; i < parsers.length; idx++){
-        if(parsers[idx] === parser){break;}
-      }
+      var idx = getParserIndex(parser);
       
       // create a short alias
       var pc = pointClouds[idx];
@@ -1291,16 +1303,11 @@ function PointStream(){
     */
     load: function(path){
 
-      parsers.push(new ASCParser());
-      
-      var numParsersIdx = parsers.length - 1;
-      
-      parsers[numParsersIdx].load(path);
-      
-      parsers[numParsersIdx].setParseCallback(this.parseCallback);
-      parsers[numParsersIdx].setLoadedCallback(this.loadedCallback);
-      // parser.onload = this.onload; ??
-      
+      var ascParser = new ASCParser();
+      ascParser.addEventListener("onstart", this.startCallback);
+      ascParser.addEventListener("onparse", this.parseCallback);
+      ascParser.addEventListener("onfinish", this.loadedCallback);
+
       // !! fix
       var newPointCloud = {
         status: -1,
@@ -1327,7 +1334,10 @@ function PointStream(){
         }
       };
       
+      parsers.push(ascParser);
       pointClouds.push(newPointCloud);
+      
+      ascParser.load(path);
       
       return newPointCloud;
     }

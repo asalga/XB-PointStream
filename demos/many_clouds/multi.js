@@ -1,4 +1,4 @@
-var egg = null;
+var eggenburg = null;
 var acorn = null;
 var mickey = null;
 
@@ -10,24 +10,6 @@ var zoomed = -50;
 
 var rot =[0, 0];
 var curCoords = [0, 0];
-
-function addPNG(){
-  var img = document.createElement('img');
-  img.setAttribute("width", "100");  
-  document.getElementById('thumbnails').appendChild(img);
-  img.src = ps.getPNG();
-}
-
-/*
-  Remove all screenshots
-*/
-function clearPNG(){
-  var thumbnails = document.getElementById('thumbnails');
-  
-  while(thumbnails.childNodes.length > 0){
-    thumbnails.removeChild(thumbnails.childNodes[0]);
-  }
-}
 
 function zoom(amt){
   var invert = document.getElementById('invertScroll').checked ? -1: 1;
@@ -47,8 +29,15 @@ function mouseReleased(){
   buttonDown = false;
 }
 
-function keyDown(){
-  document.getElementById('key').innerHTML = key;
+function updateStatus(cloud, str){
+  var status = document.getElementById(str);
+  status.innerHTML = "";
+  switch(cloud.status){
+    case 1: status.innerHTML = "STARTED";break;
+    case 2: status.innerHTML = "STREAMING";break;
+    case 3: status.innerHTML = "COMPLETE";break;
+    default:break;
+  }
 }
 
 function render() {
@@ -82,7 +71,7 @@ function render() {
   ps.render(mickey);
 
   ps.translate(0, -17, 0);
-  ps.render(egg);
+  ps.render(eggenburg);
 
   ps.translate(0, 17, 0);
     
@@ -97,17 +86,11 @@ function render() {
   ps.translate(-c[0], -c[1], -c[2]);
   ps.scale(0.8);
 
-
   ps.render(acorn);
-      
-  var status = document.getElementById("fileStatus");
-  status.innerHTML = "";
-  switch(acorn.status){
-    case 1: status.innerHTML = "STARTED";break;
-    case 2: status.innerHTML = "STREAMING";break;
-    case 3: status.innerHTML = "COMPLETE";break;
-    default:break;
-  }
+  
+  updateStatus(acorn,"acornStatus");
+  updateStatus(mickey, "mickeyStatus");
+  updateStatus(eggenburg, "villageStatus");  
 
   var fps = Math.floor(ps.frameRate);
   if(fps < 1){
@@ -118,7 +101,10 @@ function render() {
   
   // 
   if(acorn.getNumParsedPoints() > 0){
-    numPointsAndFPS.innerHTML = acorn.getNumParsedPoints() + " points @ " + fps + " FPS";
+    numPointsAndFPS.innerHTML = acorn.getNumParsedPoints() + 
+                                mickey.getNumParsedPoints() + 
+                                eggenburg.getNumParsedPoints() +
+                                " points @ " + fps + " FPS";
   }
   else{
     numPointsAndFPS.innerHTML = fps + " FPS";
@@ -131,21 +117,15 @@ function render() {
 
 function start(){
   ps = new PointStream();
-  document.getElementById('debug').innerHTML += "XB PointStream Version: " + ps.getVersion();
-  
   ps.setup(document.getElementById('canvas'), render);
-  
   ps.background([0, 0, 0, 0.5]);
 
-  // ps.onRender = 
+  // ps.onRender = render
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
   
-  // !
-  ps.keyDown = keyDown;
-  
   acorn = ps.load("../../clouds/acorn.asc");
   mickey = ps.load("../../clouds/mickey.asc");
-  egg = ps.load("../../clouds/eggenburg.asc");
+  eggenburg = ps.load("../../clouds/eggenburg.asc");
 }

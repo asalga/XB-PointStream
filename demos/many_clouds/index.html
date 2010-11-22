@@ -7,18 +7,17 @@
     <script src="multi.js"></script>
   </head>
 
-  <body onLoad="start();" bgcolor="#222222">
-    <input type="button" value="Take Screenshot" onClick="addPNG();"/>
-    <input type="button" value="clear" onClick="clearPNG();"/><br />
+  <body onLoad="start();" bgcolor="#222222" text="#FFFFFF">
+    <span>acorn: </span>[<span class="orangeText" id="acornStatus"></span>]<br />
+    <span>mickey: </span>[<span class="orangeText" id="mickeyStatus"></span>]<br />
+    <span>village: </span>[<span class="orangeText" id="villageStatus"></span>]<br />
     
-    <span>status: </span><span class="orangeText" id="fileStatus"></span><br />
     <div id="numPointsAndFPS"></div>
     
-    <canvas id="canvas" width="600" height="600"></canvas><span id="thumbnails"></span><br />
+    <canvas id="canvas" width="600" height="600"></canvas><br />
+    
     <span>Invert scroll wheel:</span> <input type="checkbox" id="invertScroll" /><br />
-    <span id="debug"></span>
     <br />
-    <span>Last key Pressed:</span> <span id="key" class="orangeText">None</span>
   </body>
 
 </html>

@@ -29,9 +29,12 @@ var ASCParser = (function() {
     const XHR_DONE = 4;
     const STARTED = 1;
     
-    // !! add start callback
-    var parseCallback = null;
-    var loadedCallback = null;
+    //
+    var events = {
+      "onstart": null,
+      "onparse": null,
+      "onfinish": null
+    };
     
     var pathToFile = null;
     var fileSize = 0;
@@ -155,15 +158,15 @@ var ASCParser = (function() {
     };
     
     /**
+      "onstart"
+      "onparse"
+      "onfinish"
+      
+      @param {String} eventName
+      @param {Function} func
     */
-    this.setParseCallback = function(){
-      parseCallback = arguments[0];
-    };
-    
-    /*
-    */
-    this.setLoadedCallback = function(){
-      loadedCallback = arguments[0];
+    this.addEventListener = function(eventName, func){
+      events[eventName] = func;
     };
     
     /*
@@ -207,6 +210,7 @@ var ASCParser = (function() {
         if(evt.lengthComputable){
           fileSize = evt.total;
         }
+        events["onstart"](AJAX.parser);
       };
             
       /*
@@ -236,7 +240,7 @@ var ASCParser = (function() {
         }
 
         numTotalPoints = numParsedPoints;
-        loadedCallback(AJAX.parser);
+        events["onfinish"](AJAX.parser);
       }
       
       /**
@@ -336,8 +340,8 @@ var ASCParser = (function() {
         if(verts){test["VERTEX"] = verts;}
         if(cols){test["COLOR"] = cols;}
         if(norms){test["NORMAL"] = norms;}
-
-        parseCallback(test, AJAX.parser);
+ 
+        events["onparse"](test, AJAX.parser);
       };
     
       /**

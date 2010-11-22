@@ -22,9 +22,8 @@ function addPNG(){
 }
 
 /*
-  Remove all screenshots
 */
-function clearPNG(){
+function removeAllScreenShots(){
   var thumbnails = document.getElementById('thumbnails');
   
   while(thumbnails.childNodes.length > 0){
@@ -114,7 +113,9 @@ function start(){
   ps.background([0, 0, 0, 0.5]);
   ps.pointSize(5);
   
-  // !!! fix me ps.onRender = 
+  // !! fix me 
+  // ps.onRender = render;
+  ps.onRender = render;
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
