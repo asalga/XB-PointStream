@@ -31,9 +31,9 @@ var ASCParser = (function() {
     
     //
     var events = {
-      "onstart": null,
-      "onparse": null,
-      "onfinish": null
+      "onstart": function(){},
+      "onparse": function(){},
+      "onfinish": function(){}
     };
     
     var pathToFile = null;
