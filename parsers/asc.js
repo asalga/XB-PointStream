@@ -182,6 +182,8 @@ var ASCParser = (function() {
       return numTotalPoints;
     }
     
+    /*
+    */
     this.getProgress = function(){
       return progress;
     }
