@@ -1208,7 +1208,8 @@ function PointStream(){
 
       var i = getParserIndex(parser);
       pointClouds[i].status = STREAMING;
-      pointClouds[i].numParsedPoints = parsers[i].getNumParsedPoints();
+      pointClouds[i].progress = parser.getProgress();
+      pointClouds[i].numPoints = parsers[i].getNumParsedPoints();
       
       // !! comment
       for(var semantic in attributes){
@@ -1296,6 +1297,7 @@ function PointStream(){
       pc.center = getAverage(verts);
       
       pc.status = COMPLETE;
+      pc.progress = parser.getProgress();
     },
     
     /**
@@ -1310,12 +1312,18 @@ function PointStream(){
 
       // !! fix
       var newPointCloud = {
-        status: -1,
+
         VBOs: [],
         attributes: {},
         
+        progress: 0,
+        getProgress: function(){
+          return this.progress;
+        },
+
+        status: -1,
         getStatus: function(){
-          return status;
+          return this.status;
         },
         
         center: [0, 0, 0],
@@ -1328,9 +1336,9 @@ function PointStream(){
           return this.numTotalPoints;
         },
         
-        numParsedPoints: -1,
-        getNumParsedPoints: function(){
-          return this.numParsedPoints;
+        numPoints: -1,
+        getNumPoints: function(){
+          return this.numPoints;
         }
       };
       

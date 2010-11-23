@@ -42,6 +42,7 @@ var ASCParser = (function() {
     //
     var numParsedPoints = 0;
     var numTotalPoints = 0;
+    var progress = 0;
     
     //
     var numValuesPerLine = -1;
@@ -181,6 +182,10 @@ var ASCParser = (function() {
       return numTotalPoints;
     }
     
+    this.getProgress = function(){
+      return progress;
+    }
+    
     /*
     */
     this.getFileSize = function(){
@@ -206,10 +211,7 @@ var ASCParser = (function() {
         occurs exactly once when the resource begins
         to be downloaded
       */
-      AJAX.onloadstart = function(evt){
-        if(evt.lengthComputable){
-          fileSize = evt.total;
-        }
+      AJAX.onloadstart = function(evt){        
         events["onstart"](AJAX.parser);
       };
             
@@ -240,6 +242,9 @@ var ASCParser = (function() {
         }
 
         numTotalPoints = numParsedPoints;
+
+        progress = 1;
+        
         events["onfinish"](AJAX.parser);
       }
       
@@ -349,6 +354,12 @@ var ASCParser = (function() {
         On Chrome/WebKit this will occur one or many times
       */
       AJAX.onprogress = function(evt){
+      
+       if(evt.lengthComputable){
+          fileSize = evt.total;
+          progress = evt.loaded/evt.total;
+        }
+
         onProgressCalled = true;
 
         // if we have something to actually parse

@@ -1,23 +1,71 @@
 <html>
 
   <head>
+    <!-- jQuery stuff -->  
+    <script type="text/javascript" src="jquery-1.3.2.min.js"></script>
+    <script type="text/javascript" src="jquery-ui-1.7.2.custom.min.js"></script>
+    <link rel="stylesheet" type="text/css" media="screen" href="jquery-ui-1.7.2.custom.css" />
+
     <link rel="stylesheet" type="text/css" href="../style.css" />
     <script src="../../pointstream.js"></script>
     <script src="../../parsers/asc.js"></script>
     <script src="multi.js"></script>
   </head>
 
-  <body onLoad="start();" bgcolor="#222222" text="#FFFFFF">
-    <span>acorn: </span>[<span class="orangeText" id="acornStatus"></span>]<br />
-    <span>mickey: </span>[<span class="orangeText" id="mickeyStatus"></span>]<br />
-    <span>village: </span>[<span class="orangeText" id="villageStatus"></span>]<br />
-    
-    <div id="numPointsAndFPS"></div>
-    
-    <canvas id="canvas" width="600" height="600"></canvas><br />
-    
-    <span>Invert scroll wheel:</span> <input type="checkbox" id="invertScroll" /><br />
-    <br />
-  </body>
+  <body onload="start();" bgcolor="#222222" text="#FFFFFF">
+    <script type="text/javascript">
+      $(function() {
+        $("#progressbar1").css({'height': '10px' });
+        $("#progressbar1").progressbar({ value: 0 });
+        
+        $("#progressbar2").css({'height': '10px' });
+        $("#progressbar2").progressbar({ value: 0 });
+        
+        $("#progressbar3").css({'height': '10px' });
+        $("#progressbar3").progressbar({ value: 0 });
+      });
+    </script>
 
+    <table>
+      <tr>
+        <td>
+          <canvas id="canvas" width="500" height="500"></canvas>
+        </td>
+        
+        <td valign="top">
+          <table border="0" width="300" cellspacing="0" cellpadding="0">
+            <tr>
+              <td>
+                <span>acorn: </span>[<span class="orangeText" id="acornStatus"></span>] - <span id="acornNumPoints">0</span> 
+                <div id="progressbar1"></div>
+              </td>
+            </tr>
+                    
+            <tr>
+              <td>
+                <span>mickey: </span>[<span class="orangeText" id="mickeyStatus"></span>] - <span id="mickeyNumPoints">0</span><br />
+                <div id="progressbar2"></div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <span>village: </span>[<span class="orangeText" id="villageStatus"></span>] - <span id="eggenburgNumPoints">0</span><br />
+                <div id="progressbar3"></div>
+              </td>
+            </tr>
+            
+            <tr>
+              <td>
+                <br />
+                <div id="fps"></div>
+                <span>Invert scroll wheel:</span> <input type="checkbox" id="invertScroll" />
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+  </body>
 </html>
