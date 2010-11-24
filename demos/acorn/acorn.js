@@ -96,8 +96,8 @@ function render(){
   var numPointsAndFPS = document.getElementById("numPointsAndFPS");
   
   // 
-  if(acorn.getNumParsedPoints() > 0){
-    numPointsAndFPS.innerHTML = acorn.getNumParsedPoints() + " points @ " + fps + " FPS";
+  if(acorn.getNumPoints() > 0){
+    numPointsAndFPS.innerHTML = acorn.getNumPoints() + " points @ " + fps + " FPS";
   }
   else{
     numPointsAndFPS.innerHTML = fps + " FPS";

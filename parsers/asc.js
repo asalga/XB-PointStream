@@ -257,98 +257,103 @@ var ASCParser = (function() {
         var chunk = chunkData;
         
         // !! fix this
-        if(layoutCode === UNKNOWN){
-          layoutCode = getDataLayout(chunk);
-          numValuesPerLine = -1;
+        // this occurs over network connections, but not locally.
+        if(chunk !== ""){
           
-          switch(layoutCode){
-            case 0: numValuesPerLine = 3;
-                    break;
-            case 1: numValuesPerLine = 6;
-                    colorsPresent = true;
-                    break;
-            case 2: numValuesPerLine = 6;
-                    normalsPresent = true;
-                    break;
-            case 3: numValuesPerLine = 9;
-                    normalsPresent = true;
-                    colorsPresent = true;
-                    break;
+          // !! fix this
+          if(layoutCode === UNKNOWN){
+            layoutCode = getDataLayout(chunk);
+            numValuesPerLine = -1;
+            
+            switch(layoutCode){
+              case 0: numValuesPerLine = 3;
+                      break;
+              case 1: numValuesPerLine = 6;
+                      colorsPresent = true;
+                      break;
+              case 2: numValuesPerLine = 6;
+                      normalsPresent = true;
+                      break;
+              case 3: numValuesPerLine = 9;
+                      normalsPresent = true;
+                      colorsPresent = true;
+                      break;
+            }
+            gotLayout = true;
           }
-          gotLayout = true;
-        }
-        
-        // trim trailing spaces
-        chunk = chunk.replace(/\s+$/,"");
-        
-        // trim leading spaces
-        chunk = chunk.replace(/^\s+/,"");
-        
-        // split on white space
-        chunk = chunk.split(/\s+/);
-        
-        var numVerts = chunk.length/numValuesPerLine;
-        numParsedPoints += numVerts;
+          
+          // trim trailing spaces
+          chunk = chunk.replace(/\s+$/,"");
+          
+          // trim leading spaces
+          chunk = chunk.replace(/^\s+/,"");
+          
+          // split on white space
+          chunk = chunk.split(/\s+/);
+          
+          var numVerts = chunk.length/numValuesPerLine;
+          numParsedPoints += numVerts;
 
-        var verts = new Float32Array(numVerts*3);
-        var cols = null;
-        var norms = null;
+          var verts = new Float32Array(numVerts*3);
+          var cols = null;
+          var norms = null;
 
-        if(colorsPresent){
-          cols = new Float32Array(numVerts*3);
-        }
-        
-        if(normalsPresent){
-          norms = new Float32Array(numVerts*3);
-        }
-
-        // depending if there are colors, 
-        // we'll need to read different indices.
-        // if there aren't:
-        // x  y  z  r  g  b  nx ny nz
-        // 0  1  2  3  4  5  6  7  8 <- normals start at index 6
-        //
-        // if there are:
-        // x  y  z  nx ny nz
-        // 0  1  2  3  4  5 <- normals start at index 3
-        var valueOffset = 0;
-        if(colorsPresent){
-          valueOffset = 3;
-        }
-
-        // xyz  rgb  normals
-        for(var i = 0, j = 0, len = chunk.length; i < len; i += numValuesPerLine, j += 3){
-          verts[j]   = parseFloat(chunk[i]);
-          verts[j+1] = parseFloat(chunk[i+1]);
-          verts[j+2] = parseFloat(chunk[i+2]);
-
-          // XBPS spec for parsers requires colors to be normalized
-          if(cols){
-            cols[j]   = parseInt(chunk[i+3])/255;
-            cols[j+1] = parseInt(chunk[i+4])/255;
-            cols[j+2] = parseInt(chunk[i+5])/255;
+          if(colorsPresent){
+            cols = new Float32Array(numVerts*3);
+          }
+          
+          if(normalsPresent){
+            norms = new Float32Array(numVerts*3);
           }
 
-          if(norms){
-            norms[j]   = parseFloat(chunk[i + 3 + valueOffset]);
-            norms[j+1] = parseFloat(chunk[i + 4 + valueOffset]);
-            norms[j+2] = parseFloat(chunk[i + 5 + valueOffset]);
+          // depending if there are colors, 
+          // we'll need to read different indices.
+          // if there aren't:
+          // x  y  z  r  g  b  nx ny nz
+          // 0  1  2  3  4  5  6  7  8 <- normals start at index 6
+          //
+          // if there are:
+          // x  y  z  nx ny nz
+          // 0  1  2  3  4  5 <- normals start at index 3
+          var valueOffset = 0;
+          if(colorsPresent){
+            valueOffset = 3;
           }
+
+          // xyz  rgb  normals
+          for(var i = 0, j = 0, len = chunk.length; i < len; i += numValuesPerLine, j += 3){
+            verts[j]   = parseFloat(chunk[i]);
+            verts[j+1] = parseFloat(chunk[i+1]);
+            verts[j+2] = parseFloat(chunk[i+2]);
+
+            // XBPS spec for parsers requires colors to be normalized
+            if(cols){
+              cols[j]   = parseInt(chunk[i+3])/255;
+              cols[j+1] = parseInt(chunk[i+4])/255;
+              cols[j+2] = parseInt(chunk[i+5])/255;
+            }
+
+            if(norms){
+              norms[j]   = parseFloat(chunk[i + 3 + valueOffset]);
+              norms[j+1] = parseFloat(chunk[i + 4 + valueOffset]);
+              norms[j+2] = parseFloat(chunk[i + 5 + valueOffset]);
+            }
+          }
+          
+          // !! pushing on null?
+          parsedVerts.push(verts);
+          parsedCols.push(cols);
+          parsedNorms.push(norms);
+           
+          // !! needs test
+          // !! needs comment
+          var test = {};
+          if(verts){test["VERTEX"] = verts;}
+          if(cols){test["COLOR"] = cols;}
+          if(norms){test["NORMAL"] = norms;}
+   
+          events["onparse"](test, AJAX.parser);
         }
-        
-        // !! pushing on null?
-        parsedVerts.push(verts);
-        parsedCols.push(cols);
-        parsedNorms.push(norms);
-         
-        // !! needs test
-        // !! needs comment
-        var test = {};
-        if(verts){test["VERTEX"] = verts;}
-        if(cols){test["COLOR"] = cols;}
-        if(norms){test["NORMAL"] = norms;}
- 
-        events["onparse"](test, AJAX.parser);
       };
     
       /**

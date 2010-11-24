@@ -63,7 +63,7 @@ function render() {
     fps = "< 1";
   }
   
-  status.innerHTML += "<br />" + mickey.getNumParsedPoints() + " points @ " + fps + " FPS";
+  status.innerHTML += "<br />" + mickey.getNumPoints() + " points @ " + fps + " FPS";
 }
 
 function start(){

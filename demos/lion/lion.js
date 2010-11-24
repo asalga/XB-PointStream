@@ -43,11 +43,9 @@ function render() {
   // !!! fix me
   ps.translate(281.32617943646534,205.61656736098982,290.55082983174293);
   
-  if(ps.mouseX > 200){
   // redraw
   ps.clear();
   ps.render(lion);
-  }
   
   var status = document.getElementById('fileStatus');
   status.innerHTML = "";
@@ -64,7 +62,7 @@ function render() {
   }
   
   status.innerHTML  += "<br />" 
-                    + addCommas(new String(lion.getNumParsedPoints()))
+                    + addCommas(new String(lion.getNumPoints()))
                     + " points @ " + fps + " FPS";
 }
 
