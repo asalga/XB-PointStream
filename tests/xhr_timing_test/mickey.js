@@ -47,14 +47,14 @@ function render() {
     }
 
     // transform point cloud
-    ps.translate(0,0,zoomed);
+    ps.translate(0, 0, zoomed);
       
     ps.rotateY(rot[0]);
     ps.rotateX(rot[1]);
     
     var c = mickey.getCenter();
     
-    ps.translate(-c[0],-c[1],-c[2]);
+    ps.translate(-c[0], -c[1], -c[2]);
 
     ps.clear();
     ps.render(mickey); 
@@ -64,11 +64,12 @@ function render() {
 function start(){
   ps = new PointStream();
   
-  ps.setup(document.getElementById('canvas'), render);
+  ps.setup(document.getElementById('canvas'));
   
   ps.pointSize(5);
   ps.background([1, 1, 1, 1]);
 
+  ps.onRender = render;
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;

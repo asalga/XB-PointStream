@@ -13,8 +13,9 @@ function render() {
 
 function start(){
   ps = new PointStream();  
-  ps.setup(document.getElementById('canvas'), render);
+  ps.setup(document.getElementById('canvas'));
   ps.background([0, 0, 0, 0.5]);
   ps.pointSize(5);
+  ps.onRender = render;
   pointCloud = ps.load("../../clouds/mickey_verts_cols.asc");
 }

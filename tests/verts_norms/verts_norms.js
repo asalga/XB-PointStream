@@ -7,17 +7,17 @@ function render() {
   var c = acorn.getCenter();
   ps.translate(-c[0], -c[1], -c[2]);
   
-  // redraw
   ps.clear();
   ps.render(acorn);
 }
 
 function start(){
   ps = new PointStream();
-  ps.setup(document.getElementById('canvas'), render);
+  ps.setup(document.getElementById('canvas'));
   
   ps.background([0, 0, 0, 0.5]);
   ps.pointSize(5);
+  ps.onRender = render;
   
   acorn = ps.load("../../clouds/acorn_verts_norms.asc");
 }
