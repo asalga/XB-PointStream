@@ -10,6 +10,10 @@ function PointStream(){
   var parsers = [];
   var pointClouds = [];
   
+  var registeredParsers = {};
+  registeredParsers["asc"] = ASCParser;
+  //registeredParsers["psi"] = PSIParser;
+
   // WebGL compatibility wrapper
   try{
     Float32Array;
@@ -863,6 +867,18 @@ function PointStream(){
       uniformMatrix(progObj, "projection", false, M4x4.transpose(projection));
     },
     
+    /*
+      Register a user's parser. When a resource is loaded with
+      the extension provided by the user, the user's parser will
+      be used to parse that resource.
+      
+      @param {String} str
+      @param {} usersParser
+    */
+    registerParser: function(extension, usersParser){
+      registeredParsers[extension] = usersParser;
+    },
+    
     /**
       Renders a point cloud
       @param {} pointCloud
@@ -1312,49 +1328,60 @@ function PointStream(){
     */
     load: function(path){
 
-      var ascParser = new ASCParser();
-      ascParser.addEventListener("onstart", this.startCallback);
-      ascParser.addEventListener("onparse", this.parseCallback);
-      ascParser.addEventListener("onfinish", this.loadedCallback);
-
-      // !! fix
-      var newPointCloud = {
-
-        VBOs: [],
-        attributes: {},
-        
-        progress: 0,
-        getProgress: function(){
-          return this.progress;
-        },
-
-        status: -1,
-        getStatus: function(){
-          return this.status;
-        },
-        
-        center: [0, 0, 0],
-        getCenter: function(){
-          return this.center;
-        },
-        
-        numTotalPoints: -1,
-        getNumTotalPoints: function(){
-          return this.numTotalPoints;
-        },
-        
-        numPoints: -1,
-        getNumPoints: function(){
-          return this.numPoints;
-        }
-      };
+      // get the extension of the resource
+      var extension = path.split(".").pop().toLowerCase();
       
-      parsers.push(ascParser);
-      pointClouds.push(newPointCloud);
+      if(registeredParsers[extension]){
+        var parserObject = registeredParsers[extension];
+
+        var parser = new parserObject();
+        parser.addEventListener("onstart", this.startCallback);
+        parser.addEventListener("onparse", this.parseCallback);
+        parser.addEventListener("onfinish", this.loadedCallback);
+
+        // !! fix
+        var newPointCloud = {
+
+          VBOs: [],
+          attributes: {},
+          
+          progress: 0,
+          getProgress: function(){
+            return this.progress;
+          },
+          
+          status: -1,
+          getStatus: function(){
+            return this.status;
+          },
+          
+          center: [0, 0, 0],
+          getCenter: function(){
+            return this.center;
+          },
+          
+          numTotalPoints: -1,
+          getNumTotalPoints: function(){
+            return this.numTotalPoints;
+          },
+          
+          numPoints: -1,
+          getNumPoints: function(){
+            return this.numPoints;
+          }
+        };
+        
+        parsers.push(parser);
+        pointClouds.push(newPointCloud);
+        
+        parser.load(path);
+        
+        return newPointCloud;
+      }
       
-      ascParser.load(path);
+      throw "There is no parser for the file type: " + extension;
       
-      return newPointCloud;
+      return null;
     }
   }
   return xb;

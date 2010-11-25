@@ -34,9 +34,9 @@ pretty-zipped: pretty
 
 # don't name this example
 examples:
-	mkdir ./release/example/
-	cp ./clouds/acorn.asc ./release/example/
-	cp ./example/* ./release/example/
+	mkdir ./release/clouds
+	cp ./clouds/acorn.asc ./release/clouds/
+	cp ./example.* ./release/
 
 # Copy over the documents into the release directory
 create-release-docs:
