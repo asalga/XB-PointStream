@@ -18,6 +18,8 @@ function start(){
   
   ps.background([0, 0, 0, 0.5]);
   ps.pointSize(5);
+  
+  ps.registerParser("asc", User_ASC_Parser);
 
   acorn = ps.load("../../clouds/acorn.asc");
 }
