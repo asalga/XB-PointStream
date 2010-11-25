@@ -12,5 +12,5 @@ function start(){
   ps.setup(document.getElementById('canvas'));
   ps.pointSize(4);
   ps.onRender = render;
-  acorn = ps.load("acorn.asc");
+  acorn = ps.load("clouds/acorn.asc");
 }
