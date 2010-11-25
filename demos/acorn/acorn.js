@@ -108,13 +108,11 @@ function start(){
   ps = new PointStream();
   document.getElementById('debug').innerHTML += "XB PointStream Version: " + ps.getVersion();
   
-  ps.setup(document.getElementById('canvas'), render);
+  ps.setup(document.getElementById('canvas'));
   
   ps.background([0, 0, 0, 0.5]);
   ps.pointSize(5);
-  
-  // !! fix me 
-  // ps.onRender = render;
+
   ps.onRender = render;
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;

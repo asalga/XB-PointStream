@@ -32,8 +32,6 @@ function PointStream(){
   var frames = 0;
   var lastTime;
   
-  var usersRenderCallback = null;
-  
   // default rendering states
   var bk = [1, 1, 1, 1];
   var attn = [0.01, 0.0, 0.003];
@@ -753,9 +751,7 @@ function PointStream(){
       model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
       
       // now call user's stuff
-      if(usersRenderCallback){
-        usersRenderCallback();
-      }
+      xb.onRender();
       
       // if more than 1 second has elapsed, recalculate fps
       if(now - lastTime > 1000){
@@ -868,7 +864,7 @@ function PointStream(){
     },
     
     /**
-      renders a point cloud
+      Renders a point cloud
       @param {} pointCloud
     */
     render: function(pointCloud){
@@ -932,7 +928,7 @@ function PointStream(){
     /**
       @param {} element
       @param {} type
-      @param {} func
+      @param {Function} func
     */
     attach: function(element, type, func){
       //
@@ -941,6 +937,13 @@ function PointStream(){
       } else {
         element.attachEvent("on" + type, fn);
       }
+    },
+    
+    /*
+      default render does nothing
+      User must override this method
+    */
+    onRender: function(){
     },
     
     /*
@@ -1048,11 +1051,12 @@ function PointStream(){
     },
     
     /**
+      Must be called after the library has been created.
+      
       @param {canvas} cvs
-      @param {Function} renderCB
     */
-    setup: function(cvs, renderCB){
-      canvas = cvs;    
+    setup: function(cvs){
+      canvas = cvs;
       browser = getUserAgent(navigator.userAgent);
       
       lastTime = new Date();
@@ -1060,14 +1064,17 @@ function PointStream(){
       
       xb.resize(canvas.getAttribute("width"), canvas.getAttribute("height"));
       
-      usersRenderCallback = renderCB;
+      // our render loop will call the users render
+      // function.
       setInterval(xb.renderLoop, 10);
+      xb.onRender = function(){};
 
       xb.attach(cvs, "mouseup", xb._mouseReleased);      
       xb.attach(cvs, "mousedown", xb._mousePressed);
       xb.attach(cvs, "mousemove", xb.mouseMove);      
       xb.attach(cvs, "DOMMouseScroll", xb._mouseScroll);
       xb.attach(cvs, "mousewheel", xb._mouseScroll);
+      
       xb.attach(document, "keydown", xb._keyDown);
       xb.attach(document, "keypress", xb._keyPressed);
       xb.attach(document, "keyup", xb._keyUp);

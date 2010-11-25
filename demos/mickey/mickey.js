@@ -69,11 +69,12 @@ function render() {
 function start(){
   ps = new PointStream();
   
-  ps.setup(document.getElementById('canvas'), render);
+  ps.setup(document.getElementById('canvas'));
   
   ps.pointSize(8);
   ps.background([0.3, 0.5, 0.7, 0.2]);
 
+  ps.onRender = render;
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;

@@ -95,11 +95,12 @@ function addCommas(value){
 function start(){
   ps = new PointStream();
   
-  ps.setup(document.getElementById('canvas'), render);
+  ps.setup(document.getElementById('canvas'));
   
   ps.background([0.2, 0.2 ,0.2 ,1]);
   ps.pointSize(8);
 
+  ps.onRender = render;
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;

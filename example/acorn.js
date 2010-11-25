@@ -9,7 +9,8 @@ function render(){
 
 function start(){
   ps = new PointStream();
-  ps.setup(document.getElementById('canvas'), render);
-  ps.pointSize(4);  
+  ps.setup(document.getElementById('canvas'));
+  ps.pointSize(4);
+  ps.onRender = render;
   acorn = ps.load("acorn.asc");
 }

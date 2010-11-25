@@ -9,7 +9,7 @@ all: release
 release: create-release-dir create-release-files
 
 # final files to release
-create-release-files: create-release-app create-release-docs examples pretty-zipped
+create-release-files: create-release-docs examples pretty-zipped
 
 # Minification strips out comments and most whitespace
 minified: create-release-dir
@@ -21,11 +21,11 @@ minified: create-release-dir
 	rm ./release/psapi-min.js ./release/asc-min.js ./release/mjs-min.js
 
 # 
-pretty: create-release-dir
+pretty: 
 	cat psapi.js mjs.js parsers/asc.js > release/xbps.js
 
 #
-pretty-zipped:
+pretty-zipped: pretty
 	zip -r ./release/xbps.zip ./release/
 	mv ./release/xbps.zip .
 	rm -fr ./release
