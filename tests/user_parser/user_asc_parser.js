@@ -22,20 +22,24 @@ var User_ASC_Parser = (function() {
   /**
     Constructor
   */
-  function User_ASC_Parser() {
+  function User_ASC_Parser(config) {
+    
+    var undef;
+    
+    var __empty_func = function(){};
   
+    var start = config.start || __empty_func;
+    var parse = config.parse || __empty_func;
+    var end = config.end || __empty_func;
+    
+    
+    var version = "0.1";
+    
     const UNKNOWN = -1;
     
     const XHR_DONE = 4;
     const STARTED = 1;
-    
-    //
-    var events = {
-      "onstart": function(){},
-      "onparse": function(){},
-      "onfinish": function(){}
-    };
-    
+
     var pathToFile = null;
     var fileSize = 0;
     
@@ -154,46 +158,42 @@ var User_ASC_Parser = (function() {
       
       @returns {String} parser version
     */
-    this.getVersion = function(){
-      return "0.1";
-    };
+    this.__defineGetter__("version", function(){
+      return version;
+    });
+    
+    /*
+      Get the number of parsed points so far
+      
+      @returns {Number} number of points parsed.
+    */
+    this.__defineGetter__("numParsedPoints", function(){
+      return numParsedPoints;
+    });
+    
+    /*
+      Get the total number of points in the point cloud.
+      
+      @returns {Number}
+    */
+    this.__defineGetter__("numTotalPoints", function(){
+      return numTotalPoints;
+    });
     
     /**
-      "onstart"
-      "onparse"
-      "onfinish"
+      Returns the progress of downloading the point cloud
       
-      @param {String} eventName
-      @param {Function} func
+      @returns {Number} value from zero to one or -1 if unknown.
     */
-    this.addEventListener = function(eventName, func){
-      events[eventName] = func;
-    };
-    
-    /*
-    */
-    this.getNumParsedPoints = function(){
-      return numParsedPoints;
-    };
-    
-    /*
-    */
-    this.getNumTotalPoints = function(){
-      return numTotalPoints;
-    }
-    
-    /*
-    */
-    this.getProgress = function(){
+    this.__defineGetter__("progress", function(){
       return progress;
-    }
+    });
     
-    /*
+    /**
     */
-    this.getFileSize = function(){
+    this.__defineGetter__("fileSize", function(){
       return fileSize;
-    };
-
+    });
     
     /**
       pathToFile
@@ -213,8 +213,8 @@ var User_ASC_Parser = (function() {
         occurs exactly once when the resource begins
         to be downloaded
       */
-      AJAX.onloadstart = function(evt){        
-        events["onstart"](AJAX.parser);
+      AJAX.onloadstart = function(evt){
+        start(AJAX.parser);
       };
             
       /*
@@ -247,7 +247,7 @@ var User_ASC_Parser = (function() {
 
         progress = 1;
         
-        events["onfinish"](AJAX.parser);
+        end(AJAX.parser);
       }
       
       /**
@@ -351,8 +351,8 @@ var User_ASC_Parser = (function() {
           if(verts){test["VERTEX"] = verts;}
           if(cols){test["COLOR"] = cols;}
           if(norms){test["NORMAL"] = norms;}
-   
-          events["onparse"](test, AJAX.parser);
+          
+          parse(test, AJAX.parser);
         }
       };
     

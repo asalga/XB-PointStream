@@ -5,6 +5,11 @@
 
 function PointStream(){
 
+  // intentionally left undefined
+  var undef;
+  
+  var __empty_func = function(){};
+  
   // These are parallel arrays. Each parser
   // has a point cloud it works with
   var parsers = [];
@@ -1083,7 +1088,7 @@ function PointStream(){
       // our render loop will call the users render
       // function.
       setInterval(xb.renderLoop, 10);
-      xb.onRender = function(){};
+      xb.onRender = __empty_func;
 
       xb.attach(cvs, "mouseup", xb._mouseReleased);      
       xb.attach(cvs, "mousedown", xb._mousePressed);
@@ -1231,8 +1236,8 @@ function PointStream(){
 
       var i = getParserIndex(parser);
       pointClouds[i].status = STREAMING;
-      pointClouds[i].progress = parser.getProgress();
-      pointClouds[i].numPoints = parsers[i].getNumParsedPoints();
+      pointClouds[i].progress = parser.progress;
+      pointClouds[i].numPoints = parsers[i].numParsedPoints;
       
       // !! comment
       for(var semantic in attributes){
@@ -1261,7 +1266,7 @@ function PointStream(){
       
       // once the point cloud is done being parsed,
       // we can merge the vbos    
-      var numPoints = pc.numTotalPoints = parsers[idx].getNumTotalPoints();
+      var numPoints = pc.numTotalPoints = parsers[idx].numTotalPoints;
       
       // Merge the VBOs into one. Since we are slowly 
       // getting the points, we'll end up with many vbos
@@ -1320,7 +1325,7 @@ function PointStream(){
       pc.center = getAverage(verts);
       
       pc.status = COMPLETE;
-      pc.progress = parser.getProgress();
+      pc.progress = parser.progress;
     },
     
     /**
@@ -1334,11 +1339,10 @@ function PointStream(){
       if(registeredParsers[extension]){
         var parserObject = registeredParsers[extension];
 
-        var parser = new parserObject();
-        parser.addEventListener("onstart", this.startCallback);
-        parser.addEventListener("onparse", this.parseCallback);
-        parser.addEventListener("onfinish", this.loadedCallback);
-
+        var parser = new parserObject({ start: this.startCallback,
+                                        parse: this.parseCallback,
+                                        end: this.loadedCallback});
+        
         // !! fix
         var newPointCloud = {
 
