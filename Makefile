@@ -6,48 +6,50 @@
 all: release
 
 #
-release: create-release-dir create-release-files
+release: create-release-dirs create-release-files
 
 # final files to release
-create-release-files: create-release-docs examples pretty-zipped
+create-release-files: create-release-docs minify example-min zip-min
 
 # Minification strips out comments and most whitespace
-minified: create-release-dir
-	cc -o tools/minifier tools/jsmin.c
-	./tools/minifier < psapi.js > ./release/psapi-min.js
-	./tools/minifier < parsers/asc.js > ./release/asc-min.js
-	./tools/minifier < mjs.js > ./release/mjs-min.js
-	cat ./release/psapi-min.js ./release/mjs-min.js ./release/asc-min.js > release/xbps-min.js
-	rm ./release/psapi-min.js ./release/asc-min.js ./release/mjs-min.js
-
-# 
-pretty: 
-	cat psapi.js mjs.js parsers/asc.js > release/xbps.js
+minify: create-release-dirs
+	cat psapi.js mjs.js ./parsers/asc.js > ./xbps-min/xbps-temp.js
+	cc -o tools-bin/minifier tools/jsmin.c
+	./tools-bin/minifier < ./xbps-min/xbps-temp.js > ./xbps-min/xbps.js
+	rm ./xbps-min/xbps-temp.js
 
 #
-pretty-zipped: pretty
-	zip -r ./release/xbps.zip ./release/
-	mv ./release/xbps.zip .
-	rm -fr ./release
-	mkdir ./release
-	mv xbps.zip ./release/
+zip-min: minify
+	zip -r ./xbps-min/xbps-min.zip ./xbps-min
+	mv ./xbps-min/xbps-min.zip .
+	rm -fr ./xbps-min
+	mkdir ./xbps-min
+	mv xbps-min.zip ./xbps-min
 
 # don't name this example
-examples:
-	mkdir ./release/clouds
-	cp ./clouds/acorn.asc ./release/clouds/
-	cp ./example.* ./release/
+example-min: create-release-dirs
+	mkdir ./xbps-min/clouds
+	cp ./clouds/acorn.asc ./xbps-min/clouds
+	cp ./example.* ./xbps-min
 
 # Copy over the documents into the release directory
-create-release-docs:
-	cp AUTHORS ./release
-	cp README ./release
-	cp LICENSE ./release
+create-release-docs: create-release-dirs
+	cp AUTHORS ./xbps-min
+#	cp AUTHORS ./xbps-all
+	cp README ./xbps-min
+#	cp README ./xbps-all/
+	cp LICENSE ./xbps-min
+#	cp LICENSE ./xbps-all
 
-# Create an empty release directory to store the release files
-create-release-dir: clean
-	mkdir ./release
+# Create two directories in a release directory
+#
+# all - Will contain the library merged into a single file
+# min - above, but also minified
+create-release-dirs: clean
+#	mkdir ./xbps-all/
+	mkdir ./xbps-min/
 
 # remove the release directory and its contents
 clean:
-	rm -fr ./release
+	rm -fr ./xbps-min/
+#	rm -fr ./xbps-all/
