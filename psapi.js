@@ -80,7 +80,7 @@ function PointStream(){
   const _RIGHT     = 39;
   const _DOWN      = 40;
   const _LEFT      = 37;
-
+  
   var codedKeys = [_SHIFT, _CONTROL, _ALT, _UP, _RIGHT, _DOWN, _LEFT];
         
   // Vertex shader for boxes and spheres
@@ -499,12 +499,13 @@ function PointStream(){
   /**
   */
   var keyFunc = function (evt, type){
+    var key;
     if (evt.charCode){
       key = keyCodeMap(evt.charCode, evt.shiftKey);
     } else {
       key = keyCodeMap(evt.keyCode, evt.shiftKey);
     }
-    type();
+    return key;
   };
   
   // tinylog lite JavaScript library
@@ -1014,19 +1015,22 @@ function PointStream(){
     
     _keyDown: function(evt){
       if(typeof xb.keyDown === "function"){
-        keyFunc(evt, xb.keyDown);
+        xb.key = keyFunc(evt, xb.keyDown);
+        xb.keyDown();
       }
     },
     
     _keyPressed: function(evt){
       if(typeof xb.keyPressed === "function"){
-        keyFunc(evt, xb.keyPressed);
+        xb.key = keyFunc(evt, xb.keyPressed);
+        xb.keyPressed();
       }
     },
     
     _keyUp: function(evt){
       if(typeof xb.keyUp === "function"){
-        keyFunc(evt, xb.keyUp);
+        xb.key = keyFunc(evt, xb.keyUp);
+        xb.keyUp();
       }
     },
     
