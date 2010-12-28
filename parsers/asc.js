@@ -350,12 +350,12 @@ var ASCParser = (function() {
            
           // !! needs test
           // !! needs comment
-          var test = {};
-          if(verts){test["VERTEX"] = verts;}
-          if(cols){test["COLOR"] = cols;}
-          if(norms){test["NORMAL"] = norms;}
+          var attributes = {};
+          if(verts){attributes["VERTEX"] = verts;}
+          if(cols){attributes["COLOR"] = cols;}
+          if(norms){attributes["NORMAL"] = norms;}
           
-          parse(AJAX.parser, test);
+          parse(AJAX.parser, attributes);
         }
       };
     
