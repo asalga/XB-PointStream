@@ -32,7 +32,6 @@ var User_ASC_Parser = (function() {
     var parse = config.parse || __empty_func;
     var end = config.end || __empty_func;
     
-    
     var version = "0.1";
     
     const UNKNOWN = -1;
@@ -352,7 +351,7 @@ var User_ASC_Parser = (function() {
           if(cols){test["COLOR"] = cols;}
           if(norms){test["NORMAL"] = norms;}
           
-          parse(test, AJAX.parser);
+          parse(AJAX.parser, test);
         }
       };
     

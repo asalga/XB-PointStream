@@ -758,7 +758,7 @@ var PointStream = (function() {
         "UNKNOWN": [.....]
       }
     */
-    function parseCallback(attributes, parser){
+    function parseCallback(parser, attributes){
 
       var i = getParserIndex(parser);
       pointClouds[i].status = STREAMING;

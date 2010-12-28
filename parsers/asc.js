@@ -26,12 +26,12 @@ var ASCParser = (function() {
     
     var undef;
     
+    // defined once to reduce number of empty functions
     var __empty_func = function(){};
   
     var start = config.start || __empty_func;
     var parse = config.parse || __empty_func;
     var end = config.end || __empty_func;
-    
     
     var version = "0.1";
     
@@ -41,7 +41,7 @@ var ASCParser = (function() {
     const STARTED = 1;
 
     var pathToFile = null;
-    var fileSize = 0;
+    var fileSizeInBytes = 0;
     
     //
     var numParsedPoints = 0;
@@ -154,16 +154,16 @@ var ASCParser = (function() {
     };
     
     /*
-      Returns the version of this parser
+      Returns the version of this parser.
       
-      @returns {String} parser version
+      @returns {String} parser version.
     */
     this.__defineGetter__("version", function(){
       return version;
     });
     
     /*
-      Get the number of parsed points so far
+      Get the number of parsed points so far.
       
       @returns {Number} number of points parsed.
     */
@@ -181,7 +181,7 @@ var ASCParser = (function() {
     });
     
     /**
-      Returns the progress of downloading the point cloud
+      Returns the progress of downloading the point cloud between zero and one.
       
       @returns {Number} value from zero to one or -1 if unknown.
     */
@@ -190,13 +190,16 @@ var ASCParser = (function() {
     });
     
     /**
+      Returns the file size of the resource in bytes.
+      
+      @returns {Number} size of resource in bytes.
     */
     this.__defineGetter__("fileSize", function(){
-      return fileSize;
+      return fileSizeInBytes;
     });
     
     /**
-      pathToFile
+      @param path Path to the resource
     */
     this.load = function(path){
       pathToFile = path;
@@ -352,7 +355,7 @@ var ASCParser = (function() {
           if(cols){test["COLOR"] = cols;}
           if(norms){test["NORMAL"] = norms;}
           
-          parse(test, AJAX.parser);
+          parse(AJAX.parser, test);
         }
       };
     
@@ -363,7 +366,7 @@ var ASCParser = (function() {
       AJAX.onprogress = function(evt){
       
        if(evt.lengthComputable){
-          fileSize = evt.total;
+          fileSizeInBytes = evt.total;
           progress = evt.loaded/evt.total;
         }
 
