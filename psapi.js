@@ -90,7 +90,6 @@ var PointStream = (function() {
     var model;
     var normalTransform;
 
-<<<<<<< .merge_file_7nnFRB
     var progObj;
     
     // Both key and keyCode will be equal to these values
@@ -1165,38 +1164,6 @@ var PointStream = (function() {
       uniformMatrix(progObj, "projection", false, M4x4.transpose(projection));
     };
 
-
-////////////
-
-    /**
-      @private
-    */    
-    _mouseReleased: function(){
-      if(typeof xb.onMouseReleased === "function"){
-        xb.onMouseReleased();
-      }
-    },
-    
-    _keyDown: function(evt){
-      if(typeof xb.keyDown === "function"){
-        xb.key = keyFunc(evt, xb.keyDown);
-        xb.keyDown();
-      }
-    },
-    
-    _keyPressed: function(evt){
-      if(typeof xb.keyPressed === "function"){
-        xb.key = keyFunc(evt, xb.keyPressed);
-        xb.keyPressed();
-      }
-    },
-    
-    _keyUp: function(evt){
-      if(typeof xb.keyUp === "function"){
-        xb.key = keyFunc(evt, xb.keyUp);
-        xb.keyUp();
-      }
-    },
     
     /**
     */
