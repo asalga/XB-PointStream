@@ -406,6 +406,9 @@ var User_ASC_Parser = (function() {
       };//onprogress
       
       // open an asynchronous request to the path
+      if(AJAX.overrideMimeType){
+        AJAX.overrideMimeType("application/json");
+      }
       AJAX.open("GET", path, true);
       AJAX.send(null);
     };// load

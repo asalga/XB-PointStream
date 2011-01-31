@@ -1122,25 +1122,22 @@ var PointStream = (function() {
       @param {Number} width
       @param {Number} height
     */
-    this.resize = function(wi, he){
+    this.resize = function(pWidth, pHeight){
       // delete old program object?
       // delete old context?
       
       // override the canvas attributes
-      canvas.setAttribute("width", wi);
-      canvas.setAttribute("height", he);
+      canvas.setAttribute("width", pWidth);
+      canvas.setAttribute("height", pHeight);
 
       // check if style exists? how? can't just query it...
-      canvas.style.width = width = wi;
-      canvas.style.height = height = he;
+      canvas.style.width = width = pWidth;
+      canvas.style.height = height = pHeight;
       
       ctx = canvas.getContext("experimental-webgl");
 
       // crazy hack for Chrome/Chromium
-      var w = parseInt(wi);
-      var h = parseInt(he);
-      
-      ctx.viewport(0, 0, w, h);
+      ctx.viewport(0, 0, parseInt(pWidth), parseInt(pHeight));
       ctx.enable(ctx.DEPTH_TEST);
       
       this.background(bk);
@@ -1173,7 +1170,7 @@ var PointStream = (function() {
       the extension provided by the user, the user's parser will
       be used to parse that resource.
       
-      @param {String} str
+      @param {String} extension
       @param {} usersParser
     */
     this.registerParser = function(extension, usersParser){
