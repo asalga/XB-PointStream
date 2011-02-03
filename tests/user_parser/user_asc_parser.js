@@ -349,9 +349,9 @@ var User_ASC_Parser = (function() {
           //   "COLOR" : [...]
           // }
           var attributes = {};
-          if(verts){attributes["XBPS_aVertex"] = verts;}
-          if(cols){attributes["XBPS_aColor"] = cols;}
-          if(norms){attributes["XBPS_aNormal"] = norms;}
+          if(verts){attributes["ps_Vertex"] = verts;}
+          if(cols){attributes["ps_Color"] = cols;}
+          if(norms){attributes["ps_Normal"] = norms;}
           
           parse(AJAX.parser, attributes);
         }

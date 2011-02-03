@@ -38,8 +38,6 @@ var PointStream = (function() {
     registeredParsers["asc"] = ASCParser;
     //registeredParsers["psi"] = PSIParser;
     
-    var matrixStack = [];
-    
     // WebGL compatibility wrapper
     try{
       Float32Array;
@@ -86,9 +84,10 @@ var PointStream = (function() {
     var canvas = null;
     var ctx = null;
 
-    // shader matrices
-    var projection;
-    var normalTransform;
+    // transformation matrices
+    var matrixStack = [];
+    var projectionMatrix;
+    var normalMatrix;
 
     var progObj;
     // Keep a reference to the default program object
@@ -118,32 +117,31 @@ var PointStream = (function() {
     var vertexShaderSource =
     "varying vec4 frontColor;" +
 
-    "attribute vec3 XBPS_aVertex;" +
-    "attribute vec3 XBPS_aNormal;" +
-    "attribute vec4 XBPS_aColor;" +
+    "attribute vec3 ps_Vertex;" +
+    "attribute vec4 ps_Color;" +
     
-    "uniform float XBPS_pointSize;" +
+    "uniform float ps_PointSize;" +
     "uniform vec3 XBPS_attenuation;" +
     
-    "uniform mat4 XBPS_ModelViewMatrix;" +
-    "uniform mat4 XBPS_Projection;" +
+    "uniform mat4 ps_ModelViewMatrix;" +
+    "uniform mat4 ps_ProjectionMatrix;" +
     
     "void main(void) {" +
-    "  frontColor = XBPS_aColor;" +
-    "  vec4 mvVertex = XBPS_ModelViewMatrix * vec4(XBPS_aVertex, 1.0);" +
-    "  float dist = length( mvVertex );" +
+    "  frontColor = ps_Color;" +
+    "  vec4 ecPos4 = ps_ModelViewMatrix * vec4(ps_Vertex, 1.0);" +
+    "  float dist = length(ecPos4);" +
     "  float attn = XBPS_attenuation[0] + " +
     "              (XBPS_attenuation[1] * dist) + " + 
     "              (XBPS_attenuation[2] * dist * dist);" +
 
     "  if(attn > 0.0){" +
-    "    gl_PointSize = XBPS_pointSize * sqrt(1.0/attn);" +
+    "    gl_PointSize = ps_PointSize * sqrt(1.0/attn);" +
     "  }" +
     "  else{" +
     "    gl_PointSize = 1.0;" +
     "  }"+
     
-    "  gl_Position = XBPS_Projection * mvVertex;" +
+    "  gl_Position = ps_ProjectionMatrix * ecPos4;" +
     "}";
 
     var fragmentShaderSource =
@@ -817,13 +815,13 @@ var PointStream = (function() {
       var C = -(zfar + znear) / (zfar - znear);
       var D = -2 * zfar * znear / (zfar - znear);
       
-      projection = M4x4.$(
+      projectionMatrix = M4x4.$(
       X, 0, 0, 0, 
       0, Y, 0, 0, 
       A, B, C, -1, 
       0, 0, D, 0);
       
-      normalTransform = M4x4.I;
+      normalMatrix = M4x4.I;
     };
     
     /**
@@ -965,9 +963,9 @@ var PointStream = (function() {
       var name0 = names[0];
       
       var topMatrix = this.peekMatrix();
-      normalTransform = M4x4.inverseOrthonormal(topMatrix);
-      uniformMatrix(progObj, "XBPS_NormalMatrix", false, M4x4.transpose(normalTransform));
-      uniformMatrix(progObj, "XBPS_ModelViewMatrix", false, topMatrix);
+      normalMatrix = M4x4.inverseOrthonormal(topMatrix);
+      uniformMatrix(progObj, "ps_NormalMatrix", false, M4x4.transpose(normalMatrix));
+      uniformMatrix(progObj, "ps_ModelViewMatrix", false, topMatrix);
   
       // if we have a context and 
       // if the point cloud actually has something to render
@@ -992,9 +990,9 @@ var PointStream = (function() {
     /**
     */
     this.setDefaultUniforms = function(){
-      uniformf(progObj, "XBPS_pointSize", 1);
+      uniformf(progObj, "ps_PointSize", 1);
       uniformf(progObj, "XBPS_attenuation", [attn[0], attn[1], attn[2]]); 
-      uniformMatrix(progObj, "XBPS_Projection", false, projection);
+      uniformMatrix(progObj, "ps_ProjectionMatrix", false, projectionMatrix);
     }
     
     /**
@@ -1261,7 +1259,7 @@ var PointStream = (function() {
       !! change to get/setter
     */
     this.pointSize = function(size){
-      uniformf(progObj, "XBPS_pointSize", size);
+      uniformf(progObj, "ps_PointSize", size);
     };
 
 
