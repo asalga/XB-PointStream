@@ -9,6 +9,7 @@ var vertShader =
 "uniform vec3 XBPS_attenuation;" +
 
 "uniform vec3 lightPos;" + 
+"uniform bool reflection;"+
 
 "uniform mat4 ps_ModelViewMatrix;" +
 "uniform mat4 ps_ProjectionMatrix;" +
@@ -47,6 +48,13 @@ var vertShader =
 "  PointLight(col, ecPos, transNorm, eye);" +
 
 "  frontColor = ps_Color * vec4(col, 1.0);" +
+
+"  if(reflection){" +
+"    float l = length(ps_Vertex - vec3(0.0, -20.0, 0.0))/20.0;" +
+     // magic number that super saturates to white
+"    float col = l * 5.0;" +
+"    frontColor += vec4(col, col, col, 1.0);" +
+"  }" +
 
 "  float dist = length( ecPos4 );" +
 "  float attn = XBPS_attenuation[0] + " +

@@ -17,6 +17,7 @@ function render() {
   i += 0.05;
 
   // Draw reflection
+  ps.uniformi("reflection", true);
   ps.uniformf("lightPos", [0, -50, 10]);
   ps.uniformf("uReflection", [.15, .15, .3, .8]);
   ps.pushMatrix();
@@ -29,8 +30,9 @@ function render() {
   ps.popMatrix();
   
   // Draw object
+  ps.uniformi("reflection", false);
   ps.uniformf("lightPos", [0, 50, 10]);
-  ps.uniformf("uReflection", [1,1,1,1]);  
+  ps.uniformf("uReflection", [1,1,1,1]);
   ps.pushMatrix();
     ps.translate(0, 20, -80);
     ps.rotateX(1.0);
@@ -53,7 +55,9 @@ function start(){
   ps.onRender = render;
   ps.onKeyDown = keyDown;
   
-  ps.background([0, 0, 0, 0.7]);
+  //ps.background([0, 0, 0, 0.7]);
+  //ps.background([0.5, 0.5, 0.5, 1.0]);
+  ps.background([1.0, 1.0, 1.0, 1.0]);
   
   mickey = ps.load("../../clouds/mickey.asc");
 }
