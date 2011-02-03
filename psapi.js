@@ -89,10 +89,11 @@ var PointStream = (function() {
     var projectionMatrix;
     var normalMatrix;
 
-    var progObj;
+    var currProgram;
     // Keep a reference to the default program object
     // in case the user wants to unset his shaders.
-    var defProgObj;
+    var defaultProgram;
+    var programCaches = [];
     
     // Both key and keyCode will be equal to these values
     const _BACKSPACE = 8;
@@ -964,8 +965,8 @@ var PointStream = (function() {
       
       var topMatrix = this.peekMatrix();
       normalMatrix = M4x4.inverseOrthonormal(topMatrix);
-      uniformMatrix(progObj, "ps_NormalMatrix", false, M4x4.transpose(normalMatrix));
-      uniformMatrix(progObj, "ps_ModelViewMatrix", false, topMatrix);
+      uniformMatrix(currProgram, "ps_NormalMatrix", false, M4x4.transpose(normalMatrix));
+      uniformMatrix(currProgram, "ps_ModelViewMatrix", false, topMatrix);
   
       // if we have a context and 
       // if the point cloud actually has something to render
@@ -979,22 +980,14 @@ var PointStream = (function() {
         for(var currVBO = 0; currVBO < numBufferObjects; currVBO++){
           
           for(var namesI = 0; namesI < names.length; namesI++){
-            vertexAttribPointer(progObj, names[namesI], 3, pointCloud.attributes[names[namesI]][currVBO].VBO);
+            vertexAttribPointer(currProgram, names[namesI], 3, pointCloud.attributes[names[namesI]][currVBO].VBO);
           }
               
           ctx.drawArrays(ctx.POINTS, 0, arrayOfBufferObjs[currVBO].length/3);
         }
       }
     };
-    
-    /**
-    */
-    this.setDefaultUniforms = function(){
-      uniformf(progObj, "ps_PointSize", 1);
-      uniformf(progObj, "XBPS_attenuation", [attn[0], attn[1], attn[2]]); 
-      uniformMatrix(progObj, "ps_ProjectionMatrix", false, projectionMatrix);
-    }
-    
+        
     /**
       Get the version of the library.
       
@@ -1130,35 +1123,56 @@ var PointStream = (function() {
     };
 
     /**
+      if program is null, we use the default program object
     */
-    this.useProgram = function(pProgObj){
-      if(!pProgObj){
-        progObj = defProgObj;
-        ctx.useProgram(progObj);
+    this.useProgram = function(program){
+      currProgram = program ? program : defaultProgram;
+      ctx.useProgram(currProgram);
+      
+      // We don't want to set the static uniforms every frame,
+      // but we also can't do it when the user creates the program,
+      // so we do it here, but only once
+      var alreadySet = false;
+      for(var i = 0; i < programCaches.length; i++){
+        if(currProgram && programCaches[i] === currProgram){
+          alreadySet = true;
+        }
       }
-      else{
-        progObj = pProgObj;
-        ctx.useProgram(progObj);
+      if(alreadySet === false){
+        this.setDefaultUniforms();
+        programCaches.push(currProgram);
       }
-      this.setDefaultUniforms();
+    };
+    
+    /**
+      useProgram must be called before trying
+      assign a uniform variable in that program
+    */
+    this.uniformi = function(varName, varValue){
+      uniformi(currProgram, varName, varValue);
     };
     
     /**
     */
-    this.uniformi = function(programObj, varName, varValue){
-      uniformi(programObj, varName, varValue);
+    this.uniformf = function(varName, varValue){
+      uniformf(currProgram, varName, varValue);
     };
     
     /**
     */
-    this.uniformf = function(programObj, varName, varValue){
-      uniformf(programObj, varName, varValue);
+    this.uniformMatrix = function(varName, varValue){
+      uniformMatrix(currProgram, varName, false, varValue);
     };
-    
+
     /**
+      These uniforms only need to be set once during the use of
+      the program. Unless of course the user explicitly sets the
+       point size, attenuation or projection.
     */
-    this.uniformMatrix = function(programObj, varName, varValue){
-      uniformMatrix(programObj, varName, false, varValue);
+    this.setDefaultUniforms = function(){
+      uniformf(currProgram, "ps_PointSize", 1);
+      uniformf(currProgram, "XBPS_attenuation", [attn[0], attn[1], attn[2]]); 
+      uniformMatrix(currProgram, "ps_ProjectionMatrix", false, projectionMatrix);
     };
 
     /**
@@ -1224,10 +1238,8 @@ var PointStream = (function() {
       this.background(bk);
       
       // Create and use the program object
-      defProgObj = progObj = createProgramObject(ctx, vertexShaderSource, fragmentShaderSource);
-      ctx.useProgram(progObj);
-      
-      // Now that we have a program object, we can set some defaults
+      defaultProgram = currProgram = createProgramObject(ctx, vertexShaderSource, fragmentShaderSource);
+      ctx.useProgram(currProgram);
       this.setDefaultUniforms();
       
       // our render loop will call the users render function
@@ -1250,7 +1262,7 @@ var PointStream = (function() {
       @param {Number} quadratic - 
     */
     this.attenuation = function(constant, linear, quadratic){
-      uniformf(progObj, "attenuation", [constant, linear, quadratic]);
+      uniformf(currProgram, "attenuation", [constant, linear, quadratic]);
     };
     
     /**
@@ -1259,10 +1271,8 @@ var PointStream = (function() {
       !! change to get/setter
     */
     this.pointSize = function(size){
-      uniformf(progObj, "ps_PointSize", size);
+      uniformf(currProgram, "ps_PointSize", size);
     };
-
-
     
     /**
       @param {String} path - path to resource
@@ -1329,7 +1339,7 @@ var PointStream = (function() {
   return PointStream;
 }());
 
-// !! fix (re-move from global ns)
+// !! fix (remove from global ns)
 var getAverage = function(arr){
   var objCenter = [0, 0, 0];
 

@@ -77,44 +77,36 @@ function render() {
   ps.useProgram();
   ps.pointSize(5);
   ps.pushMatrix();
-  // place the street at Mickey's feet
-  ps.translate(0, -19, 0);
-  ps.render(eggenburg);
+    // place the street at Mickey's feet
+    ps.translate(0, -19, 0);
+    ps.render(eggenburg);
   ps.popMatrix();
   
   // Mickey
   ps.useProgram(mickeyProgObj);
+  ps.pointSize(8);
   ps.pushMatrix();
-  var c = mickey.getCenter();
-  ps.translate(-c[0], -c[1], -c[2]);
-  ps.pointSize(8);
+    var c = mickey.getCenter();
+    ps.translate(-c[0], -c[1], -c[2]);
   
-  ps.pushMatrix();
-  ps.uniformi(mickeyProgObj, "uOutline", true);
-  ps.pointSize(8);
-  ps.render(mickey);
+    ps.uniformi("uOutline", true);
+    ps.render(mickey);
   
-  ps.uniformi(mickeyProgObj, "uOutline", false);
-  ps.pointSize(8);
-  ps.render(mickey);
+    ps.uniformi("uOutline", false);
+    ps.render(mickey);
 
-  // acorn
-  ps.pushMatrix();
-  // place the acron in Mickey's hand
-  ps.translate(15, 28, -8);
- 
-  ps.scale(0.8);
-  ps.rotateX(0.5);
-  // tilt the acorn since Mickey's hand is tilted
-  ps.rotateY(acornRot);
-  c = acorn.getCenter();
-  ps.translate(-c[0], -c[1], -c[2]);
-  ps.useProgram(acornProgObj);
-  
-  ps.pointSize(5);
-  ps.render(acorn);
-  
-  ps.popMatrix();
+    // acorn
+    ps.useProgram(acornProgObj);
+    ps.pointSize(5);
+    // place the acron in Mickey's hand
+    ps.translate(15, 28, -8);
+    ps.scale(0.8);
+    ps.rotateX(0.5);
+    // tilt the acorn since Mickey's hand is tilted
+    ps.rotateY(acornRot);
+    c = acorn.getCenter();
+    ps.translate(-c[0], -c[1], -c[2]);
+    ps.render(acorn);
   ps.popMatrix();
   
   updateStatus(acorn, "acornStatus");
@@ -136,9 +128,9 @@ function render() {
 function start(){
   ps = new PointStream();
   ps.setup(document.getElementById('canvas'));
- // ps.background([.3,.6, .9,1]);
- //ps.background([1,1,1,1]);
- ps.background([1,1,1,0.1]);
+  ps.background([.3,.6, .9,1]);
+ ps.background([1,1,1,1]);
+ //ps.background([1,1,1,0.1]);
  
   ps.onRender = render
   ps.onMouseScroll = zoom;

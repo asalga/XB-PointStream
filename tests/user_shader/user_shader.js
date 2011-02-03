@@ -17,25 +17,25 @@ function render() {
   i += 0.05;
 
   // Draw reflection
-  ps.uniformf(objectShader, "lightPos", [0, -50, 10]);
-  ps.uniformf(objectShader, "uReflection", [.15, .15, .3, .8]);
-  
+  ps.uniformf("lightPos", [0, -50, 10]);
+  ps.uniformf("uReflection", [.15, .15, .3, .8]);
   ps.pushMatrix();
-  ps.translate(0, 20, -80);
-  ps.rotateX(1.0);  
-  ps.translate(0, -55, 0);  
-  ps.scale(1, -1, 1);
-  ps.rotateY(i);
-  ps.render(mickey);
+    ps.translate(0, 20, -80);
+    ps.rotateX(1.0);  
+    ps.translate(0, -55, 0);  
+    ps.scale(1, -1, 1);
+    ps.rotateY(i);
+    ps.render(mickey);
   ps.popMatrix();
-
-  ps.uniformf(objectShader, "lightPos", [0, 50, 10]);
-  ps.uniformf(objectShader, "uReflection", [1,1,1,1]);  
+  
+  // Draw object
+  ps.uniformf("lightPos", [0, 50, 10]);
+  ps.uniformf("uReflection", [1,1,1,1]);  
   ps.pushMatrix();
-  ps.translate(0, 20, -80);
-  ps.rotateX(1.0);
-  ps.rotateY(i);
-  ps.render(mickey);
+    ps.translate(0, 20, -80);
+    ps.rotateX(1.0);
+    ps.rotateY(i);
+    ps.render(mickey);
   ps.popMatrix();
   
   var fps = Math.floor(ps.frameRate);
