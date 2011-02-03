@@ -8,7 +8,7 @@ var vertShader =
 "uniform float XBPS_pointSize;" +
 "uniform vec3 XBPS_attenuation;" +
 
-"uniform vec3 test;" + 
+"uniform vec3 lightPos;" + 
 
 "uniform mat4 XBPS_ModelViewMatrix;" +
 "uniform mat4 XBPS_Projection;" +
@@ -21,7 +21,7 @@ var vertShader =
 
 "void PointLight(inout vec3 col, in vec3 ecPos, in vec3 vertNormal, in vec3 eye ) {" +
   // Get the vector from the light to the vertex
-"  vec3 VP = test - ecPos;" +
+"  vec3 VP = lightPos - ecPos;" +
 
 // Get the distance from the current vector to the light position
 "  float d = length( VP ); " +
@@ -68,9 +68,9 @@ var fragShader =
 "  precision highp float;\n" +
 "#endif\n" +
 
-"uniform vec4 blah;" +
+"uniform vec4 uReflection;" +
 
 "varying vec4 frontColor;" +
 "void main(void){" +
-"  gl_FragColor = frontColor * blah;" +
+"  gl_FragColor = frontColor * uReflection;" +
 "}";

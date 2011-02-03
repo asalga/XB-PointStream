@@ -90,11 +90,11 @@ function render() {
   ps.pointSize(8);
   
   ps.pushMatrix();
-  ps.uniformi(mickeyProgObj, "blah", true);
+  ps.uniformi(mickeyProgObj, "uOutline", true);
   ps.pointSize(8);
   ps.render(mickey);
   
-  ps.uniformi(mickeyProgObj, "blah", false);
+  ps.uniformi(mickeyProgObj, "uOutline", false);
   ps.pointSize(8);
   ps.render(mickey);
 

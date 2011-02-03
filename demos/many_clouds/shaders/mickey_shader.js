@@ -9,7 +9,7 @@ var mickeyFragShader =
 "}";
 
 var mickeyVertShader = 
-"uniform bool blah;" +
+"uniform bool uOutline;" +
 "varying vec4 frontColor;" +
 
 "attribute vec3 XBPS_aVertex;" +
@@ -39,7 +39,7 @@ var mickeyVertShader =
 "  vec3 halfVector = normalize( VP + eye );" +
 "  float nDotHV = max( 0.0, dot( vertNormal, halfVector ));" +
 "  col += vec3(0.9, 0.9, 0.9) * nDotVP;" +
-"  if(blah){" +
+"  if(uOutline){" +
 "    if(nDotVP == 0.0){col = vec3(1.0, 0.0, 0.0);" +
 "      outline = true;" +
 "    }" +
@@ -58,13 +58,13 @@ var mickeyVertShader =
 "  vec3 grey = vec3(0.0, 0.0, 0.0);" +
 "  PointLight(grey, ecPos, transNorm, eye, outline);" +
 
-"  if(grey.x <= 0.5){"+
-"    grey = vec3(0.5, 0.5, 0.5);" +
+"  if(grey.x <= 0.3){"+
+"    grey = vec3(0.3, 0.3, 0.3);" +
 "  }" +
-"  else if(grey.x <= 0.7){"+
-"    grey = vec3(0.7, 0.7, 0.7);" +
+"  else if(grey.x <= 0.6){"+
+"    grey = vec3(0.6, 0.6, 0.6);" +
 "  }" +
-"  else if(grey.x <= 0.9){"+
+"  else if(grey.x <= 1.0){"+
 "    grey = vec3(0.9, 0.9, 0.9);" +
 "  }" +
    
@@ -83,11 +83,9 @@ var mickeyVertShader =
 "    gl_PointSize = 1.0;" +
 "  }"+
 
-"if(blah){" +
+"if(uOutline){" +
 "  if(outline){ gl_PointSize = 5.0;  frontColor = vec4(0.09, 0.05, 0.05, 1.0);" +
-
-"    vec4 test = XBPS_ModelViewMatrix * vec4(XBPS_aVertex + XBPS_aNormal/5.0, 1.0);" +
-"    gl_Position = XBPS_Projection * test;" +
+"    gl_Position = XBPS_Projection * XBPS_ModelViewMatrix * vec4(XBPS_aVertex + XBPS_aNormal/5.0, 1.0);" +
 "  }" +
 "}" +
 "else{" +

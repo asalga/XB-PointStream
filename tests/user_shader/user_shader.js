@@ -17,8 +17,8 @@ function render() {
   i += 0.05;
 
   // Draw reflection
-  ps.uniformf(objectShader, "test", [0, -50, 10]);
-  ps.uniformf(objectShader, "blah", [.15, .15, .3, .8]);
+  ps.uniformf(objectShader, "lightPos", [0, -50, 10]);
+  ps.uniformf(objectShader, "uReflection", [.15, .15, .3, .8]);
   
   ps.pushMatrix();
   ps.translate(0, 20, -80);
@@ -29,8 +29,8 @@ function render() {
   ps.render(mickey);
   ps.popMatrix();
 
-  ps.uniformf(objectShader, "test", [0, 50, 10]);
-  ps.uniformf(objectShader, "blah", [1,1,1,1]);  
+  ps.uniformf(objectShader, "lightPos", [0, 50, 10]);
+  ps.uniformf(objectShader, "uReflection", [1,1,1,1]);  
   ps.pushMatrix();
   ps.translate(0, 20, -80);
   ps.rotateX(1.0);
