@@ -297,17 +297,9 @@ var ASCParser = (function() {
           var numVerts = chunk.length/numValuesPerLine;
           numParsedPoints += numVerts;
 
-          var verts = new Float32Array(numVerts*3);
-          var cols = null;
-          var norms = null;
-
-          if(colorsPresent){
-            cols = new Float32Array(numVerts*3);
-          }
-          
-          if(normalsPresent){
-            norms = new Float32Array(numVerts*3);
-          }
+          var verts = new Float32Array(numVerts * 3);
+          var cols = colorsPresent ? new Float32Array(numVerts * 3) : null;
+          var norms = normalsPresent ? new Float32Array(numVerts * 3) : null;
 
           // depending if there are colors, 
           // we'll need to read different indices.
@@ -347,13 +339,19 @@ var ASCParser = (function() {
           parsedVerts.push(verts);
           parsedCols.push(cols);
           parsedNorms.push(norms);
-           
-          // !! needs test
-          // !! needs comment
+          
+          // XB PointStream expects an object with named/value pairs
+          // which contain the attribute arrays. These must match attribute
+          // names found in the shader 
+          
+          // attributes {
+          //   "VERTEX" : [...],
+          //   "COLOR" : [...]
+          // }
           var attributes = {};
-          if(verts){attributes["VERTEX"] = verts;}
-          if(cols){attributes["COLOR"] = cols;}
-          if(norms){attributes["NORMAL"] = norms;}
+          if(verts){attributes["XBPS_aVertex"] = verts;}
+          if(cols){attributes["XBPS_aColor"] = cols;}
+          if(norms){attributes["XBPS_aNormal"] = norms;}
           
           parse(AJAX.parser, attributes);
         }

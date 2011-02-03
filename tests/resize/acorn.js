@@ -1,10 +1,8 @@
-var acorn = null;
-var ps = null;
+var ps, acorn;
 
 var buttonDown = false;
 var zoomed = -50;
-
-var rot =[0, 0];
+var rot = [0, 0];
 var curCoords = [0, 0];
 
 window.onresize = function(){
@@ -61,8 +59,6 @@ function start(){
   ps.setup(document.getElementById('canvas'));
   
   resize();
-  ps.background([0, 0, 0, 0.5]);
-  ps.pointSize(5);
 
   ps.onRender = render;
   ps.onMouseScroll = zoom;

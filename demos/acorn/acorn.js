@@ -1,18 +1,9 @@
-var acorn = null;
-var ps = null;
+var ps, acorn;
 
 var buttonDown = false;
 var zoomed = -50;
-
-var rot =[0, 0];
+var rot = [0, 0];
 var curCoords = [0, 0];
-
-/*window.onresize = function(){
-  ps.resize(window.innerWidth/2, window.innerHeight/2);
-  ps.background([0,0,0,1]);
-  ps.pointSize(5);
-};*/
-
 
 function addPNG(){
   var img = document.createElement('img');
@@ -21,8 +12,6 @@ function addPNG(){
   img.src = ps.getPNG();
 }
 
-/*
-*/
 function removeAllScreenShots(){
   var thumbnails = document.getElementById('thumbnails');
   

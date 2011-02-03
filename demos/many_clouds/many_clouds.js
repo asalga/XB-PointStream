@@ -1,22 +1,17 @@
-var eggenburg = null;
-var acorn = null;
-var mickey = null;
+var ps;
+var acorn, eggenburg, mickey;
+var acornProgObj, mickeyProgObj;
 
-var r = 0;
-var ps = null;
+var acornRot = 0;
 
 var buttonDown = false;
 var zoomed = -50;
-
-var rot =[0, 0];
+var rot = [0, 0];
 var curCoords = [0, 0];
 
 function zoom(amt){
   var invert = document.getElementById('invertScroll').checked ? -1: 1;
   zoomed += amt * 2 * invert;
-  if(buttonDown){
-    addPNG();
-  }
 }
 
 function mousePressed(){
@@ -54,7 +49,7 @@ function updatePointCount(cloud, str){
 }
 
 function render() {
-  r += 0.05;
+  acornRot += 0.005;
   
   $('#progressbar1').progressbar( 'value' , acorn.getProgress() * 100 );
   $('#progressbar2').progressbar( 'value' , mickey.getProgress() * 100 );
@@ -71,38 +66,56 @@ function render() {
     curCoords[1] = ps.mouseY;
   }
 
-  // transform point cloud
-  ps.translate(0, 0, zoomed);
-    
+  ps.clear();
+  
+  // users transformations with mouse & kb
+  ps.translate(0, 0, zoomed);  
   ps.rotateY(rot[0]);
   ps.rotateX(rot[1]);
 
-  // clear the canvas
-  ps.clear();
+  // Eggenburg
+  ps.useProgram();
+  ps.pointSize(5);
+  ps.pushMatrix();
+  // place the street at Mickey's feet
+  ps.translate(0, -19, 0);
+  ps.render(eggenburg);
+  ps.popMatrix();
   
-  // draw mickey
+  // Mickey
+  ps.useProgram(mickeyProgObj);
+  ps.pushMatrix();
   var c = mickey.getCenter();
   ps.translate(-c[0], -c[1], -c[2]);
   ps.pointSize(8);
+  
+  ps.pushMatrix();
+  ps.uniformi(mickeyProgObj, "blah", true);
+  ps.pointSize(8);
+  ps.render(mickey);
+  
+  ps.uniformi(mickeyProgObj, "blah", false);
+  ps.pointSize(8);
   ps.render(mickey);
 
-  ps.translate(0, -17, 0);
-  ps.render(eggenburg);
-
-  ps.translate(0, 17, 0);
-    
-  // draw acorn
-  ps.pointSize(5);
-  ps.translate(c[0], c[1], c[2]);
-
+  // acorn
+  ps.pushMatrix();
+  // place the acron in Mickey's hand
   ps.translate(15, 28, -8);
+ 
+  ps.scale(0.8);
   ps.rotateX(0.5);
-  ps.rotateY(r);
+  // tilt the acorn since Mickey's hand is tilted
+  ps.rotateY(acornRot);
   c = acorn.getCenter();
   ps.translate(-c[0], -c[1], -c[2]);
-  ps.scale(0.8);
-
+  ps.useProgram(acornProgObj);
+  
+  ps.pointSize(5);
   ps.render(acorn);
+  
+  ps.popMatrix();
+  ps.popMatrix();
   
   updateStatus(acorn, "acornStatus");
   updateStatus(mickey, "mickeyStatus");
@@ -123,8 +136,10 @@ function render() {
 function start(){
   ps = new PointStream();
   ps.setup(document.getElementById('canvas'));
-  ps.background([0, 0, 0, 0.5]);
-
+ // ps.background([.3,.6, .9,1]);
+ //ps.background([1,1,1,1]);
+ ps.background([1,1,1,0.1]);
+ 
   ps.onRender = render
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
@@ -133,4 +148,7 @@ function start(){
   acorn = ps.load("../../clouds/acorn.asc");
   mickey = ps.load("../../clouds/mickey.asc");
   eggenburg = ps.load("../../clouds/eggenburg.asc");
+  
+  acornProgObj = ps.createProgram(acornVertShader, acornFragShader);
+  mickeyProgObj = ps.createProgram(mickeyVertShader, mickeyFragShader);  
 }

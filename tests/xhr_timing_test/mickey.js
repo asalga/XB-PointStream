@@ -1,12 +1,10 @@
-var ps = null;
-var mickey = null;
+var ps, mickey;
 
 var XHR_Timer;
 var XHR_TimerDone = false;
 
 var buttonDown = false;
 var zoomed = -50;
-
 var rot =[0,0];
 var curCoords = [0,0];
 
@@ -67,7 +65,7 @@ function start(){
   ps.setup(document.getElementById('canvas'));
   
   ps.pointSize(5);
-  ps.background([1, 1, 1, 1]);
+  ps.background([.5, .5, .5, 1]);
 
   ps.onRender = render;
   ps.onMouseScroll = zoom;

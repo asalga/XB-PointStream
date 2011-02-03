@@ -1,5 +1,4 @@
-var acorn = null;
-var ps = null;
+var ps, acorn;
 
 function render() {
   ps.translate(0, 0, -20);
@@ -9,6 +8,10 @@ function render() {
   
   ps.clear();
   ps.render(acorn);
+  
+  if(acorn.getStatus() === 3){
+    ps.onRender = function(){};
+  }
 }
 
 function start(){

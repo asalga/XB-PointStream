@@ -1,0 +1,34 @@
+If writing a parser and using the XB PointStream built-in shader, 
+you must ensure the parser set the correct attribute names
+
+XBPS_aVertex
+XBPS_aColor
+
+
+XBPS_model
+XBPS_view
+XBPS_modelView
+XBPS_perspective
+
+XBPS_pointSize
+
+
+use XBPS shaders and parser
+- Only position and colors will be available
+
+use XBPS parser
+- You must read XBPS attribute names in your shader
+
+use XBPS shader
+- You must write to XBPS attribute names in your parser
+
+use custom shader and parser
+- any attribute names can be read and written to, except you must use
+
+XBPS_model
+XBPS_view
+XBPS_modelView
+XBPS_normalMatrix
+XBPS_perspective
+XBPS_pointSize
+

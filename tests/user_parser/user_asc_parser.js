@@ -26,6 +26,7 @@ var User_ASC_Parser = (function() {
     
     var undef;
     
+    // defined once to reduce number of empty functions
     var __empty_func = function(){};
   
     var start = config.start || __empty_func;
@@ -40,7 +41,7 @@ var User_ASC_Parser = (function() {
     const STARTED = 1;
 
     var pathToFile = null;
-    var fileSize = 0;
+    var fileSizeInBytes = 0;
     
     //
     var numParsedPoints = 0;
@@ -153,16 +154,16 @@ var User_ASC_Parser = (function() {
     };
     
     /*
-      Returns the version of this parser
+      Returns the version of this parser.
       
-      @returns {String} parser version
+      @returns {String} parser version.
     */
     this.__defineGetter__("version", function(){
       return version;
     });
     
     /*
-      Get the number of parsed points so far
+      Get the number of parsed points so far.
       
       @returns {Number} number of points parsed.
     */
@@ -180,7 +181,7 @@ var User_ASC_Parser = (function() {
     });
     
     /**
-      Returns the progress of downloading the point cloud
+      Returns the progress of downloading the point cloud between zero and one.
       
       @returns {Number} value from zero to one or -1 if unknown.
     */
@@ -189,13 +190,16 @@ var User_ASC_Parser = (function() {
     });
     
     /**
+      Returns the file size of the resource in bytes.
+      
+      @returns {Number} size of resource in bytes.
     */
     this.__defineGetter__("fileSize", function(){
-      return fileSize;
+      return fileSizeInBytes;
     });
     
     /**
-      pathToFile
+      @param path Path to the resource
     */
     this.load = function(path){
       pathToFile = path;
@@ -293,17 +297,9 @@ var User_ASC_Parser = (function() {
           var numVerts = chunk.length/numValuesPerLine;
           numParsedPoints += numVerts;
 
-          var verts = new Float32Array(numVerts*3);
-          var cols = null;
-          var norms = null;
-
-          if(colorsPresent){
-            cols = new Float32Array(numVerts*3);
-          }
-          
-          if(normalsPresent){
-            norms = new Float32Array(numVerts*3);
-          }
+          var verts = new Float32Array(numVerts * 3);
+          var cols = colorsPresent ? new Float32Array(numVerts * 3) : null;
+          var norms = normalsPresent ? new Float32Array(numVerts * 3) : null;
 
           // depending if there are colors, 
           // we'll need to read different indices.
@@ -343,15 +339,21 @@ var User_ASC_Parser = (function() {
           parsedVerts.push(verts);
           parsedCols.push(cols);
           parsedNorms.push(norms);
-           
-          // !! needs test
-          // !! needs comment
-          var test = {};
-          if(verts){test["VERTEX"] = verts;}
-          if(cols){test["COLOR"] = cols;}
-          if(norms){test["NORMAL"] = norms;}
           
-          parse(AJAX.parser, test);
+          // XB PointStream expects an object with named/value pairs
+          // which contain the attribute arrays. These must match attribute
+          // names found in the shader 
+          
+          // attributes {
+          //   "VERTEX" : [...],
+          //   "COLOR" : [...]
+          // }
+          var attributes = {};
+          if(verts){attributes["XBPS_aVertex"] = verts;}
+          if(cols){attributes["XBPS_aColor"] = cols;}
+          if(norms){attributes["XBPS_aNormal"] = norms;}
+          
+          parse(AJAX.parser, attributes);
         }
       };
     
@@ -362,7 +364,7 @@ var User_ASC_Parser = (function() {
       AJAX.onprogress = function(evt){
       
        if(evt.lengthComputable){
-          fileSize = evt.total;
+          fileSizeInBytes = evt.total;
           progress = evt.loaded/evt.total;
         }
 

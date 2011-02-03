@@ -3,6 +3,7 @@ XB PointStream
 XB PointStream is a cross-browser JavaScript tool which emulates Arius3D's PointStream viewer.
 It can render a large amount of point cloud data to the <canvas> tag using WebGL.
 
+PointStream
 Arius3D:     http://www.arius3d.com/
 
 XB PointStream

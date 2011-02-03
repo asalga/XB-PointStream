@@ -1,5 +1,4 @@
-var onlyVerts = null;
-var ps = null;
+var ps, onlyVerts;
 
 function render() {
   ps.translate(0, 0, -20);
@@ -9,6 +8,9 @@ function render() {
   
   ps.clear();
   ps.render(onlyVerts);
+  if(onlyVerts.getStatus() === 3){
+    ps.onRender = function(){};
+  }
 }
   
 function start(){

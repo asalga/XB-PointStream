@@ -1,5 +1,4 @@
-var pointCloud = null;
-var ps = null;
+var ps, pointCloud;
 
 function render() {
   ps.translate(0, 0, -30);
@@ -9,6 +8,9 @@ function render() {
   
   ps.clear();
   ps.render(pointCloud);
+  if(pointCloud.getStatus() === 3){
+    ps.onRender = function(){};
+  }
 }
 
 function start(){

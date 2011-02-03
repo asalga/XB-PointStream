@@ -37,7 +37,9 @@ var PointStream = (function() {
     var registeredParsers = {};
     registeredParsers["asc"] = ASCParser;
     //registeredParsers["psi"] = PSIParser;
-      
+    
+    var matrixStack = [];
+    
     // WebGL compatibility wrapper
     try{
       Float32Array;
@@ -86,11 +88,12 @@ var PointStream = (function() {
 
     // shader matrices
     var projection;
-    var view;
-    var model;
     var normalTransform;
 
     var progObj;
+    // Keep a reference to the default program object
+    // in case the user wants to unset his shaders.
+    var defProgObj;
     
     // Both key and keyCode will be equal to these values
     const _BACKSPACE = 8;
@@ -114,94 +117,33 @@ var PointStream = (function() {
     
     var vertexShaderSource =
     "varying vec4 frontColor;" +
-    "attribute vec3 aVertex;" +
-    "attribute vec3 aNormal;" +
-    "attribute vec4 aColor;" +
+
+    "attribute vec3 XBPS_aVertex;" +
+    "attribute vec3 XBPS_aNormal;" +
+    "attribute vec4 XBPS_aColor;" +
     
-    "uniform bool colorsPresent;" +
-
-    "uniform bool usingMat;" +
-    "uniform vec3 specular;" +
-    "uniform vec3 mat_emissive;" +
-    "uniform vec3 mat_ambient;" +
-    "uniform vec3 mat_specular;" +
-    "uniform float shininess;" +
+    "uniform float XBPS_pointSize;" +
+    "uniform vec3 XBPS_attenuation;" +
     
-    "uniform float pointSize;" +
-    "uniform vec3 attenuation;" +
+    "uniform mat4 XBPS_ModelViewMatrix;" +
+    "uniform mat4 XBPS_Projection;" +
     
-    "uniform mat4 model;" +
-    "uniform mat4 view;" +
-    "uniform mat4 projection;" +
-    "uniform mat4 normalTransform;" +
-
-    "struct LightStruct{" +
-    "  vec3 col;" + 
-    "  vec3 pos;" +
-    "};" +
-    "uniform LightStruct light;" +
-
-    "uniform int lightCount;" +
-
-    "void DirectionalLight( inout vec3 col, in vec3 ecPos, in vec3 vertNormal ) {" +
-    "  float nDotVP = max(0.0, dot( vertNormal, light.pos ));" +
-    "  float nDotVH = max(0.0, dot( vertNormal, normalize( light.pos-ecPos )));" +
-    "  col += light.col * 2.0 * nDotVP;" +
-    "}" +
-
-    "void PointLight( inout vec3 col, in vec3 ecPos, in vec3 vertNormal, in vec3 eye ) {" +
-    // Get the vector from the light to the vertex
-    "   vec3 VP = light.pos - ecPos;" +
-
-    // Get the distance from the current vector to the light position
-    "  float d = length( VP ); " +
-
-    // Normalize the light ray so it can be used in the dot product operation.
-    "  VP = normalize( VP );" +
-
-    "  float attenuation = 1.0 / ( 1.0 + ( d ) + ( d * d ));" +
-    "  float nDotVP = max( 0.0, dot( vertNormal, VP ));" +
-    "  vec3 halfVector = normalize( VP + eye );" +
-    "  float nDotHV = max( 0.0, dot( vertNormal, halfVector ));" +
-    "  col += light.col * nDotVP;" +
-    "}" +
-
     "void main(void) {" +
-    "  vec3 finalDiffuse = vec3( 0.0, 0.0, 0.0 );" +
-
-    // If no color data is present, use 1's so normals get lit.
-    "  vec4 col = aColor;" +
-    "  if(colorsPresent == false){" +
-    "    col = vec4(1.0, 1.0, 1.0, 1.0);" +
-    "  }" +
-    
-    "  vec3 norm = vec3( normalTransform * vec4( aNormal, 0.0 ) );" +
-
-    "  vec4 ecPos4 = view * model * vec4(aVertex,1.0);" +
-    "  vec3 ecPos = (vec3(ecPos4))/ecPos4.w;" +
-    "  vec3 eye = vec3( 0.0, 0.0, 1.0 );" +
-
-    // If there were no lights this draw call, just use the
-    // assigned fill color of the shape and the specular value
-    "  if( lightCount == 0 ) {" +
-    "    frontColor = vec4(col[0], col[1], col[2], 1.0);" +
-    "  }" +
-    "  else {" +
-    "    PointLight(finalDiffuse, ecPos, norm, eye );" +
-    "    frontColor = vec4(finalDiffuse[0] * col[0], finalDiffuse[1] * col[1], finalDiffuse[2] * col[2], 1.0);" +
-    "  }" +
-
-    "  float dist = length( view * model * vec4(aVertex, 1.0));" +
-    "  float attn = attenuation[0] + (attenuation[1] * dist) + (attenuation[2] * dist * dist);" +
+    "  frontColor = XBPS_aColor;" +
+    "  vec4 mvVertex = XBPS_ModelViewMatrix * vec4(XBPS_aVertex, 1.0);" +
+    "  float dist = length( mvVertex );" +
+    "  float attn = XBPS_attenuation[0] + " +
+    "              (XBPS_attenuation[1] * dist) + " + 
+    "              (XBPS_attenuation[2] * dist * dist);" +
 
     "  if(attn > 0.0){" +
-    "    gl_PointSize = pointSize * sqrt(1.0/attn);" +
+    "    gl_PointSize = XBPS_pointSize * sqrt(1.0/attn);" +
     "  }" +
     "  else{" +
     "    gl_PointSize = 1.0;" +
     "  }"+
     
-    "  gl_Position = projection * view * model * vec4(aVertex, 1.0);" +
+    "  gl_Position = XBPS_Projection * mvVertex;" +
     "}";
 
     var fragmentShaderSource =
@@ -751,12 +693,8 @@ var PointStream = (function() {
       Whenever a chunk of data is parsed, this function 
       will be called.
       
-      sends in name value pairs
-      {
-        "VERTEX" : [.....],
-        "COLOR" :  [.....],
-        "UNKNOWN": [.....]
-      }
+      @param {Object} attributes contains name/value pairs of arrays
+      { "VERTEX": [.....], "COLOR":  [.....], "NORMAL": [.....] }
     */
     function parseCallback(parser, attributes){
 
@@ -765,7 +703,6 @@ var PointStream = (function() {
       pointClouds[i].progress = parser.progress;
       pointClouds[i].numPoints = parsers[i].numParsedPoints;
       
-      // !! comment
       for(var semantic in attributes){
       
        // if not yet created  
@@ -779,9 +716,9 @@ var PointStream = (function() {
     }
         
     /*
-      called when the file is done being downloaded
+      Called when the file is done being downloaded.
       
-      // !! this function needs some serious documentation
+      @param {} parser
     */
     function loadedCallback(parser){
 
@@ -791,61 +728,31 @@ var PointStream = (function() {
       var pc = pointClouds[idx];
       
       // once the point cloud is done being parsed,
-      // we can merge the vbos    
+      // we can merge the vbos to speed up rendering.
       var numPoints = pc.numTotalPoints = parsers[idx].numTotalPoints;
       
       // Merge the VBOs into one. Since we are slowly 
       // getting the points, we'll end up with many vbos
       // which is slow to render.
       var verts = new TYPED_ARRAY_FLOAT(numPoints * 3);
-      var cols = null;
-      var norms = null;
       
-      //
-      if(pc.attributes["COLOR"]){
-        cols = new TYPED_ARRAY_FLOAT(numPoints * 3);
-      }
-      if(pc.attributes["NORMAL"]){
-        norms = new TYPED_ARRAY_FLOAT(numPoints * 3);
+      var names = [];
+      for(var attribute in pc.attributes){
+        names.push(attribute);
       }
       
-      var numVBOs = pc.attributes["VERTEX"].length;
+      var numVBOs = pc.attributes[names[0]].length;
       
-      //
-      //
       // iterate over all the vbos
       for(var currVBO = 0, c = 0; currVBO < numVBOs; currVBO++){
       
         // iterate over all the values in the original array and
         // copy them into a single array which will hold the entire chunk.
-        for(var i = 0; i < pc.attributes["VERTEX"][currVBO].length; i++, c++){
-          
-          verts[c] = pc.attributes["VERTEX"][currVBO].array[i];
-          
-          if(cols){
-            cols[c] = pc.attributes["COLOR"][currVBO].array[i];
-          }
-          if(norms){
-            norms[c] = pc.attributes["NORMAL"][currVBO].array[i];
-          }
+        for(var i = 0; i < pc.attributes[names[0]][currVBO].length; i++, c++){
+          verts[c] = pc.attributes[names[0]][currVBO].array[i];
+          //aOfa[c] = pc.attributes[names[c]][currVBO].array[i];
         }
       }
-      
-      // rendering code iterates over all the vbos, so
-      // make sure we have an array of just one element
-      // !! eventually fix this
-      /*pc.attributes["VERTEX"] = [];
-      pc.attributes["VERTEX"].push(createBufferObject(verts));
-
-      if(cols){
-        pc.attributes["COLOR"] = [];
-        pc.attributes["COLOR"].push(createBufferObject(cols));
-      }
-
-      if(norms){
-        pc.attributes["NORMAL"] = [];
-        pc.attributes["NORMAL"].push(createBufferObject(norms));
-      }*/
       
       // !! fix
       pc.center = getAverage(verts);
@@ -867,11 +774,12 @@ var PointStream = (function() {
       frames++;
       var now = new Date();
 
+      matrixStack.push(M4x4.I);
+
       // now call user's stuff
       e.onRender();
-
-      // our stuff
-      model = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+      
+      matrixStack.pop();
       
       // if more than 1 second has elapsed, recalculate fps
       if(now - lastTime > 1000){
@@ -887,7 +795,6 @@ var PointStream = (function() {
     function runDefault(){
       var fovy = 60;
       
-      //alert(this.width);
       var aspect = width/height;
       var znear = 0.1;
 
@@ -911,15 +818,12 @@ var PointStream = (function() {
       var D = -2 * zfar * znear / (zfar - znear);
       
       projection = M4x4.$(
-      X, 0, A, 0, 
-      0, Y, B, 0, 
-      0, 0, C, D, 
-      0, 0, -1, 0);
+      X, 0, 0, 0, 
+      0, Y, 0, 0, 
+      A, B, C, -1, 
+      0, 0, D, 0);
       
-      // !! fix this identity
-      view =            M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
-      model =           M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
-      normalTransform = M4x4.$(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+      normalTransform = M4x4.I;
     };
     
     /**
@@ -939,8 +843,8 @@ var PointStream = (function() {
     function mouseScroll(evt){
       var delta = 0;
      
+      // !!
       // which check to use?
-      // !!!
       //if(browser === MINEFIELD){
       if(evt.detail){
         delta = evt.detail / 3;
@@ -976,9 +880,9 @@ var PointStream = (function() {
       keyFunc(evt, userKeyUp);
     }
     
-    /****************************************/
-    /*********  Public methods **************/
-    /****************************************/
+    /*************************************/
+    /**********  Public methods **********/
+    /*************************************/
     
     /**
     */
@@ -1052,53 +956,46 @@ var PointStream = (function() {
     */
     this.render = function(pointCloud){
 
+      var names = [];
+
+      // send in the vertex data
+      for(attribute in pointCloud.attributes){
+        names.push(attribute);
+      }
+      var name0 = names[0];
+      
+      var topMatrix = this.peekMatrix();
+      normalTransform = M4x4.inverseOrthonormal(topMatrix);
+      uniformMatrix(progObj, "XBPS_NormalMatrix", false, M4x4.transpose(normalTransform));
+      uniformMatrix(progObj, "XBPS_ModelViewMatrix", false, topMatrix);
+  
       // if we have a context and 
       // if the point cloud actually has something to render
-      if(ctx && pointCloud.attributes["VERTEX"]){
+      if(ctx && pointCloud.attributes[name0]){
         
-        var arrayOfBufferObjs = pointCloud.attributes["VERTEX"];
+        var arrayOfBufferObjs = pointCloud.attributes[name0];
         
         var numBufferObjects = arrayOfBufferObjs.length;
-
+        
         // render all the vbos in the current point cloud
         for(var currVBO = 0; currVBO < numBufferObjects; currVBO++){
-        
-          // send in the vertex data
-          vertexAttribPointer(progObj, "aVertex", 3, arrayOfBufferObjs[currVBO].VBO);
           
-          // if we have a color attribute, send in those values
-          if(pointCloud.attributes["COLOR"]){
-            vertexAttribPointer(progObj, "aColor", 3, pointCloud.attributes["COLOR"][currVBO].VBO);
-            uniformi(progObj, "colorsPresent", true);
+          for(var namesI = 0; namesI < names.length; namesI++){
+            vertexAttribPointer(progObj, names[namesI], 3, pointCloud.attributes[names[namesI]][currVBO].VBO);
           }
-          else{
-            disableVertexAttribPointer(progObj, "aColor");
-            uniformi(progObj, "colorsPresent", false);
-          }
-          
-          // only turn on the lights if we have normal data
-          if(pointCloud.attributes["NORMAL"]){
-            vertexAttribPointer(progObj, "aNormal", 3, pointCloud.attributes["NORMAL"][currVBO].VBO);
-            uniformf(progObj, "light.col", [1, 1, 1]);
-            uniformf(progObj, "light.pos", [0, 0, -1]);
-            uniformi(progObj, "lightCount", 1);
-          }
-          else{
-            disableVertexAttribPointer(progObj, "aNormal");
-            uniformi(progObj, "lightCount", 0);
-          }
-
-          var mvm = M4x4.mul(view, model);
-          normalTransform = M4x4.inverseOrthonormal(mvm);
-          uniformMatrix(progObj, "normalTransform", false, M4x4.transpose(normalTransform));
-          uniformMatrix(progObj, "model", false, model);
-          
-          //alert(pointCloud.attributes["VERTEX"][0].length/3);
-          
+              
           ctx.drawArrays(ctx.POINTS, 0, arrayOfBufferObjs[currVBO].length/3);
         }
       }
     };
+    
+    /**
+    */
+    this.setDefaultUniforms = function(){
+      uniformf(progObj, "XBPS_pointSize", 1);
+      uniformf(progObj, "XBPS_attenuation", [attn[0], attn[1], attn[2]]); 
+      uniformMatrix(progObj, "XBPS_Projection", false, projection);
+    }
     
     /**
       Get the version of the library.
@@ -1119,13 +1016,10 @@ var PointStream = (function() {
       Resize the viewport.
       This can be called after setup
       
-      @param {Number} width
-      @param {Number} height
+      @param {Number} pWidth
+      @param {Number} pHeight
     */
     this.resize = function(pWidth, pHeight){
-      // delete old program object?
-      // delete old context?
-      
       // override the canvas attributes
       canvas.setAttribute("width", pWidth);
       canvas.setAttribute("height", pHeight);
@@ -1136,31 +1030,139 @@ var PointStream = (function() {
       
       ctx = canvas.getContext("experimental-webgl");
 
-      // crazy hack for Chrome/Chromium
+      // parseInt hack used for Chrome/Chromium
       ctx.viewport(0, 0, parseInt(pWidth), parseInt(pHeight));
-      ctx.enable(ctx.DEPTH_TEST);
       
-      this.background(bk);
-      
-      progObj = createProgramObject(ctx, vertexShaderSource, fragmentShaderSource);
-      ctx.useProgram(progObj);
-      
-      runDefault();      
-      
-      // if VBOs already exist, recreate them?
-
-      // !! check if point cloud vbo exists?          
-      uniformf(progObj, "light.pos", [0,0,-1]);
-      uniformf(progObj, "light.col", [1,1,1]);
-      uniformi(progObj, "lightCount", 1);
-      
-      uniformf(progObj, "pointSize", 1);
-      uniformf(progObj, "attenuation", [attn[0], attn[1], attn[2]]); 
-
-      uniformMatrix(progObj, "view", false, M4x4.transpose(view));
-      uniformMatrix(progObj, "projection", false, M4x4.transpose(projection));
+      runDefault();
     };
     
+    /*************************************/
+    /********** Transformations **********/
+    /*************************************/
+
+    /**
+      1 arg = uniform scaling
+      3 args = independant scaling
+    */
+    this.scale = function(sx, sy, sz){
+      var smat = (!sy && !sz) ? M4x4.scale1(sx, M4x4.I) : 
+                                M4x4.scale3(sx, sy, sz, M4x4.I);
+      this.loadMatrix(M4x4.mul(this.peekMatrix(), smat));
+    };
+    
+    /**
+      Multiplies the top of the matrix stack with a translation matrix.
+      
+      @param {Number} tx
+      @param {Number} ty
+      @param {Number} tz
+    */
+    this.translate = function(tx, ty, tz){
+      var trans = M4x4.translate3(tx, ty, tz, M4x4.I);
+      this.loadMatrix(M4x4.mul(this.peekMatrix(), trans));
+    };
+        
+    /**
+      @param {Number} radians
+    */
+    this.rotateX = function(radians){
+      var rotMat = M4x4.rotate(radians, V3.$(1,0,0), M4x4.I);
+      this.loadMatrix(M4x4.mul(this.peekMatrix(), rotMat));
+    };
+    
+    /**
+      @param {Number} radians
+    */
+    this.rotateY = function(radians){
+      var rotMat = M4x4.rotate(radians, V3.$(0,1,0), M4x4.I);
+      this.loadMatrix(M4x4.mul(this.peekMatrix(), rotMat));
+    };
+
+    /**
+      @param {Number} radians
+    */
+    this.rotateZ = function(radians){
+      var rotMat = M4x4.rotate(radians, V3.$(0,0,1), M4x4.I);
+      this.loadMatrix(M4x4.mul(this.peekMatrix(), rotMat));
+    };
+    
+    /*********************************************/
+    /********** Matrix Stack Operations **********/
+    /*********************************************/
+
+    /**
+      Pushes on a copy of the matrix on top of the stack
+    */
+    this.pushMatrix = function(){
+      matrixStack.push(this.peekMatrix());
+    };
+    
+    /**
+      Pops off the matrix on top of the matrix stack
+    */
+    this.popMatrix = function(){
+      matrixStack.pop();
+    };
+    
+    /**
+      Get a copy of the matrix at the top of the matrix stack
+      
+      @returns {}
+    */
+    this.peekMatrix = function(){
+      return M4x4.clone(matrixStack[matrixStack.length - 1]);
+    };
+        
+    /**
+      Set the matrix at the top of the matrix stack
+      @param {} mat
+    */
+    this.loadMatrix = function(mat){
+      matrixStack[matrixStack.length - 1] = mat;
+    }
+    
+    /************************************/
+    /********** Program Object **********/
+    /************************************/
+
+    /**
+    */
+    this.createProgram = function(vertShader, fragShader){
+      return createProgramObject(ctx, vertShader, fragShader);
+    };
+
+    /**
+    */
+    this.useProgram = function(pProgObj){
+      if(!pProgObj){
+        progObj = defProgObj;
+        ctx.useProgram(progObj);
+      }
+      else{
+        progObj = pProgObj;
+        ctx.useProgram(progObj);
+      }
+      this.setDefaultUniforms();
+    };
+    
+    /**
+    */
+    this.uniformi = function(programObj, varName, varValue){
+      uniformi(programObj, varName, varValue);
+    };
+    
+    /**
+    */
+    this.uniformf = function(programObj, varName, varValue){
+      uniformf(programObj, varName, varValue);
+    };
+    
+    /**
+    */
+    this.uniformMatrix = function(programObj, varName, varValue){
+      uniformMatrix(programObj, varName, false, varValue);
+    };
+
     /**
     */
     this.onRender = __empty_func;
@@ -1204,7 +1206,7 @@ var PointStream = (function() {
     this.print = function(message) {
       logBuffer.push(message);
     };
-
+        
     /**
       Must be called after the library has been created.
       
@@ -1219,51 +1221,29 @@ var PointStream = (function() {
       
       this.resize(canvas.getAttribute("width"), canvas.getAttribute("height"));
       
-      // our render loop will call the users render function.
+      ctx.enable(ctx.DEPTH_TEST);
+
+      this.background(bk);
+      
+      // Create and use the program object
+      defProgObj = progObj = createProgramObject(ctx, vertexShaderSource, fragmentShaderSource);
+      ctx.useProgram(progObj);
+      
+      // Now that we have a program object, we can set some defaults
+      this.setDefaultUniforms();
+      
+      // our render loop will call the users render function
       setInterval(renderLoop, 10, this);
 
       attach(cvs, "mouseup", mouseReleased);
       attach(cvs, "mousedown", mousePressed);
       attach(cvs, "DOMMouseScroll", mouseScroll);
       attach(cvs, "mousewheel", mouseScroll);
-      
       attach(cvs, "mousemove", mouseMoved);
       
       attach(document, "keydown", keyDown);
       attach(document, "keypress", keyPressed);
       attach(document, "keyup", keyUp);
-    };
-
-
-    /**
-      1 arg = uniform scaling
-      3 args = independant scaling
-    */
-    this.scale = function(sx, sy, sz){
-    
-      // uniform scaling
-      if( !sy && !sz){
-        model =  M4x4.scale1(sx, model);
-      }
-      else{
-        model =  M4x4.scale3(sx, sy, sz, model);
-      }
-    };
-    
-    /**
-     @param {Number} tx
-     @param {Number} ty
-     @param {Number} tz
-    */
-    this.translate = function(tx, ty, tz){
-      model = M4x4.translate3(tx, ty, tz, model, model);
-    };
-    
-    /**
-      @param {Number} radians
-    */
-    this.rotateY = function(radians){
-      model =  M4x4.rotate(radians,V3.$(0,1,0),model);
     };
     
     /**
@@ -1281,23 +1261,11 @@ var PointStream = (function() {
       !! change to get/setter
     */
     this.pointSize = function(size){
-      uniformf(progObj, "pointSize", size);
+      uniformf(progObj, "XBPS_pointSize", size);
     };
+
+
     
-    /**
-      @param {Number} radians
-    */
-    this.rotateX = function(radians){
-      model = M4x4.rotate(radians,V3.$(1,0,0),model);
-    };
-    
-    /**
-      @param {Number} radians
-    */
-    this.rotateZ = function(radians){
-      model = M4x4.rotate(radians,V3.$(0,0,1),model);
-    };
-        
     /**
       @param {String} path - path to resource
     */
@@ -1314,7 +1282,7 @@ var PointStream = (function() {
                                         parse: parseCallback,
                                         end: loadedCallback});
         
-        // !! fix
+        // !! fix (private vars are visible in user script)
         var newPointCloud = {
 
           VBOs: [],
@@ -1363,7 +1331,7 @@ var PointStream = (function() {
   return PointStream;
 }());
 
-// !! fix
+// !! fix (re-move from global ns)
 var getAverage = function(arr){
   var objCenter = [0, 0, 0];
 
