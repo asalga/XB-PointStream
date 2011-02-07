@@ -8,5 +8,5 @@ function start(){
     ps.translate(0, 0, -25);
     ps.render(acorn);
   };
-  acorn = ps.load("clouds/acorn.asc");
+  acorn = ps.load("clouds/acorn_center.asc");
 }
