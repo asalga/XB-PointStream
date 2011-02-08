@@ -119,7 +119,7 @@ var ASCParser = (function() {
       var str = "";
       
       //
-      // !! fix me
+      // !! clean me
       for(i = 0; i < 500; i++){
         str += values[i];
       }
@@ -201,7 +201,6 @@ var ASCParser = (function() {
       // put a reference to the parser in the AJAX object
       // so we can give the library a reference to the
       // parser within the AJAX event handler scope.
-      // !! eventually need to fix this
       AJAX.parser = this;
 
       /**
@@ -246,7 +245,6 @@ var ASCParser = (function() {
       }
       
       /**
-        !! fix me
       */
       AJAX.parseChunk = function(chunkData){
         var chunk = chunkData;
@@ -254,7 +252,6 @@ var ASCParser = (function() {
         // this occurs over network connections, but not locally.
         if(chunk !== ""){
           
-          // !! fix this
           if(layoutCode === UNKNOWN){
             layoutCode = getDataLayout(chunk);
             numValuesPerLine = -1;

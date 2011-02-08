@@ -32,15 +32,13 @@ function render() {
   }
 
   // transform point cloud
-  ps.translate(0,0,zoomed);
+  ps.translate(0, 0, zoomed);
 
   ps.rotateY(rot[0]);
   ps.rotateX(rot[1]);
-  
-  // !! fix me
-  ps.translate(281.32617943646534,205.61656736098982,290.55082983174293);
-  
-  // redraw
+ 
+  // !! fix 
+  ps.translate(281.32617943646534,205.61656736098982,290.55082983174293);  
   ps.clear();
   ps.render(lion);
   

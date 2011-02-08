@@ -755,7 +755,7 @@ var PointStream = (function() {
       
       // !! fix
       pc.center = getAverage(verts);
-      
+
       pc.status = COMPLETE;
       pc.progress = parser.progress;
     }
@@ -788,7 +788,8 @@ var PointStream = (function() {
       }
     }
     
-    // !! fix (remove from global ns)
+    /**
+    */
     function getAverage(arr){
       var objCenter = [0, 0, 0];
 
