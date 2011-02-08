@@ -3,7 +3,6 @@ var i = 0.0;
 var j = 5.0;
 
 function render() {
-
   ps.translate(0, 0, -20);
   ps.rotateY(i += 0.0011);
   ps.rotateZ(j += 0.0015);

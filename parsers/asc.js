@@ -50,14 +50,8 @@ var ASCParser = (function() {
     
     //
     var numValuesPerLine = -1;
-    var normalsPresent = false;
     var colorsPresent = false;
     var layoutCode = UNKNOWN;
-    
-    //
-    var parsedVerts = [];
-    var parsedCols = [];
-    var parsedNorms = [];
     
     // keep track if onprogress event handler was called to 
     // handle Chrome/WebKit vs. Minefield differences.
@@ -90,7 +84,6 @@ var ASCParser = (function() {
       3 fourth case
     */
     var getDataLayout = function(values){
-      var normalsPresent = false;
       var colorsPresent = false;
       
       var VERTS = 0;
@@ -143,7 +136,6 @@ var ASCParser = (function() {
       
       for(var i = 0; i < data.length; i++){
         if(data[i] < 0 || data[i] > 255){
-          normalsPresent = true;
           return VERTS_NORMS;
         }
       }
@@ -259,7 +251,6 @@ var ASCParser = (function() {
       AJAX.parseChunk = function(chunkData){
         var chunk = chunkData;
         
-        // !! fix this
         // this occurs over network connections, but not locally.
         if(chunk !== ""){
           
@@ -274,11 +265,11 @@ var ASCParser = (function() {
               case 1: numValuesPerLine = 6;
                       colorsPresent = true;
                       break;
+                      
+              // normals present
               case 2: numValuesPerLine = 6;
-                      normalsPresent = true;
                       break;
               case 3: numValuesPerLine = 9;
-                      normalsPresent = true;
                       colorsPresent = true;
                       break;
             }
@@ -299,7 +290,6 @@ var ASCParser = (function() {
 
           var verts = new Float32Array(numVerts * 3);
           var cols = colorsPresent ? new Float32Array(numVerts * 3) : null;
-          var norms = normalsPresent ? new Float32Array(numVerts * 3) : null;
 
           // depending if there are colors, 
           // we'll need to read different indices.
@@ -327,31 +317,14 @@ var ASCParser = (function() {
               cols[j+1] = parseInt(chunk[i+4])/255;
               cols[j+2] = parseInt(chunk[i+5])/255;
             }
-
-            if(norms){
-              norms[j]   = parseFloat(chunk[i + 3 + valueOffset]);
-              norms[j+1] = parseFloat(chunk[i + 4 + valueOffset]);
-              norms[j+2] = parseFloat(chunk[i + 5 + valueOffset]);
-            }
           }
-          
-          // !! pushing on null?
-          parsedVerts.push(verts);
-          parsedCols.push(cols);
-          parsedNorms.push(norms);
-          
+                    
           // XB PointStream expects an object with named/value pairs
           // which contain the attribute arrays. These must match attribute
-          // names found in the shader 
-          
-          // attributes {
-          //   "VERTEX" : [...],
-          //   "COLOR" : [...]
-          // }
+          // names found in the shader
           var attributes = {};
           if(verts){attributes["ps_Vertex"] = verts;}
           if(cols){attributes["ps_Color"] = cols;}
-          if(norms){attributes["ps_Normal"] = norms;}
           
           parse(AJAX.parser, attributes);
         }
@@ -405,7 +378,7 @@ var ASCParser = (function() {
             AJAX.parseChunk(chunk);
           }
         }
-      };//onprogress
+      };// onprogress
       
       // open an asynchronous request to the path
       if(AJAX.overrideMimeType){
@@ -414,6 +387,6 @@ var ASCParser = (function() {
       AJAX.open("GET", path, true);
       AJAX.send(null);
     };// load
-  }//ctor
+  }// ctor
   return ASCParser;
 }());

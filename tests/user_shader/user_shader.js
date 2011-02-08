@@ -1,54 +1,30 @@
-var ps, mickey;
-var rotY = 0.0;
-var rotX = 0.3;
-
-var progObj;
-var fps_label;
+var ps, acorn, progObj;
+var i = 0.0;
 
 function render() {
+  ps.translate(0, 0, -20);
+
+  var c = acorn.getCenter();
+  ps.rotateY(i += 0.0011);
+  ps.translate(-c[0], -c[1], -c[2]);
+  
   ps.clear();
+  ps.render(acorn);
   
-  // spin object
-  rotY += 0.01;
-
-  // Draw reflection
-  ps.uniformi("reflection", true);
-  ps.uniformf("lightPos", [0, -50, 10]);
-  ps.uniformf("uReflection", [.15, .15, .3, .8]);
-  ps.pushMatrix();
-    ps.translate(0, 10, -80);
-    ps.rotateX(rotX);  
-    ps.translate(0, -55, 0);  
-    ps.scale(1, -1, 1);
-    ps.rotateY(rotY);
-    ps.render(mickey);
-  ps.popMatrix();
-  
-  // Draw object
-  ps.uniformi("reflection", false);
-  ps.uniformf("lightPos", [0, 50, 10]);
-  ps.uniformf("uReflection", [1, 1, 1, 1]);
-  ps.pushMatrix();
-    ps.translate(0, 10, -80);
-    ps.rotateX(rotX);
-    ps.rotateY(rotY);
-    ps.render(mickey);
-  ps.popMatrix();
-  
-  fps_label.innerHTML = Math.floor(ps.frameRate) + " FPS";
+  var fps = Math.floor(ps.frameRate);
+  var fps_label = document.getElementById("fps");
+  fps_label.innerHTML = fps + " FPS";
 }
-
+ 
 function start(){
-  fps_label = document.getElementById("fps");
-  
   ps = new PointStream(); 
   ps.setup(document.getElementById('canvas'));
   ps.onRender = render;
-  ps.background([1, 1, 1, 1]);
+  ps.background([0,0,0,1]);
   
-  progObj = ps.createProgram(vertShader, fragShader);
+  progObj = ps.createProgram(scan_vertShader, scan_fragShader);
   ps.useProgram(progObj);
-  ps.pointSize(10);
+  ps.pointSize(3);
 
-  mickey = ps.load("../../clouds/mickey.asc");
+  acorn = ps.load("../../clouds/acorn.asc");
 }
