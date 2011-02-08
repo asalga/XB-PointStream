@@ -10,21 +10,19 @@ var PointStream = (function() {
   */
   function PointStream() {
     
-    // intentionally left undefined
+    // Intentionally left undefined
     var undef;
     
     var __empty_func = function(){};
     
-    // mouse events
+    // Mouse
     var userMouseReleased = __empty_func;
     var userMousePressed = __empty_func;
-    
-    // !! change to scrolled?
     var userMouseScroll = __empty_func;
     var mouseX = 0;
     var mouseY = 0;
     
-    // keyboard
+    // Keyboard
     var userKeyUp = __empty_func;
     var userKeyDown = __empty_func;
     var userKeyPressed = __empty_func;
@@ -84,7 +82,7 @@ var PointStream = (function() {
     var canvas = null;
     var ctx = null;
 
-    // transformation matrices
+    // Transformation matrices
     var matrixStack = [];
     var projectionMatrix;
     var normalMatrix;
@@ -156,7 +154,8 @@ var PointStream = (function() {
     }';
 
     /**
-      set a uniform integer
+      Set a uniform integer
+      
       @param programObj
       @param {String} varName
       @param varValue
@@ -211,7 +210,6 @@ var PointStream = (function() {
     }
     
     /**
-      !! fix this
     */
     function getParserIndex(parser){
       var i;
@@ -229,6 +227,8 @@ var PointStream = (function() {
       A 3D context must exist before calling this function
       
       @param {Array} arr
+      
+      @returns {Object}
     */
     function createBufferObject(arr){
     
@@ -680,8 +680,15 @@ var PointStream = (function() {
 
       return tinylogLite;
     }());    
-    
+
+    /***************************************/
+    /**********  Parser callbacks **********/
+    /***************************************/
+
     /**
+      The parser calls this when the parsing has started.
+      
+      @param {} parser
     */
     function startCallback(parser){
       var i = getParserIndex(parser);
@@ -689,11 +696,16 @@ var PointStream = (function() {
     }
     
     /*
-      Whenever a chunk of data is parsed, this function 
-      will be called.
+      The parser will call this when it is done parsing a chunk of data.
       
-      @param {Object} attributes contains name/value pairs of arrays
-      { "VERTEX": [.....], "COLOR":  [.....], "NORMAL": [.....] }
+      @param {Object} attributes - contains name/value pairs of arrays
+      
+      For example, if using a custom parser, the attributes may be:
+      {
+        "Vertex": [.....],
+        "Color":  [.....],
+        "Normal": [.....]
+      }
     */
     function parseCallback(parser, attributes){
 
@@ -715,7 +727,7 @@ var PointStream = (function() {
     }
         
     /*
-      Called when the file is done being downloaded.
+      The parser will call this when the file is done being downloaded.
       
       @param {} parser
     */
@@ -729,10 +741,8 @@ var PointStream = (function() {
       // once the point cloud is done being parsed,
       // we can merge the vbos to speed up rendering.
       var numPoints = pc.numTotalPoints = parsers[idx].numTotalPoints;
-      
-      // Merge the VBOs into one. Since we are slowly 
-      // getting the points, we'll end up with many vbos
-      // which is slow to render.
+
+      // To calculate center
       var verts = new TYPED_ARRAY_FLOAT(numPoints * 3);
       
       var names = [];
@@ -749,21 +759,13 @@ var PointStream = (function() {
         // copy them into a single array which will hold the entire chunk.
         for(var i = 0; i < pc.attributes[names[0]][currVBO].length; i++, c++){
           verts[c] = pc.attributes[names[0]][currVBO].array[i];
-          //aOfa[c] = pc.attributes[names[c]][currVBO].array[i];
         }
       }
       
       // !! fix
       pc.center = getAverage(verts);
-
       pc.status = COMPLETE;
       pc.progress = parser.progress;
-    }
-    
-    /**
-    */
-    this.background = function(color){
-      ctx.clearColor(color[0], color[1], color[2], color[3]);
     }
     
     /**
@@ -857,12 +859,20 @@ var PointStream = (function() {
       }
     }
     
+    /**
+      These uniforms only need to be set once during the use of
+      the program. Unless of course the user explicitly sets the
+      point size, attenuation or projection.
+    */
+    function setDefaultUniforms(){
+      uniformf(currProgram, "ps_PointSize", 1);
+      uniformf(currProgram, "ps_Attenuation", [attn[0], attn[1], attn[2]]); 
+      uniformMatrix(currProgram, "ps_ProjectionMatrix", false, projectionMatrix);
+    }
+    
     function mouseScroll(evt){
       var delta = 0;
      
-      // !!
-      // which check to use?
-      //if(browser === MINEFIELD){
       if(evt.detail){
         delta = evt.detail / 3;
       }
@@ -952,8 +962,33 @@ var PointStream = (function() {
     this.__defineGetter__("height", function(){
       return height;
     });
-        
+    
     /**
+      Get the version of the library.
+      
+      @returns {String} library version
+    */
+    this.__defineGetter__("version", function(){
+      return XBPS_VERSION;
+    });
+    
+    /**
+    */
+    this.__defineGetter__("frameRate", function(){
+      return frameRate;
+    });
+    
+    /**
+      Sets the background color
+      
+      @param {Array} color Array of 4 values ranging from 0 to 1.
+    */
+    this.background = function(color){
+      ctx.clearColor(color[0], color[1], color[2], color[3]);
+    };  
+    
+    /**
+      Clears the color and depth buffers
     */
     this.clear = function(){
       ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
@@ -1005,21 +1040,6 @@ var PointStream = (function() {
         }
       }
     };
-        
-    /**
-      Get the version of the library.
-      
-      @returns {String} library version
-    */
-    this.__defineGetter__("version", function(){
-      return XBPS_VERSION;
-    });
-    
-    /**
-    */
-    this.__defineGetter__("frameRate", function(){
-      return frameRate;
-    });
         
     /**
       Resize the viewport.
@@ -1141,7 +1161,7 @@ var PointStream = (function() {
     };
 
     /**
-      if program is null, we use the default program object
+      If program is null, we use the default program object
     */
     this.useProgram = function(program){
       currProgram = program ? program : defaultProgram;
@@ -1157,7 +1177,7 @@ var PointStream = (function() {
         }
       }
       if(alreadySet === false){
-        this.setDefaultUniforms();
+        setDefaultUniforms();
         programCaches.push(currProgram);
       }
     };
@@ -1180,17 +1200,6 @@ var PointStream = (function() {
     */
     this.uniformMatrix = function(varName, varValue){
       uniformMatrix(currProgram, varName, false, varValue);
-    };
-
-    /**
-      These uniforms only need to be set once during the use of
-      the program. Unless of course the user explicitly sets the
-       point size, attenuation or projection.
-    */
-    this.setDefaultUniforms = function(){
-      uniformf(currProgram, "ps_PointSize", 1);
-      uniformf(currProgram, "ps_Attenuation", [attn[0], attn[1], attn[2]]); 
-      uniformMatrix(currProgram, "ps_ProjectionMatrix", false, projectionMatrix);
     };
 
     /**
@@ -1258,7 +1267,7 @@ var PointStream = (function() {
       // Create and use the program object
       defaultProgram = currProgram = createProgramObject(ctx, vertexShaderSource, fragmentShaderSource);
       ctx.useProgram(currProgram);
-      this.setDefaultUniforms();
+      setDefaultUniforms();
       
       // our render loop will call the users render function
       setInterval(renderLoop, 10, this);
@@ -1285,8 +1294,6 @@ var PointStream = (function() {
     
     /**
       @param {Number} size - in pixels
-      
-      !! change to get/setter
     */
     this.pointSize = function(size){
       uniformf(currProgram, "ps_PointSize", size);

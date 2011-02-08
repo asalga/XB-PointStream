@@ -1,15 +1,17 @@
 Using the internal XB PointStream parser and shader
 
-If you decide to use the internal XB PointStream parser and shader, you can have a script displaying your point cloud in about 10 lines of JavaScript. However, you will be required to send in your point cloud as an .ASC file. Also, the built-in shader will only draw the minimum necessary for you point cloud, that is, it will only render vertex positions and colors.
+If you decide to use the internal XB PointStream parser and shader, you can have a script displaying your point cloud in about 10 lines of JavaScript. However, you will be required to send in your point cloud as an .ASC file. Also, the built-in shader will only draw the minimum necessary for you point cloud. That is, it will only render vertex positions and colors.
 
 
 
 
 Using the internal XB PointStream parser with a custom shader
+Intro
+It is possible to create shader effects on point cloud objects to add effect such as mirroring, etc.
 
 If you decide to use the internal .ASC parser and write a custom shader, you'll need to ensure your vertex shader uses the correct uniform and attribute variable names which XB PointStream refers to.
 
-The built-in .ASC parser only reads in vertex position and colors, so you must use the following names to refer to those attributes:
+The built-in .ASC parser only reads in vertex position and colors, so you must use the following names to refer to those attributes in your vertex shader:
 
 vec3 ps_Vertex
 vec4 ps_Color
@@ -42,3 +44,11 @@ ps.registerParser("XYZ", Your_XYZ_Parser_Name);
 
 
 Using a custom shader and parser
+TODO: write
+
+
+
+
+
+
+
