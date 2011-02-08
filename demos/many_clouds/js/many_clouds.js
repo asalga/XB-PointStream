@@ -128,9 +128,7 @@ function render() {
 function start(){
   ps = new PointStream();
   ps.setup(document.getElementById('canvas'));
-  ps.background([.3,.6, .9,1]);
- ps.background([1,1,1,1]);
- //ps.background([1,1,1,0.1]);
+  ps.background([1,1,1,1]);
  
   ps.onRender = render
   ps.onMouseScroll = zoom;

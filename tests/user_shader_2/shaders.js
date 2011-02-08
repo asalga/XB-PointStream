@@ -16,7 +16,7 @@ var cel_vertShader =
 "attribute vec4 ps_Color;" +
 
 "uniform float ps_PointSize;" +
-"uniform vec3 XBPS_attenuation;" +
+"uniform vec3 ps_Attenuation;" +
 
 "uniform mat4 ps_ModelViewMatrix;" +
 "uniform mat4 ps_ProjectionMatrix;" +
@@ -35,24 +35,18 @@ var cel_vertShader =
 "  float intensity;" +
 "  PointLight(intensity, vec3(ecPos4), transNorm);" +
 
-"  if(intensity <= 0.6){ intensity = 0.5;}" +
+"  if     (intensity <= 0.6){ intensity = 0.6;}" +
 "  else if(intensity <= 0.8){ intensity = 0.8;}" +
 "  else if(intensity <= 1.0){ intensity = 1.0;}" +
    
 "  frontColor = ps_Color * vec4(intensity, intensity, intensity, 1.0);" +
 
 "  float dist = length( ecPos4 );" +
-"  float attn = XBPS_attenuation[0] + " +
-"              (XBPS_attenuation[1] * dist) + " + 
-"              (XBPS_attenuation[2] * dist * dist);" +
+"  float attn = ps_Attenuation[0] + " +
+"              (ps_Attenuation[1] * dist) + " + 
+"              (ps_Attenuation[2] * dist * dist);" +
 
-"  if(attn > 0.0){" +
-"    gl_PointSize = ps_PointSize * sqrt(1.0/attn);" +
-"  }" +
-"  else{" +
-"    gl_PointSize = 1.0;" +
-"  }"+
-
+"  gl_PointSize = ps_PointSize * sqrt(1.0/attn);" +
 "  gl_Position = ps_ProjectionMatrix * ecPos4;" +
 "}";
 
@@ -74,7 +68,7 @@ var scan_vertShader =
 "attribute vec4 ps_Color;" +
 
 "uniform float ps_PointSize;" +
-"uniform vec3 XBPS_attenuation;" +
+"uniform vec3 ps_Attenuation;" +
 
 "uniform mat4 ps_ModelViewMatrix;" +
 "uniform mat4 ps_ProjectionMatrix;" +
@@ -85,16 +79,10 @@ var scan_vertShader =
 
 "  vec4 ecPos4 = ps_ModelViewMatrix * vec4(ps_Vertex, 1.0);" +
 "  float dist = length( ecPos4 );" +
-"  float attn = XBPS_attenuation[0] + " +
-"              (XBPS_attenuation[1] * dist) + " + 
-"              (XBPS_attenuation[2] * dist * dist);" +
+"  float attn = ps_Attenuation[0] + " +
+"              (ps_Attenuation[1] * dist) + " + 
+"              (ps_Attenuation[2] * dist * dist);" +
 
-"  if(attn > 0.0){" +
-"    gl_PointSize = ps_PointSize * sqrt(1.0/attn);" +
-"  }" +
-"  else{" +
-"    gl_PointSize = 1.0;" +
-"  }"+
-
+"  gl_PointSize = ps_PointSize * sqrt(1.0/attn);" +
 "  gl_Position = ps_ProjectionMatrix * ecPos4;" +
 "}";

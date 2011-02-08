@@ -17,7 +17,7 @@ var mickeyVertShader =
 "attribute vec4 ps_Color;" +
 
 "uniform float ps_PointSize;" +
-"uniform vec3 XBPS_attenuation;" +
+"uniform vec3 ps_Attenuation;" +
 
 "uniform mat4 ps_ModelViewMatrix;" +
 "uniform mat4 ps_ProjectionMatrix;" +
@@ -36,9 +36,9 @@ var mickeyVertShader =
 "  vec3 ecPos = (vec3(ecPos4))/ecPos4.w;" +
 
 "  float dist = length( ecPos4 );" +
-"  float attn = XBPS_attenuation[0] + " +
-"              (XBPS_attenuation[1] * dist) + " + 
-"              (XBPS_attenuation[2] * dist * dist);" +
+"  float attn = ps_Attenuation[0] + " +
+"              (ps_Attenuation[1] * dist) + " + 
+"              (ps_Attenuation[2] * dist * dist);" +
 
 "  gl_PointSize = attn > 0.0 ? ps_PointSize * sqrt(1.0/attn) : 1.0;" +
 

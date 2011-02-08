@@ -1,63 +1,54 @@
-var mickey = null;
-var ps = null;
-var i = 0.0;
+var ps, mickey;
+var rotY = 0.0;
+var rotX = 0.3;
 
-var reflectionShader;
-var objectShader;
-var toggle = false;
-
-function keyDown(){
-}
+var progObj;
+var fps_label;
 
 function render() {
   ps.clear();
   
-  var center = [-1.1931838002830566,0.2915859633078008,-0.6363419673371361];
-  
-  i += 0.05;
+  // spin object
+  rotY += 0.01;
 
   // Draw reflection
   ps.uniformi("reflection", true);
   ps.uniformf("lightPos", [0, -50, 10]);
   ps.uniformf("uReflection", [.15, .15, .3, .8]);
   ps.pushMatrix();
-    ps.translate(0, 20, -80);
-    ps.rotateX(1.0);  
+    ps.translate(0, 10, -80);
+    ps.rotateX(rotX);  
     ps.translate(0, -55, 0);  
     ps.scale(1, -1, 1);
-    ps.rotateY(i);
+    ps.rotateY(rotY);
     ps.render(mickey);
   ps.popMatrix();
   
   // Draw object
   ps.uniformi("reflection", false);
   ps.uniformf("lightPos", [0, 50, 10]);
-  ps.uniformf("uReflection", [1,1,1,1]);
+  ps.uniformf("uReflection", [1, 1, 1, 1]);
   ps.pushMatrix();
-    ps.translate(0, 20, -80);
-    ps.rotateX(1.0);
-    ps.rotateY(i);
+    ps.translate(0, 10, -80);
+    ps.rotateX(rotX);
+    ps.rotateY(rotY);
     ps.render(mickey);
   ps.popMatrix();
   
-  var fps = Math.floor(ps.frameRate);
-  var fps_label = document.getElementById("fps");
-  fps_label.innerHTML = fps + " FPS";
+  fps_label.innerHTML = Math.floor(ps.frameRate) + " FPS";
 }
 
 function start(){
+  fps_label = document.getElementById("fps");
+  
   ps = new PointStream(); 
   ps.setup(document.getElementById('canvas'));
-  objectShader = ps.createProgram(vertShader, fragShader);
-  ps.useProgram(objectShader);
+  ps.onRender = render;
+  ps.background([1, 1, 1, 1]);
+  
+  progObj = ps.createProgram(vertShader, fragShader);
+  ps.useProgram(progObj);
   ps.pointSize(10);
 
-  ps.onRender = render;
-  ps.onKeyDown = keyDown;
-  
-  //ps.background([0, 0, 0, 0.7]);
-  //ps.background([0.5, 0.5, 0.5, 1.0]);
-  ps.background([1.0, 1.0, 1.0, 1.0]);
-  
   mickey = ps.load("../../clouds/mickey.asc");
 }

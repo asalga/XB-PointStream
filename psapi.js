@@ -122,7 +122,7 @@ var PointStream = (function() {
     "attribute vec4 ps_Color;" +
     
     "uniform float ps_PointSize;" +
-    "uniform vec3 XBPS_attenuation;" +
+    "uniform vec3 ps_Attenuation;" +
     
     "uniform mat4 ps_ModelViewMatrix;" +
     "uniform mat4 ps_ProjectionMatrix;" +
@@ -131,9 +131,9 @@ var PointStream = (function() {
     "  frontColor = ps_Color;" +
     "  vec4 ecPos4 = ps_ModelViewMatrix * vec4(ps_Vertex, 1.0);" +
     "  float dist = length(ecPos4);" +
-    "  float attn = XBPS_attenuation[0] + " +
-    "              (XBPS_attenuation[1] * dist) + " + 
-    "              (XBPS_attenuation[2] * dist * dist);" +
+    "  float attn = ps_Attenuation[0] + " +
+    "              (ps_Attenuation[1] * dist) + " + 
+    "              (ps_Attenuation[2] * dist * dist);" +
 
     "  if(attn > 0.0){" +
     "    gl_PointSize = ps_PointSize * sqrt(1.0/attn);" +
@@ -146,14 +146,14 @@ var PointStream = (function() {
     "}";
 
     var fragmentShaderSource =
-    "#ifdef GL_ES\n" +
-    "precision highp float;\n" +
-    "#endif\n" +
-    
-    "varying vec4 frontColor;" +
-    "void main(void){" +
-    "  gl_FragColor = frontColor;" +
-    "}";
+    '#ifdef GL_ES                 \n\
+    precision highp float;        \n\
+    #endif                        \n\
+                                  \n\
+    varying vec4 frontColor;      \n\
+    void main(void){              \n\
+      gl_FragColor = frontColor;  \n\
+    }';
 
     /**
       set a uniform integer
@@ -788,6 +788,23 @@ var PointStream = (function() {
       }
     }
     
+    // !! fix (remove from global ns)
+    function getAverage(arr){
+      var objCenter = [0, 0, 0];
+
+      for(var i = 0; i < arr.length; i += 3){
+        objCenter[0] += arr[i];
+        objCenter[1] += arr[i+1];
+        objCenter[2] += arr[i+2];
+      }
+
+      objCenter[0] /= arr.length/3;
+      objCenter[1] /= arr.length/3;
+      objCenter[2] /= arr.length/3;
+
+      return objCenter;
+    }
+    
     /**
       Sets variables to default values.
     */
@@ -1171,7 +1188,7 @@ var PointStream = (function() {
     */
     this.setDefaultUniforms = function(){
       uniformf(currProgram, "ps_PointSize", 1);
-      uniformf(currProgram, "XBPS_attenuation", [attn[0], attn[1], attn[2]]); 
+      uniformf(currProgram, "ps_Attenuation", [attn[0], attn[1], attn[2]]); 
       uniformMatrix(currProgram, "ps_ProjectionMatrix", false, projectionMatrix);
     };
 
@@ -1262,7 +1279,7 @@ var PointStream = (function() {
       @param {Number} quadratic - 
     */
     this.attenuation = function(constant, linear, quadratic){
-      uniformf(currProgram, "attenuation", [constant, linear, quadratic]);
+      uniformf(currProgram, "ps_Attenuation", [constant, linear, quadratic]);
     };
     
     /**
@@ -1338,20 +1355,3 @@ var PointStream = (function() {
 
   return PointStream;
 }());
-
-// !! fix (remove from global ns)
-var getAverage = function(arr){
-  var objCenter = [0, 0, 0];
-
-  for(var i = 0; i < arr.length; i += 3){
-    objCenter[0] += arr[i];
-    objCenter[1] += arr[i+1];
-    objCenter[2] += arr[i+2];
-  }
-
-  objCenter[0] /= arr.length/3;
-  objCenter[1] /= arr.length/3;
-  objCenter[2] /= arr.length/3;
-  
-  return objCenter;
-}
