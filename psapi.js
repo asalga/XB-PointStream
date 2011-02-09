@@ -26,6 +26,7 @@ var PointStream = (function() {
     var userKeyUp = __empty_func;
     var userKeyDown = __empty_func;
     var userKeyPressed = __empty_func;
+    var key = 0;
     
     // These are parallel arrays. Each parser
     // has a point cloud it works with
@@ -407,12 +408,13 @@ var PointStream = (function() {
       @param {} type
     */
     function keyFunc(evt, type){
+      var key;
       if (evt.charCode){
         key = keyCodeMap(evt.charCode, evt.shiftKey);
       } else {
         key = keyCodeMap(evt.keyCode, evt.shiftKey);
       }
-      type();
+      return key;
     }
 
     // tinylog lite JavaScript library
@@ -890,15 +892,18 @@ var PointStream = (function() {
     }
     
     function keyDown(evt){
-      keyFunc(evt, userKeyDown);
+      key = keyFunc(evt, userKeyDown);
+      userKeyDown();
     }
     
     function keyPressed(evt){
-      keyFunc(evt, userKeyPressed);
+      key = keyFunc(evt, userKeyPressed);
+      userKeyPressed();
     }
     
     function keyUp(evt){
-      keyFunc(evt, userKeyUp);
+      key = keyFunc(evt, userKeyUp);
+      userKeyUp();
     }
     
     /*************************************/
@@ -947,6 +952,10 @@ var PointStream = (function() {
     
     this.__defineGetter__("mouseY", function(){
       return mouseY;
+    });
+    
+    this.__defineGetter__("key", function(){
+      return key;
     });
 
     this.__defineGetter__("width", function(){
