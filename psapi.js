@@ -1059,6 +1059,54 @@ var PointStream = (function() {
       runDefault();
     };
     
+    /**
+    */
+    this.getPNG = function(){
+      // Minefield throws and exception
+      try{
+        var arr = ctx.readPixels(0, 0, width, height, ctx.RGBA, ctx.UNSIGNED_BYTE);
+        
+        // Chrome posts an error
+        if(ctx.getError()){
+          throw "readPixels exception";
+        }
+      }
+      catch(e){
+        if(!arr){
+          arr = new TYPED_ARRAY_BYTE(width * height * 4);
+          ctx.readPixels(0, 0, width, height, ctx.RGBA, ctx.UNSIGNED_BYTE, arr);
+        }
+      }
+      
+      var cvs = document.createElement('canvas');
+      cvs.width = width;
+      cvs.height = height;
+      var ctx2d = cvs.getContext('2d');
+      var image = ctx2d.createImageData(cvs.width, cvs.height);
+
+      for (var y = 0; y < cvs.height; y++){
+        for (var x = 0; x < cvs.width; x++){
+        
+          var index = (y * cvs.width + x) * 4;
+          var index2 = ((cvs.height-1-y) * cvs.width + x) * 4;
+          
+          for(var p = 0; p < 4; p++){
+            image.data[index2 + p] = arr[index + p];
+          }
+        }
+      }
+      ctx2d.putImageData(image, 0, 0);
+      return cvs.toDataURL();
+    };
+    
+    /**
+      Get the raw rgba values.
+      @returns
+    */
+    this.readPixels = function(){
+      return ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE);
+    };
+    
     /*************************************/
     /********** Transformations **********/
     /*************************************/
