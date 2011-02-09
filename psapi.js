@@ -132,14 +132,8 @@ var PointStream = (function() {
     "  float attn = ps_Attenuation[0] + " +
     "              (ps_Attenuation[1] * dist) + " + 
     "              (ps_Attenuation[2] * dist * dist);" +
-
-    "  if(attn > 0.0){" +
-    "    gl_PointSize = ps_PointSize * sqrt(1.0/attn);" +
-    "  }" +
-    "  else{" +
-    "    gl_PointSize = 1.0;" +
-    "  }"+
     
+    "  gl_PointSize = (attn > 0.0) ? ps_PointSize * sqrt(1.0/attn) : 1.0;" +
     "  gl_Position = ps_ProjectionMatrix * ecPos4;" +
     "}";
 
