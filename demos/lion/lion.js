@@ -2,8 +2,8 @@ var ps, lion;
 
 var buttonDown = false;
 var zoomed = -50;
-var rot =[0,0];
-var curCoords = [0,0];
+var rot =[0, 0];
+var curCoords = [0, 0];
 
 function zoom(amt){
   var invert = document.getElementById('invertScroll').checked ? -1: 1;
@@ -89,9 +89,7 @@ function addCommas(value){
 
 function start(){
   ps = new PointStream();
-  
   ps.setup(document.getElementById('canvas'));
-  
   ps.background([0.2, 0.2 ,0.2 ,1]);
   ps.pointSize(8);
 

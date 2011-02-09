@@ -1,11 +1,10 @@
-var ps = null;
-var mickey = null;
+var ps, mickey;
 
 var buttonDown = false;
 var zoomed = -50;
 
-var rot =[0,0];
-var curCoords = [0,0];
+var rot =[0, 0];
+var curCoords = [0, 0];
 
 function zoom(amt){
   var invert = document.getElementById('invertScroll').checked ? -1 : 1;
@@ -40,7 +39,7 @@ function render() {
   ps.rotateX(rot[1]);
   
   var c = mickey.getCenter();
-  ps.translate(-c[0],-c[1],-c[2]);
+  ps.translate(-c[0], -c[1], -c[2]);
 
   ps.clear();
   ps.render(mickey);

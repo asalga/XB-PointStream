@@ -49,7 +49,7 @@ function updatePointCount(cloud, str){
 }
 
 function render() {
-  acornRot += 0.005;
+  acornRot += 0.05;
   
   $('#progressbar1').progressbar( 'value' , acorn.getProgress() * 100 );
   $('#progressbar2').progressbar( 'value' , mickey.getProgress() * 100 );
