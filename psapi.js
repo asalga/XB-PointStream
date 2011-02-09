@@ -46,7 +46,7 @@ var PointStream = (function() {
     const TYPED_ARRAY_FLOAT = Float32Array;
     const TYPED_ARRAY_BYTE = Uint8Array;
 
-    const XBPS_VERSION  = "0.4.5";
+    const XBPS_VERSION  = "0.5";
     
     // file status of point clouds
     const FILE_NOT_FOUND = -1;
