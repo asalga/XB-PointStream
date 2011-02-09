@@ -956,7 +956,7 @@ var PointStream = (function() {
     });
 
     this.__defineGetter__("width", function(){
-      return mouseY;
+      return width;
     });
 
     this.__defineGetter__("height", function(){

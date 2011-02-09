@@ -7,12 +7,9 @@ var zoomed = -50;
 var rot =[0,0];
 var curCoords = [0,0];
 
-var size = 500;
-
 function zoom(amt){
   var invert = document.getElementById('invertScroll').checked ? -1 : 1;
   zoomed += amt * 2 * invert;
-  size += amt * 10;
 }
 
 function mousePressed(){
@@ -68,11 +65,10 @@ function render() {
 
 function start(){
   ps = new PointStream();
-  
   ps.setup(document.getElementById('canvas'));
   
   ps.pointSize(8);
-  ps.background([0.3, 0.5, 0.7, 0.2]);
+  ps.background([0.3, 0.5, 0.6, 0.6]);
 
   ps.onRender = render;
   ps.onMouseScroll = zoom;
