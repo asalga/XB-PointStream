@@ -14,9 +14,12 @@ create-release-files: create-release-docs minify example-min zip-min
 # Minification strips out comments and most whitespace
 minify: create-release-dirs
 	cat psapi.js mjs.js ./parsers/asc.js > ./xbps-min/xbps-temp.js
+	rm -fr tools-bin
+	mkdir tools-bin/
 	cc -o tools-bin/minifier tools/jsmin.c
 	./tools-bin/minifier < ./xbps-min/xbps-temp.js > ./xbps-min/xbps.js
 	rm ./xbps-min/xbps-temp.js
+	rm -fr ./tools-bin
 
 #
 zip-min: minify
@@ -46,8 +49,8 @@ create-release-docs: create-release-dirs
 # all - Will contain the library merged into a single file
 # min - above, but also minified
 create-release-dirs: clean
-#	mkdir ./xbps-all/
 	mkdir ./xbps-min/
+#	mkdir ./xbps-all/
 
 # remove the release directory and its contents
 clean:

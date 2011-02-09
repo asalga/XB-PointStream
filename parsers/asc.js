@@ -35,10 +35,15 @@ var ASCParser = (function() {
     
     var version = "0.1";
     
-    const UNKNOWN = -1;
-    
     const XHR_DONE = 4;
     const STARTED = 1;
+    
+    // The .ASC file can contain different types of data
+    const UNKNOWN = -1;
+    const VERTS = 0;
+    const VERTS_COLS = 1;
+    const VERTS_NORMS = 2;
+    const VERTS_COLS_NORMS = 3;
 
     var pathToFile = null;
     var fileSizeInBytes = 0;
@@ -51,6 +56,7 @@ var ASCParser = (function() {
     //
     var numValuesPerLine = -1;
     var colorsPresent = false;
+    var normalsPresent = false;
     var layoutCode = UNKNOWN;
     
     // keep track if onprogress event handler was called to 
@@ -73,9 +79,9 @@ var ASCParser = (function() {
       
       ASC files can either contain
       X, Y, Z
-      X, Y, Z, R,  G,  B
-      X, Y, Z, NX, NY, NZ
-      X, Y, Z, R,  G,  B, NX, NY, NZ
+      X, Y, Z, R, G, B
+      X, Y, Z, I, J, K
+      X, Y, Z, R, G, B, I, J, K
       
       @returns {Number}
       0 first case
@@ -84,43 +90,43 @@ var ASCParser = (function() {
       3 fourth case
     */
     var getDataLayout = function(values){
-      var colorsPresent = false;
+            
+      // The first thing we can do is find out how many components there are.
+      // If there are 9, we know we are dealing with:
+      // x y z   r g b   i j k
       
-      var VERTS = 0;
-      var VERTS_COLS = 1;
-      var VERTS_NORMS = 2;
-      var VERTS_COLS_NORMS = 3;
-      
-      // first check if there are 9 values, which would mean we have
-      // xyz rgb and normals
-      
-      // We can do this by counting the number of whitespace on the first line
-      var i = 0;
-      var numSpaces = 0;
-      do{
-        i++;
-        if(values[i] == " "){
-          numSpaces++;
-        }
-      }while(values[i] != '\n');
+      // The first line will determine how many components we have
+      var firstLine = values.substr(0, values.indexOf("\n"));
+
+      // trim leading trailing spaces
+      firstLine = firstLine.replace(/^\s+/,"");
+      firstLine = firstLine.replace(/\s+$/,"");
+
+      // There may be many spaces and tabs between components, easiest way
+      // is to just use split and count how many components we have
+      var numWhiteSpaceChunks = firstLine.split(/\s+/).length - 1;
       
       // Vertices, Colors, Normals:
       // 1.916 -2.421 -4.0   64 32 16   -0.3727 -0.2476 -0.8942
-      if(numSpaces === 8){
+      if(numWhiteSpaceChunks === 8){
         return VERTS_COLS_NORMS;
       }
       
       // Just vertices:
       // 1.916 -2.421 -4.0339
-      if(numSpaces == 2){
+      if(numWhiteSpaceChunks === 2){
         return VERTS;
       }
       
+      // If there are 6 components, we could have 
+      // vertices and colors or 
+      // vertices and normals
+      
       var str = "";
       
-      //
-      // !! clean me
-      for(i = 0; i < 500; i++){
+      // We're going to try the first 500 characters and hopefully
+      // figure out what we're dealing with by then.
+      for(var i = 0; i < 500; i++){
         str += values[i];
       }
       
@@ -134,14 +140,18 @@ var ASCParser = (function() {
         i += 3;
       }
       
+      //
       for(var i = 0; i < data.length; i++){
-        if(data[i] < 0 || data[i] > 255){
+        // if we have a component which is less than 0 or greater than 1, 
+        // it must represent a part of a normal vector
+        if(data[i] < 0){
+          // 1.916 -2.421 -4.0   -0.3727 -0.2476 -0.8942
           return VERTS_NORMS;
         }
       }
       
-      // Vertices and Normals:
-      // 1.916 -2.421 -4.0   -0.3727 -0.2476 -0.8942
+      // vertices and colors:
+      // -0.57831 -3.08477 -7.04268    64 32 16
       return VERTS_COLS;
     };
     
@@ -238,7 +248,8 @@ var ASCParser = (function() {
         }
 
         numTotalPoints = numParsedPoints;
-
+        
+        // Indicate parsing is done. ranges from 0 to 1
         progress = 1;
         
         end(AJAX.parser);
@@ -265,8 +276,10 @@ var ASCParser = (function() {
                       
               // normals present
               case 2: numValuesPerLine = 6;
+                      normalsPresent = true;
                       break;
               case 3: numValuesPerLine = 9;
+                      normalsPresent = true;
                       colorsPresent = true;
                       break;
             }
@@ -284,18 +297,19 @@ var ASCParser = (function() {
           
           var numVerts = chunk.length/numValuesPerLine;
           numParsedPoints += numVerts;
-
+          
           var verts = new Float32Array(numVerts * 3);
           var cols = colorsPresent ? new Float32Array(numVerts * 3) : null;
+          var norms = normalsPresent ? new Float32Array(numVerts * 3) : null;
 
           // depending if there are colors, 
           // we'll need to read different indices.
           // if there aren't:
-          // x  y  z  r  g  b  nx ny nz
+          // x  y  z  r  g  b  i  j  k
           // 0  1  2  3  4  5  6  7  8 <- normals start at index 6
           //
           // if there are:
-          // x  y  z  nx ny nz
+          // x  y  z  i  j  k
           // 0  1  2  3  4  5 <- normals start at index 3
           var valueOffset = 0;
           if(colorsPresent){
@@ -314,6 +328,12 @@ var ASCParser = (function() {
               cols[j+1] = parseInt(chunk[i+4])/255;
               cols[j+2] = parseInt(chunk[i+5])/255;
             }
+          
+            if(norms){
+              norms[j]   = parseFloat(chunk[i + 3 + valueOffset]);
+              norms[j+1] = parseFloat(chunk[i + 4 + valueOffset]);
+              norms[j+2] = parseFloat(chunk[i + 5 + valueOffset]);
+            }
           }
                     
           // XB PointStream expects an object with named/value pairs
@@ -322,7 +342,8 @@ var ASCParser = (function() {
           var attributes = {};
           if(verts){attributes["ps_Vertex"] = verts;}
           if(cols){attributes["ps_Color"] = cols;}
-          
+          if(norms){attributes["ps_Normal"] = norms;}
+                    
           parse(AJAX.parser, attributes);
         }
       };

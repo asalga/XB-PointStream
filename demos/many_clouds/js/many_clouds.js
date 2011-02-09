@@ -128,7 +128,6 @@ function render() {
 function start(){
   ps = new PointStream();
   ps.setup(document.getElementById('canvas'));
-  ps.registerParser("asc", User_ASC_Parser);
   ps.background([1,1,1,1]);
  
   ps.onRender = render

@@ -43,7 +43,7 @@ function start(){
   
   ps = new PointStream(); 
   ps.setup(document.getElementById('canvas'));
-  ps.registerParser("asc", User_ASC_Parser);
+  ps.registerParser("asc", ASCParser);
   ps.onRender = render;
   ps.background([1, 1, 1, 1]);
   

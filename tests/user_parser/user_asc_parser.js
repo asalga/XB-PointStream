@@ -10,12 +10,7 @@
   Notes:
   This parser parses .ASC filetypes. These files are ASCII
   files which have their data stored in one of the following ways:
-  
-  This particular parser is meant to be used with the built-in XB 
-  PointStream shader, therefore it only reads in vertex positions
-  and colors.
-  
-  .ASC structure can be one of:
+
   X, Y, Z
   X, Y, Z, R, G, B
   X, Y, Z, I, J, K
@@ -40,11 +35,18 @@ var User_ASC_Parser = (function() {
     
     var version = "0.1";
     
-    const UNKNOWN = -1;
-    
     const XHR_DONE = 4;
     const STARTED = 1;
+    
+    // The .ASC file can contain different types of data    
+    const UNKNOWN = -1;
+    const VERTS = 0;
+    const VERTS_COLS = 1;
+    const VERTS_NORMS = 2;
+    const VERTS_COLS_NORMS = 3;
 
+    var layoutCode = UNKNOWN;
+    
     var pathToFile = null;
     var fileSizeInBytes = 0;
     
@@ -55,10 +57,8 @@ var User_ASC_Parser = (function() {
     
     //
     var numValuesPerLine = -1;
-    var normalsPresent = false;
     var colorsPresent = false;
-    var layoutCode = UNKNOWN;
-        
+    
     // keep track if onprogress event handler was called to 
     // handle Chrome/WebKit vs. Minefield differences.
     //
@@ -90,44 +90,44 @@ var User_ASC_Parser = (function() {
       3 fourth case
     */
     var getDataLayout = function(values){
-      var normalsPresent = false;
       var colorsPresent = false;
       
-      var VERTS = 0;
-      var VERTS_COLS = 1;
-      var VERTS_NORMS = 2;
-      var VERTS_COLS_NORMS = 3;
+      // The first thing we can do is find out how many components there are.
+      // If there are 9, we know we are dealing with:
+      // x y z   r g b   i j k
       
-      // first check if there are 9 values, which would mean we have
-      // xyz rgb and normals
-      
-      // We can do this by counting the number of whitespace on the first line
-      var i = 0;
-      var numSpaces = 0;
-      do{
-        i++;
-        if(values[i] == " "){
-          numSpaces++;
-        }
-      }while(values[i] != '\n');
+      // The first line will determine how many components we have
+      var firstLine = values.substr(0, values.indexOf("\n"));
+
+      // trim leading trailing spaces
+      firstLine = firstLine.replace(/^\s+/,"");
+      firstLine = firstLine.replace(/\s+$/,"");
+
+      // There may be many spaces and tabs between components, easiest way
+      // is to just use split and count how many components we have
+      var numWhiteSpaceChunks = firstLine.split(/\s+/).length - 1;
       
       // Vertices, Colors, Normals:
       // 1.916 -2.421 -4.0   64 32 16   -0.3727 -0.2476 -0.8942
-      if(numSpaces === 8){
+      if(numWhiteSpaceChunks === 8){
         return VERTS_COLS_NORMS;
       }
       
       // Just vertices:
       // 1.916 -2.421 -4.0339
-      if(numSpaces == 2){
+      if(numWhiteSpaceChunks == 2){
         return VERTS;
       }
       
+      // If there are 6 components, we could have 
+      // vertices and colors or 
+      // vertices and normals
+      
       var str = "";
       
-      //
-      // !! clean me
-      for(i = 0; i < 500; i++){
+      // We're going to try the first 500 characters and hopefully
+      // figure out what we're dealing with by then.
+      for(var i = 0; i < 500; i++){
         str += values[i];
       }
       
@@ -141,15 +141,18 @@ var User_ASC_Parser = (function() {
         i += 3;
       }
       
+      //
       for(var i = 0; i < data.length; i++){
-        if(data[i] < 0 || data[i] > 255){
-          normalsPresent = true;
+        // if we have a component which is less than 0 or greater than 1, 
+        // it must represent a part of a normal vector
+        if(data[i] < 0){
+          // 1.916 -2.421 -4.0   -0.3727 -0.2476 -0.8942
           return VERTS_NORMS;
         }
       }
       
-      // Vertices and Normals:
-      // 1.916 -2.421 -4.0   -0.3727 -0.2476 -0.8942
+      // vertices and colors:
+      // -0.57831 -3.08477 -7.04268    64 32 16
       return VERTS_COLS;
     };
     
@@ -246,7 +249,8 @@ var User_ASC_Parser = (function() {
         }
 
         numTotalPoints = numParsedPoints;
-
+        
+        // Indicate parsing is done. ranges from 0 to 1
         progress = 1;
         
         end(AJAX.parser);
@@ -270,11 +274,11 @@ var User_ASC_Parser = (function() {
               case 1: numValuesPerLine = 6;
                       colorsPresent = true;
                       break;
+                      
+              // normals present
               case 2: numValuesPerLine = 6;
-                      normalsPresent = true;
                       break;
               case 3: numValuesPerLine = 9;
-                      normalsPresent = true;
                       colorsPresent = true;
                       break;
             }
@@ -292,23 +296,9 @@ var User_ASC_Parser = (function() {
           
           var numVerts = chunk.length/numValuesPerLine;
           numParsedPoints += numVerts;
-
+                    
           var verts = new Float32Array(numVerts * 3);
           var cols = colorsPresent ? new Float32Array(numVerts * 3) : null;
-
-          // depending if there are colors,
-          // we'll need to read different indices.
-          // if there aren't:
-          // x  y  z  r  g  b  i  j  k
-          // 0  1  2  3  4  5  6  7  8 <- normals start at index 6
-          //
-          // if there are:
-          // x  y  z  i  j  k
-          // 0  1  2  3  4  5 <- normals start at index 3
-          var valueOffset = 0;
-          if(colorsPresent){
-            valueOffset = 3;
-          }
 
           // xyz  rgb  normals
           for(var i = 0, j = 0, len = chunk.length; i < len; i += numValuesPerLine, j += 3){
@@ -326,8 +316,7 @@ var User_ASC_Parser = (function() {
                     
           // XB PointStream expects an object with named/value pairs
           // which contain the attribute arrays. These must match attribute
-          // names found in the shader 
-          
+          // names found in the shader
           var attributes = {};
           if(verts){attributes["ps_Vertex"] = verts;}
           if(cols){attributes["ps_Color"] = cols;}
@@ -384,7 +373,7 @@ var User_ASC_Parser = (function() {
             AJAX.parseChunk(chunk);
           }
         }
-      };//onprogress
+      };// onprogress
       
       // open an asynchronous request to the path
       if(AJAX.overrideMimeType){
@@ -393,6 +382,6 @@ var User_ASC_Parser = (function() {
       AJAX.open("GET", path, true);
       AJAX.send(null);
     };// load
-  }//ctor
+  }// ctor
   return User_ASC_Parser;
 }());

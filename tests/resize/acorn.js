@@ -47,10 +47,7 @@ function render(){
   ps.rotateY(rot[0]);
   ps.rotateX(rot[1]);
   
-  ps.clear();
-  
-  var c = acorn.getCenter();
-  ps.translate(-c[0], -c[1], -c[2]);
+  ps.clear();  
   ps.render(acorn);
 }
 
