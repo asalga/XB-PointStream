@@ -6,6 +6,7 @@ function start(){
   ps.pointSize(5);
   ps.onRender = function(){
     ps.translate(0, 0, -25);
+    ps.clear();
     ps.render(acorn);
   };
   acorn = ps.load("clouds/acorn.asc");
