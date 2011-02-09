@@ -18,9 +18,13 @@ h1 a {
   color: #00AA00;
 }
 
+/*
+  wrap text around after we hit 500px
+*/
 p {
   padding-left: 20px;
   line-height: 1.3em;
+  width: 500px;
 }
 
 p a {

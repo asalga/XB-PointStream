@@ -2,13 +2,13 @@
 
   <head>
     <link rel="stylesheet" type="text/css" href="../style.css" />
-    <script src="../../pointstream.js"></script>
+    <script src="../../xbps.js"></script>
     <script src="acorn.js"></script>
   </head>
 
   <body onLoad="start();" bgcolor="#222222">
     <input type="button" value="Take Screenshot" onClick="addPNG();"/>
-    <input type="button" value="clear" onClick="clearPNG();"/><br />
+    <input type="button" value="clear" onClick="removeAllScreenShots();"/><br />
     
     <span>status: </span><span class="orangeText" id="fileStatus"></span><br />
     <div id="numPointsAndFPS"></div>

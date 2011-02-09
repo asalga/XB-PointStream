@@ -1,0 +1,79 @@
+<html>
+
+  <head>
+    <!-- jQuery/jQueryUI stuff -->  
+    <link rel="stylesheet" type="text/css" media="screen" href="css/smoothness/jquery-ui-1.8.6.custom.css" />
+    <script type="text/javascript" src="js/jquery-1.4.2.min.js"></script>
+    <script type="text/javascript" src="js/jquery-ui-1.8.6.custom.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="../style.css" />
+    <script src="../../xbps.js"></script>
+    <script src="shaders/acorn_shader.js"></script>
+    <script src="shaders/mickey_shader.js"></script>
+    <script src="js/many_clouds.js"></script>
+    <script src="js/user_asc_parser.js"></script>
+  </head>
+
+  <body onload="start();" bgcolor="#222222" text="#FFFFFF">
+    <script type="text/javascript">
+      $(function() {
+        $("#progressbar1").css({'height': '10px' });
+        $("#progressbar1").css({'background': '#000000' });
+        $("#progressbar1").progressbar({ value: 0 });
+        
+        $("#progressbar2").css({'height': '10px' });
+        $("#progressbar2").css({'background': '#000000' });
+        $("#progressbar2").progressbar({ value: 0 });
+        
+        $("#progressbar3").css({'height': '10px' });
+        $("#progressbar3").css({'background': '#000000' });
+        $("#progressbar3").progressbar({ value: 0 });
+      });
+    </script>
+
+    <!-- jquery prevents me from using spans for
+          elements, so I use tables instead.
+    -->
+    <table>
+      <tr>
+        <td>
+          <canvas id="canvas" width="500" height="500"></canvas>
+        </td>
+        
+        <td valign="top">
+          <table border="0" width="300" cellspacing="0" cellpadding="0">
+            <tr>
+              <td>
+                <span>acorn: </span>[<span class="orangeText" id="acornStatus"></span>] - <span id="acornNumPoints">0</span> 
+                <div id="progressbar1"></div>
+              </td>
+            </tr>
+                    
+            <tr>
+              <td>
+                <span>mickey: </span>[<span class="orangeText" id="mickeyStatus"></span>] - <span id="mickeyNumPoints">0</span><br />
+                <div id="progressbar2"></div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <span>village: </span>[<span class="orangeText" id="villageStatus"></span>] - <span id="eggenburgNumPoints">0</span><br />
+                <div id="progressbar3"></div>
+              </td>
+            </tr>
+            
+            <tr>
+              <td>
+                <br />
+                <div id="fps"></div>
+                <span>Invert scroll wheel:</span> <input type="checkbox" id="invertScroll" />
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+  </body>
+</html>
