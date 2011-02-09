@@ -33,7 +33,7 @@
 
 /*
  * Constant: MJS_VERSION
- * 
+ *
  * mjs version number aa.bb.cc, encoded as an integer of the form:
  * 0xaabbcc.
  */
@@ -41,9 +41,9 @@ const MJS_VERSION = 0x000000;
 
 /*
  * Constant: MJS_DO_ASSERT
- * 
+ *
  * Enables or disables runtime assertions.
- * 
+ *
  * For potentially more performance, the assert methods can be
  * commented out in each place where they are called.
  */
@@ -57,7 +57,7 @@ try { WebGLFloatArray; } catch (x) { WebGLFloatArray = Float32Array; }
  * Constant: MJS_FLOAT_ARRAY_TYPE
  *
  * The base float array type.  By default, WebGLFloatArray.
- * 
+ *
  * mjs can work with any array-like elements, but if an array
  * creation is requested, it will create an array of the type
  * MJS_FLOAT_ARRAY_TYPE.  Also, the builtin constants such as (M4x4.I)
@@ -357,7 +357,7 @@ V3.scale = function V3_scale(a, k, r) {
     r[1] = a[1] * k;
     r[2] = a[2] * k;
     return r;
-}
+};
 
 /*
  * Function: V3.dot
@@ -413,6 +413,53 @@ V3.cross = function V3_cross(a, b, r) {
 };
 
 /*
+ * Function: V3.mul4x4
+ *
+ * Perform
+ * r = m * v.
+ *
+ * Parameters:
+ *
+ *   m - the 4x4 matrix operand
+ *   v - the 3-element vector operand
+ *   r - optional vector to store the result in
+ *
+ * Returns:
+ *
+ *   If r is specified, returns r after performing the operation.
+ *   Otherwise, returns a new 3-element vector with the result.
+ *   The 4-element result vector is divided by the w component
+ *   and returned as a 3-element vector.
+ */
+V3.mul4x4 = function V3_mul4x4(m, v, r) {
+    //MathUtils_assert(m.length == 16, "m.length == 16");
+    //MathUtils_assert(v.length == 3, "v.length == 3");
+    //MathUtils_assert(r == undefined || r.length == 3, "r == undefined || r.length == 3");
+
+    var w;
+    var tmp = V3._temp1;
+    if (r == undefined)
+        r = new MJS_FLOAT_ARRAY_TYPE(3);
+    tmp[0] = m[ 3];
+    tmp[1] = m[ 7];
+    tmp[2] = m[11];
+    w    =  V3.dot(v, tmp) + m[15];
+    tmp[0] = m[ 0];
+    tmp[1] = m[ 4];
+    tmp[2] = m[ 8];
+    r[0] = (V3.dot(v, tmp) + m[12])/w;
+    tmp[0] = m[ 1];
+    tmp[1] = m[ 5];
+    tmp[2] = m[ 9];
+    r[1] = (V3.dot(v, tmp) + m[13])/w;
+    tmp[0] = m[ 2];
+    tmp[1] = m[ 6];
+    tmp[2] = m[10];
+    r[2] = (V3.dot(v, tmp) + m[14])/w;
+    return r;
+};
+
+/*
  * Class: M4x4
  *
  * Methods for working with 4x4 matrices.  A matrix is represented by a 16-element array
@@ -446,7 +493,8 @@ if (MJS_FLOAT_ARRAY_TYPE == Array) {
         //MathUtils_assert(m.length == 16, "m.length == 16");
         return new [m[0], m[1], m[2], m[3],
                     m[4], m[5], m[6], m[7],
-                    m[8], m[9], m[10], m[11]];
+                    m[8], m[9], m[10], m[11],
+                    m[12], m[13], m[14], m[15]];
     };
 } else {
     M4x4.I = new MJS_FLOAT_ARRAY_TYPE([1.0, 0.0, 0.0, 0.0,
@@ -556,7 +604,7 @@ M4x4.inverseOrthonormal = function M4x4_inverseOrthonormal(m, r) {
     r[13] = -V3.dot([r[1], r[5], r[9]], t);
     r[14] = -V3.dot([r[2], r[6], r[10]], t);
     return r;
-}
+};
 
 /*
  * Function: M4x4.inverseTo3x3
@@ -738,7 +786,7 @@ M4x4.makeOrtho = function M4x4_makeOrtho (left, right, bottom, top, znear, zfar,
     r[12] = -(right+left)/(right-left);
     r[13] = -(top+bottom)/(top-bottom);
     r[14] = -(zfar+znear)/(zfar-znear);
-    r[15] = 0;
+    r[15] = 1;
 
     return r;
 };
@@ -793,86 +841,268 @@ M4x4.mul = function M4x4_mul(a, b, r) {
     if (r == undefined)
         r = new MJS_FLOAT_ARRAY_TYPE(16);
 
-    r[0] =
-        b[0] * a[0] +
-        b[0+1] * a[4] +
-        b[0+2] * a[8] +
-        b[0+3] * a[12];
-    r[0+1] =
-        b[0] * a[1] +
-        b[0+1] * a[5] +
-        b[0+2] * a[9] +
-        b[0+3] * a[13];
-    r[0+2] =
-        b[0] * a[2] +
-        b[0+1] * a[6] +
-        b[0+2] * a[10] +
-        b[0+3] * a[14];
-    r[0+3] =
-        b[0] * a[3] +
-        b[0+1] * a[7] +
-        b[0+2] * a[11] +
-        b[0+3] * a[15];
-    r[4] =
-        b[4] * a[0] +
-        b[4+1] * a[4] +
-        b[4+2] * a[8] +
-        b[4+3] * a[12];
-    r[4+1] =
-        b[4] * a[1] +
-        b[4+1] * a[5] +
-        b[4+2] * a[9] +
-        b[4+3] * a[13];
-    r[4+2] =
-        b[4] * a[2] +
-        b[4+1] * a[6] +
-        b[4+2] * a[10] +
-        b[4+3] * a[14];
-    r[4+3] =
-        b[4] * a[3] +
-        b[4+1] * a[7] +
-        b[4+2] * a[11] +
-        b[4+3] * a[15];
-    r[8] =
-        b[8] * a[0] +
-        b[8+1] * a[4] +
-        b[8+2] * a[8] +
-        b[8+3] * a[12];
-    r[8+1] =
-        b[8] * a[1] +
-        b[8+1] * a[5] +
-        b[8+2] * a[9] +
-        b[8+3] * a[13];
-    r[8+2] =
-        b[8] * a[2] +
-        b[8+1] * a[6] +
-        b[8+2] * a[10] +
-        b[8+3] * a[14];
-    r[8+3] =
-        b[8] * a[3] +
-        b[8+1] * a[7] +
-        b[8+2] * a[11] +
-        b[8+3] * a[15];
-    r[12] =
-        b[12] * a[0] +
-        b[12+1] * a[4] +
-        b[12+2] * a[8] +
-        b[12+3] * a[12];
-    r[12+1] =
-        b[12] * a[1] +
-        b[12+1] * a[5] +
-        b[12+2] * a[9] +
-        b[12+3] * a[13];
-    r[12+2] =
-        b[12] * a[2] +
-        b[12+1] * a[6] +
-        b[12+2] * a[10] +
-        b[12+3] * a[14];
-    r[12+3] =
-        b[12] * a[3] +
-        b[12+1] * a[7] +
-        b[12+2] * a[11] +
-        b[12+3] * a[15];
+    var a11 = a[0];
+    var a21 = a[1];
+    var a31 = a[2];
+    var a41 = a[3];
+    var a12 = a[4];
+    var a22 = a[5];
+    var a32 = a[6];
+    var a42 = a[7];
+    var a13 = a[8];
+    var a23 = a[9];
+    var a33 = a[10];
+    var a43 = a[11];
+    var a14 = a[12];
+    var a24 = a[13];
+    var a34 = a[14];
+    var a44 = a[15];
+
+    var b11 = b[0];
+    var b21 = b[1];
+    var b31 = b[2];
+    var b41 = b[3];
+    var b12 = b[4];
+    var b22 = b[5];
+    var b32 = b[6];
+    var b42 = b[7];
+    var b13 = b[8];
+    var b23 = b[9];
+    var b33 = b[10];
+    var b43 = b[11];
+    var b14 = b[12];
+    var b24 = b[13];
+    var b34 = b[14];
+    var b44 = b[15];
+
+    r[0] = a11 * b11 + a12 * b21 + a13 * b31 + a14 * b41;
+    r[1] = a21 * b11 + a22 * b21 + a23 * b31 + a24 * b41;
+    r[2] = a31 * b11 + a32 * b21 + a33 * b31 + a34 * b41;
+    r[3] = a41 * b11 + a42 * b21 + a43 * b31 + a44 * b41;
+    r[4] = a11 * b12 + a12 * b22 + a13 * b32 + a14 * b42;
+    r[5] = a21 * b12 + a22 * b22 + a23 * b32 + a24 * b42;
+    r[6] = a31 * b12 + a32 * b22 + a33 * b32 + a34 * b42;
+    r[7] = a41 * b12 + a42 * b22 + a43 * b32 + a44 * b42;
+    r[8] = a11 * b13 + a12 * b23 + a13 * b33 + a14 * b43;
+    r[9] = a21 * b13 + a22 * b23 + a23 * b33 + a24 * b43;
+    r[10] = a31 * b13 + a32 * b23 + a33 * b33 + a34 * b43;
+    r[11] = a41 * b13 + a42 * b23 + a43 * b33 + a44 * b43;
+    r[12] = a11 * b14 + a12 * b24 + a13 * b34 + a14 * b44;
+    r[13] = a21 * b14 + a22 * b24 + a23 * b34 + a24 * b44;
+    r[14] = a31 * b14 + a32 * b24 + a33 * b34 + a34 * b44;
+    r[15] = a41 * b14 + a42 * b24 + a43 * b34 + a44 * b44;
+
+    return r;
+};
+
+/*
+ * Function: M4x4.mulOffset
+ *
+ * Performs r' = a * b, where r' is the 16 elements of r starting at element o.
+ *
+ * Parameters:
+ *
+ *   a - the first matrix operand
+ *   b - the second matrix operand
+ *   r - array to store the result in
+ *   o - offset into r at which to start storing results
+ *
+ * Returns:
+ *
+ *   r
+ */
+M4x4.mulOffset = function M4x4_mulOffset(a, b, r, o) {
+    //MathUtils_assert(a.length == 16, "a.length == 16");
+    //MathUtils_assert(b.length == 16, "b.length == 16");
+
+    var a21 = a[1];
+    var a31 = a[2];
+    var a41 = a[3];
+    var a12 = a[4];
+    var a22 = a[5];
+    var a32 = a[6];
+    var a42 = a[7];
+    var a13 = a[8];
+    var a23 = a[9];
+    var a33 = a[10];
+    var a43 = a[11];
+    var a14 = a[12];
+    var a24 = a[13];
+    var a34 = a[14];
+    var a44 = a[15];
+
+    var b11 = b[0];
+    var b21 = b[1];
+    var b31 = b[2];
+    var b41 = b[3];
+    var b12 = b[4];
+    var b22 = b[5];
+    var b32 = b[6];
+    var b42 = b[7];
+    var b13 = b[8];
+    var b23 = b[9];
+    var b33 = b[10];
+    var b43 = b[11];
+    var b14 = b[12];
+    var b24 = b[13];
+    var b34 = b[14];
+    var b44 = b[15];
+
+    r[o+0] = a11 * b11 + a12 * b21 + a13 * b31 + a14 * b41;
+    r[o+1] = a21 * b11 + a22 * b21 + a23 * b31 + a24 * b41;
+    r[o+2] = a31 * b11 + a32 * b21 + a33 * b31 + a34 * b41;
+    r[o+3] = a41 * b11 + a42 * b21 + a43 * b31 + a44 * b41;
+    r[o+4] = a11 * b12 + a12 * b22 + a13 * b32 + a14 * b42;
+    r[o+5] = a21 * b12 + a22 * b22 + a23 * b32 + a24 * b42;
+    r[o+6] = a31 * b12 + a32 * b22 + a33 * b32 + a34 * b42;
+    r[o+7] = a41 * b12 + a42 * b22 + a43 * b32 + a44 * b42;
+    r[o+8] = a11 * b13 + a12 * b23 + a13 * b33 + a14 * b43;
+    r[o+9] = a21 * b13 + a22 * b23 + a23 * b33 + a24 * b43;
+    r[o+10] = a31 * b13 + a32 * b23 + a33 * b33 + a34 * b43;
+    r[o+11] = a41 * b13 + a42 * b23 + a43 * b33 + a44 * b43;
+    r[o+12] = a11 * b14 + a12 * b24 + a13 * b34 + a14 * b44;
+    r[o+13] = a21 * b14 + a22 * b24 + a23 * b34 + a24 * b44;
+    r[o+14] = a31 * b14 + a32 * b24 + a33 * b34 + a34 * b44;
+    r[o+15] = a41 * b14 + a42 * b24 + a43 * b34 + a44 * b44;
+
+    return r;
+};
+
+/*
+ * Function: M4x4.mulAffine
+ *
+ * Performs r = a * b, assuming a and b are affine (elements 3,7,11,15 = 0,0,0,1)
+ *
+ * Parameters:
+ *
+ *   a - the first matrix operand
+ *   b - the second matrix operand
+ *   r - optional 4x4 matrix to store the result in
+ *
+ * Returns:
+ *
+ *   If r is specified, returns r after performing the operation.
+ *   Otherwise, returns a new 4x4 matrix with the result.
+ */
+M4x4.mulAffine = function M4x4_mulAffine(a, b, r) {
+    //MathUtils_assert(a.length == 16, "a.length == 16");
+    //MathUtils_assert(b.length == 16, "b.length == 16");
+    //MathUtils_assert(r == undefined || r.length == 16, "r == undefined || r.length == 16");
+    //MathUtils_assert(a != r && b != r, "a != r && b != r");
+
+    if (r == undefined)
+        r = new MJS_FLOAT_ARRAY_TYPE(16);
+    var a11 = a[0];
+    var a21 = a[1];
+    var a31 = a[2];
+    var a12 = a[4];
+    var a22 = a[5];
+    var a32 = a[6];
+    var a13 = a[8];
+    var a23 = a[9];
+    var a33 = a[10];
+    var a14 = a[12];
+    var a24 = a[13];
+    var a34 = a[14];
+
+    var b11 = b[0];
+    var b21 = b[1];
+    var b31 = b[2];
+    var b12 = b[4];
+    var b22 = b[5];
+    var b32 = b[6];
+    var b13 = b[8];
+    var b23 = b[9];
+    var b33 = b[10];
+    var b14 = b[12];
+    var b24 = b[13];
+    var b34 = b[14];
+
+    r[0] = a11 * b11 + a12 * b21 + a13 * b31;
+    r[1] = a21 * b11 + a22 * b21 + a23 * b31;
+    r[2] = a31 * b11 + a32 * b21 + a33 * b31;
+    r[3] = 0;
+    r[4] = a11 * b12 + a12 * b22 + a13 * b32;
+    r[5] = a21 * b12 + a22 * b22 + a23 * b32;
+    r[6] = a31 * b12 + a32 * b22 + a33 * b32;
+    r[7] = 0;
+    r[8] = a11 * b13 + a12 * b23 + a13 * b33;
+    r[9] = a21 * b13 + a22 * b23 + a23 * b33;
+    r[10] = a31 * b13 + a32 * b23 + a33 * b33;
+    r[11] = 0;
+    r[12] = a11 * b14 + a12 * b24 + a13 * b34 + a14;
+    r[13] = a21 * b14 + a22 * b24 + a23 * b34 + a24;
+    r[14] = a31 * b14 + a32 * b24 + a33 * b34 + a34;
+    r[15] = 1;
+
+    return r;
+};
+
+/*
+ * Function: M4x4.mulAffineOffset
+ *
+ * Performs r' = a * b, assuming a and b are affine (elements 3,7,11,15 = 0,0,0,1), where r' is the 16 elements of r starting at element o
+ *
+ * Parameters:
+ *
+ *   a - the first matrix operand
+ *   b - the second matrix operand
+ *   r - array to store the result in
+ *   o - offset into r at which to start storing results
+ *
+ * Returns:
+ *
+ *   r
+ */
+M4x4.mulAffine = function M4x4_mulAffine(a, b, r, o) {
+    //MathUtils_assert(a.length == 16, "a.length == 16");
+    //MathUtils_assert(b.length == 16, "b.length == 16");
+
+    if (r == undefined)
+        r = new MJS_FLOAT_ARRAY_TYPE(16);
+    var a11 = a[0];
+    var a21 = a[1];
+    var a31 = a[2];
+    var a12 = a[4];
+    var a22 = a[5];
+    var a32 = a[6];
+    var a13 = a[8];
+    var a23 = a[9];
+    var a33 = a[10];
+    var a14 = a[12];
+    var a24 = a[13];
+    var a34 = a[14];
+
+    var b11 = b[0];
+    var b21 = b[1];
+    var b31 = b[2];
+    var b12 = b[4];
+    var b22 = b[5];
+    var b32 = b[6];
+    var b13 = b[8];
+    var b23 = b[9];
+    var b33 = b[10];
+    var b14 = b[12];
+    var b24 = b[13];
+    var b34 = b[14];
+
+    r[o+0] = a11 * b11 + a12 * b21 + a13 * b31;
+    r[o+1] = a21 * b11 + a22 * b21 + a23 * b31;
+    r[o+2] = a31 * b11 + a32 * b21 + a33 * b31;
+    r[o+3] = 0;
+    r[o+4] = a11 * b12 + a12 * b22 + a13 * b32;
+    r[o+5] = a21 * b12 + a22 * b22 + a23 * b32;
+    r[o+6] = a31 * b12 + a32 * b22 + a33 * b32;
+    r[o+7] = 0;
+    r[o+8] = a11 * b13 + a12 * b23 + a13 * b33;
+    r[o+9] = a21 * b13 + a22 * b23 + a23 * b33;
+    r[o+10] = a31 * b13 + a32 * b23 + a33 * b33;
+    r[o+11] = 0;
+    r[o+12] = a11 * b14 + a12 * b24 + a13 * b34 + a14;
+    r[o+13] = a21 * b14 + a22 * b24 + a23 * b34 + a24;
+    r[o+14] = a31 * b14 + a32 * b24 + a33 * b34 + a34;
+    r[o+15] = 1;
+
     return r;
 };
 
@@ -949,8 +1179,69 @@ M4x4.rotate = function M4x4_rotate(angle, axis, m, r) {
     //MathUtils_assert(m.length == 16, "m.length == 16");
     //MathUtils_assert(r == undefined || r.length == 16, "r == undefined || r.length == 16");
 
-    M4x4.makeRotate(angle, axis, M4x4._temp1);
-    return M4x4.mul(m, M4x4._temp1, r);
+    if (r == undefined)
+        r = new MJS_FLOAT_ARRAY_TYPE(16);
+    var a0=axis [0], a1=axis [1], a2=axis [2];
+    var l = Math.sqrt(a0*a0 + a1*a1 + a2*a2);
+    var x = a0, y = a1, z = a2;
+    if (l != 1.0) {
+        var im = 1.0 / l;
+        x *= im;
+        y *= im;
+        z *= im;
+    }
+    var c = Math.cos(angle);
+    var c1 = 1-c;
+    var s = Math.sin(angle);
+    var xs = x*s;
+    var ys = y*s;
+    var zs = z*s;
+    var xyc1 = x * y * c1;
+    var xzc1 = x * z * c1;
+    var yzc1 = y * z * c1;
+
+    var m11 = m[0];
+    var m21 = m[1];
+    var m31 = m[2];
+    var m41 = m[3];
+    var m12 = m[4];
+    var m22 = m[5];
+    var m32 = m[6];
+    var m42 = m[7];
+    var m13 = m[8];
+    var m23 = m[9];
+    var m33 = m[10];
+    var m43 = m[11];
+
+    var t11 = x * x * c1 + c;
+    var t21 = xyc1 + zs;
+    var t31 = xzc1 - ys;
+    var t12 = xyc1 - zs;
+    var t22 = y * y * c1 + c;
+    var t32 = yzc1 + xs;
+    var t13 = xzc1 + ys;
+    var t23 = yzc1 - xs;
+    var t33 = z * z * c1 + c;
+
+    r[0] = m11 * t11 + m12 * t21 + m13 * t31;
+    r[1] = m21 * t11 + m22 * t21 + m23 * t31;
+    r[2] = m31 * t11 + m32 * t21 + m33 * t31;
+    r[3] = m41 * t11 + m42 * t21 + m43 * t31;
+    r[4] = m11 * t12 + m12 * t22 + m13 * t32;
+    r[5] = m21 * t12 + m22 * t22 + m23 * t32;
+    r[6] = m31 * t12 + m32 * t22 + m33 * t32;
+    r[7] = m41 * t12 + m42 * t22 + m43 * t32;
+    r[8] = m11 * t13 + m12 * t23 + m13 * t33;
+    r[9] = m21 * t13 + m22 * t23 + m23 * t33;
+    r[10] = m31 * t13 + m32 * t23 + m33 * t33;
+    r[11] = m41 * t13 + m42 * t23 + m43 * t33;
+    if (r != m) {
+        r[12] = m[12];
+        r[13] = m[13];
+        r[14] = m[14];
+        r[15] = m[15];
+    }
+    return r;
 };
 
 /*
@@ -1048,8 +1339,43 @@ M4x4.scale3 = function M4x4_scale3(x, y, z, m, r) {
     //MathUtils_assert(m.length == 16, "m.length == 16");
     //MathUtils_assert(r == undefined || r.length == 16, "r == undefined || r.length == 16");
 
-    M4x4.makeScale3(x, y, z, M4x4._temp1);
-    return M4x4.mul(m, M4x4._temp1, r);
+    if (r == m) {
+        m[0] *= x;
+        m[1] *= x;
+        m[2] *= x;
+        m[3] *= x;
+        m[4] *= y;
+        m[5] *= y;
+        m[6] *= y;
+        m[7] *= y;
+        m[8] *= z;
+        m[9] *= z;
+        m[10] *= z;
+        m[11] *= z;
+        return m;
+    }
+
+    if (r == undefined)
+        r = new MJS_FLOAT_ARRAY_TYPE(16);
+
+    r[0] = m[0] * x;
+    r[1] = m[1] * x;
+    r[2] = m[2] * x;
+    r[3] = m[3] * x;
+    r[4] = m[4] * y;
+    r[5] = m[5] * y;
+    r[6] = m[6] * y;
+    r[7] = m[7] * y;
+    r[8] = m[8] * z;
+    r[9] = m[9] * z;
+    r[10] = m[10] * z;
+    r[11] = m[11] * z;
+    r[12] = m[12];
+    r[13] = m[13];
+    r[14] = m[14];
+    r[15] = m[15];
+
+    return r;
 };
 
 /*
@@ -1058,9 +1384,44 @@ M4x4.scale3 = function M4x4_scale3(x, y, z, m, r) {
 M4x4.scale1 = function M4x4_scale1(k, m, r) {
     //MathUtils_assert(m.length == 16, "m.length == 16");
     //MathUtils_assert(r == undefined || r.length == 16, "r == undefined || r.length == 16");
+    if (r == m) {
+        m[0] *= k;
+        m[1] *= k;
+        m[2] *= k;
+        m[3] *= k;
+        m[4] *= k;
+        m[5] *= k;
+        m[6] *= k;
+        m[7] *= k;
+        m[8] *= k;
+        m[9] *= k;
+        m[10] *= k;
+        m[11] *= k;
+        return m;
+    }
 
-    M4x4.makeScale3(k, k, k, M4x4._temp1);
-    return M4x4.mul(m, M4x4._temp1, r);
+
+    if (r == undefined)
+        r = new MJS_FLOAT_ARRAY_TYPE(16);
+
+    r[0] = m[0] * k;
+    r[1] = m[1] * k;
+    r[2] = m[2] * k;
+    r[3] = m[3] * k;
+    r[4] = m[4] * k;
+    r[5] = m[5] * k;
+    r[6] = m[6] * k;
+    r[7] = m[7] * k;
+    r[8] = m[8] * k;
+    r[9] = m[9] * k;
+    r[10] = m[10] * k;
+    r[11] = m[11] * k;
+    r[12] = m[12];
+    r[13] = m[13];
+    r[14] = m[14];
+    r[15] = m[15];
+
+    return r;
 };
 
 /*
@@ -1070,9 +1431,46 @@ M4x4.scale = function M4x4_scale(v, m, r) {
     //MathUtils_assert(v.length == 3, "v.length == 3");
     //MathUtils_assert(m.length == 16, "m.length == 16");
     //MathUtils_assert(r == undefined || r.length == 16, "r == undefined || r.length == 16");
+    var x = v[0], y = v[1], z = v[2];
 
-    M4x4.makeScale3(v[0], v[1], v[2], M4x4._temp1);
-    return M4x4.mul(m, M4x4._temp1, r);
+    if (r == m) {
+        m[0] *= x;
+        m[1] *= x;
+        m[2] *= x;
+        m[3] *= x;
+        m[4] *= y;
+        m[5] *= y;
+        m[6] *= y;
+        m[7] *= y;
+        m[8] *= z;
+        m[9] *= z;
+        m[10] *= z;
+        m[11] *= z;
+        return m;
+    }
+
+    if (r == undefined)
+        r = new MJS_FLOAT_ARRAY_TYPE(16);
+
+
+    r[0] = m[0] * x;
+    r[1] = m[1] * x;
+    r[2] = m[2] * x;
+    r[3] = m[3] * x;
+    r[4] = m[4] * y;
+    r[5] = m[5] * y;
+    r[6] = m[6] * y;
+    r[7] = m[7] * y;
+    r[8] = m[8] * z;
+    r[9] = m[9] * z;
+    r[10] = m[10] * z;
+    r[11] = m[11] * z;
+    r[12] = m[12];
+    r[13] = m[13];
+    r[14] = m[14];
+    r[15] = m[15];
+
+    return r;
 };
 
 /*
@@ -1124,14 +1522,68 @@ M4x4.makeTranslate = function M4x4_makeTranslate (v, r) {
 };
 
 /*
+ * Function: M4x4.translate3Self
+ */
+M4x4.translate3Self = function M4x4_translate3Self (x, y, z, m) {
+    //MathUtils_assert(m.length == 16, "m.length == 16");
+    //MathUtils_assert(r == undefined || r.length == 16, "r == undefined || r.length == 16");
+    m[12] += m[0] * x + m[4] * y + m[8] * z;
+    m[13] += m[1] * x + m[5] * y + m[9] * z;
+    m[14] += m[2] * x + m[6] * y + m[10] * z;
+    m[15] += m[3] * x + m[7] * y + m[11] * z;
+    return m;
+};
+
+/*
  * Function: M4x4.translate3
  */
 M4x4.translate3 = function M4x4_translate3 (x, y, z, m, r) {
     //MathUtils_assert(m.length == 16, "m.length == 16");
     //MathUtils_assert(r == undefined || r.length == 16, "r == undefined || r.length == 16");
 
-    M4x4.makeTranslate3(x, y, z, M4x4._temp1);
-    return M4x4.mul(m, M4x4._temp1, r);
+    if (r == m) {
+        m[12] += m[0] * x + m[4] * y + m[8] * z;
+        m[13] += m[1] * x + m[5] * y + m[9] * z;
+        m[14] += m[2] * x + m[6] * y + m[10] * z;
+        m[15] += m[3] * x + m[7] * y + m[11] * z;
+        return m;
+    }
+
+    if (r == undefined)
+        r = new MJS_FLOAT_ARRAY_TYPE(16);
+
+    var m11 = m[0];
+    var m21 = m[1];
+    var m31 = m[2];
+    var m41 = m[3];
+    var m12 = m[4];
+    var m22 = m[5];
+    var m32 = m[6];
+    var m42 = m[7];
+    var m13 = m[8];
+    var m23 = m[9];
+    var m33 = m[10];
+    var m43 = m[11];
+
+
+    r[0] = m11;
+    r[1] = m21;
+    r[2] = m31;
+    r[3] = m41;
+    r[4] = m12;
+    r[5] = m22;
+    r[6] = m32;
+    r[7] = m42;
+    r[8] = m13;
+    r[9] = m23;
+    r[10] = m33;
+    r[11] = m43;
+    r[12] = m11 * x + m12 * y + m13 * z + m[12];
+    r[13] = m21 * x + m22 * y + m23 * z + m[13];
+    r[14] = m31 * x + m32 * y + m33 * z + m[14];
+    r[15] = m41 * x + m42 * y + m43 * z + m[15];
+
+    return r;
 };
 
 /*
@@ -1141,10 +1593,21 @@ M4x4.translate1 = function M4x4_translate1 (k, m, r) {
     //MathUtils_assert(m.length == 16, "m.length == 16");
     //MathUtils_assert(r == undefined || r.length == 16, "r == undefined || r.length == 16");
 
-    M4x4.makeTranslate3(k, k, k, M4x4._temp1);
-    return M4x4.mul(m, M4x4._temp1, r);
+    return M4x4.translate3(k, k, k, m, r);
 };
-
+/*
+ * Function: M4x4.translateSelf
+ */
+M4x4.translateSelf = function M4x4_translateSelf (v, m) {
+    //MathUtils_assert(v.length == 3, "v.length == 3");
+    //MathUtils_assert(m.length == 16, "m.length == 16");
+    var x=v[0], y=v[1], z=v[2];
+    m[12] += m[0] * x + m[4] * y + m[8] * z;
+    m[13] += m[1] * x + m[5] * y + m[9] * z;
+    m[14] += m[2] * x + m[6] * y + m[10] * z;
+    m[15] += m[3] * x + m[7] * y + m[11] * z;
+    return m;
+};
 /*
  * Function: M4x4.translate
  */
@@ -1152,9 +1615,49 @@ M4x4.translate = function M4x4_translate (v, m, r) {
     //MathUtils_assert(v.length == 3, "v.length == 3");
     //MathUtils_assert(m.length == 16, "m.length == 16");
     //MathUtils_assert(r == undefined || r.length == 16, "r == undefined || r.length == 16");
+    var x=v[0], y=v[1], z=v[2];
+    if (r == m) {
+        m[12] += m[0] * x + m[4] * y + m[8] * z;
+        m[13] += m[1] * x + m[5] * y + m[9] * z;
+        m[14] += m[2] * x + m[6] * y + m[10] * z;
+        m[15] += m[3] * x + m[7] * y + m[11] * z;
+        return m;
+    }
 
-    M4x4.makeTranslate3(v[0], v[1], v[2], M4x4._temp1);
-    return M4x4.mul(m, M4x4._temp1, r);
+    if (r == undefined)
+        r = new MJS_FLOAT_ARRAY_TYPE(16);
+
+    var m11 = m[0];
+    var m21 = m[1];
+    var m31 = m[2];
+    var m41 = m[3];
+    var m12 = m[4];
+    var m22 = m[5];
+    var m32 = m[6];
+    var m42 = m[7];
+    var m13 = m[8];
+    var m23 = m[9];
+    var m33 = m[10];
+    var m43 = m[11];
+
+    r[0] = m11;
+    r[1] = m21;
+    r[2] = m31;
+    r[3] = m41;
+    r[4] = m12;
+    r[5] = m22;
+    r[6] = m32;
+    r[7] = m42;
+    r[8] = m13;
+    r[9] = m23;
+    r[10] = m33;
+    r[11] = m43;
+    r[12] = m11 * x + m12 * y + m13 * z + m[12];
+    r[13] = m21 * x + m22 * y + m23 * z + m[13];
+    r[14] = m31 * x + m32 * y + m33 * z + m[14];
+    r[15] = m41 * x + m42 * y + m43 * z + m[15];
+
+    return r;
 };
 
 /*
@@ -1192,14 +1695,27 @@ M4x4.makeLookAt = function M4x4_makeLookAt (eye, center, up, r) {
 
     tm2[0] = 1; tm2[1] = 0; tm2[2] = 0; tm2[3] = 0;
     tm2[4] = 0; tm2[5] = 1; tm2[6] = 0; tm2[7] = 0;
-    tm2[8] = 0; tm2[9] = 0; tm2[10] = 1; tm2[3] = 0;
-    tm2[0] = -eye[0]; tm2[1] = -eye[1]; tm2[2] = -eye[2]; tm2[3] = 0;
+    tm2[8] = 0; tm2[9] = 0; tm2[10] = 1; tm2[11] = 0;
+    tm2[12] = -eye[0]; tm2[13] = -eye[1]; tm2[14] = -eye[2]; tm2[15] = 1;
 
     if (r == undefined)
         r = new MJS_FLOAT_ARRAY_TYPE(16);
     return M4x4.mul(tm1, tm2, r);
 };
 
+/*
+ * Function: M4x4.transposeSelf
+ */
+M4x4.transposeSelf = function M4x4_transposeSelf (m) {
+    //MathUtils_assert(m.length == 16, "m.length == 16");
+    var tmp = m[1]; m[1] = m[4]; m[4] = tmp;
+    tmp = m[2]; m[2] = m[8]; m[8] = tmp;
+    tmp = m[3]; m[3] = m[12]; m[12] = tmp;
+    tmp = m[6]; m[6] = m[9]; m[9] = tmp;
+    tmp = m[7]; m[7] = m[13]; m[13] = tmp;
+    tmp = m[11]; m[11] = m[14]; m[14] = tmp;
+    return m;
+};
 /*
  * Function: M4x4.transpose
  */
@@ -1225,6 +1741,96 @@ M4x4.transpose = function M4x4_transpose (m, r) {
     r[4] = m[1]; r[5] = m[5]; r[6] = m[9]; r[7] = m[13];
     r[8] = m[2]; r[9] = m[6]; r[10] = m[10]; r[11] = m[14];
     r[12] = m[3]; r[13] = m[7]; r[14] = m[11]; r[15] = m[15];
+
+    return r;
+};
+
+
+/*
+ * Function: M4x4.transformPoint
+ */
+M4x4.transformPoint = function M4x4_transformPoint (m, v, r) {
+    //MathUtils_assert(m.length == 16, "m.length == 16");
+    //MathUtils_assert(v.length == 3, "v.length == 3");
+    //MathUtils_assert(r == undefined || r.length == 3, "r == undefined || r.length == 3");
+    if (r == undefined)
+        r = new MJS_FLOAT_ARRAY_TYPE(3);
+
+    var v0 = v[0], v1 = v[1], v2 = v[2];
+
+    r[0] = m[0] * v0 + m[4] * v1 + m[8] * v2 + m[12];
+    r[1] = m[1] * v0 + m[5] * v1 + m[9] * v2 + m[13];
+    r[2] = m[2] * v0 + m[6] * v1 + m[10] * v2 + m[14];
+    var w = m[3] * v0 + m[7] * v1 + m[11] * v2 + m[15];
+
+    if (w != 1.0) {
+        r[0] /= w;
+        r[1] /= w;
+        r[2] /= w;
+    }
+
+    return r;
+};
+
+/*
+ * Function: M4x4.transformLine
+ */
+M4x4.transformLine = function M4x4_transformLine(m, v, r) {
+    //MathUtils_assert(m.length == 16, "m.length == 16");
+    //MathUtils_assert(v.length == 3, "v.length == 3");
+    //MathUtils_assert(r == undefined || r.length == 3, "r == undefined || r.length == 3");
+    if (r == undefined)
+        r = new MJS_FLOAT_ARRAY_TYPE(3);
+
+    var v0 = v[0], v1 = v[1], v2 = v[2];
+    r[0] = m[0] * v0 + m[4] * v1 + m[8] * v2;
+    r[1] = m[1] * v0 + m[5] * v1 + m[9] * v2;
+    r[2] = m[2] * v0 + m[6] * v1 + m[10] * v2;
+    var w = m[3] * v0 + m[7] * v1 + m[11] * v2;
+
+    if (w != 1.0) {
+        r[0] /= w;
+        r[1] /= w;
+        r[2] /= w;
+    }
+
+    return r;
+};
+
+
+/*
+ * Function: M4x4.transformPointAffine
+ */
+M4x4.transformPointAffine = function M4x4_transformPointAffine (m, v, r) {
+    //MathUtils_assert(m.length == 16, "m.length == 16");
+    //MathUtils_assert(v.length == 3, "v.length == 3");
+    //MathUtils_assert(r == undefined || r.length == 3, "r == undefined || r.length == 3");
+    if (r == undefined)
+        r = new MJS_FLOAT_ARRAY_TYPE(3);
+
+    var v0 = v[0], v1 = v[1], v2 = v[2];
+
+    r[0] = m[0] * v0 + m[4] * v1 + m[8] * v2 + m[12];
+    r[1] = m[1] * v0 + m[5] * v1 + m[9] * v2 + m[13];
+    r[2] = m[2] * v0 + m[6] * v1 + m[10] * v2 + m[14];
+
+    return r;
+};
+
+/*
+ * Function: M4x4.transformLineAffine
+ */
+M4x4.transformLineAffine = function M4x4_transformLineAffine(m, v, r) {
+    //MathUtils_assert(m.length == 16, "m.length == 16");
+    //MathUtils_assert(v.length == 3, "v.length == 3");
+    //MathUtils_assert(r == undefined || r.length == 3, "r == undefined || r.length == 3");
+    if (r == undefined)
+        r = new MJS_FLOAT_ARRAY_TYPE(3);
+
+    var v0 = v[0], v1 = v[1], v2 = v[2];
+    r[0] = m[0] * v0 + m[4] * v1 + m[8] * v2;
+    r[1] = m[1] * v0 + m[5] * v1 + m[9] * v2;
+    r[2] = m[2] * v0 + m[6] * v1 + m[10] * v2;
 
     return r;
 };
