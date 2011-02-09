@@ -1,0 +1,23 @@
+<html>
+
+  <head>
+    <link rel="stylesheet" type="text/css" href="../style.css" />
+    <script src="../../xbps.js"></script>
+    <script src="acorn.js"></script>
+  </head>
+
+  <body onLoad="start();" bgcolor="#222222">
+    <input type="button" value="Take Screenshot" onClick="addPNG();"/>
+    <input type="button" value="clear" onClick="removeAllScreenShots();"/><br />
+    
+    <span>status: </span><span class="orangeText" id="fileStatus"></span><br />
+    <div id="numPointsAndFPS"></div>
+    
+    <canvas id="canvas" width="300" height="500"></canvas><span id="thumbnails"></span><br />
+    <span>Invert scroll wheel:</span> <input type="checkbox" id="invertScroll" /><br />
+    <span id="debug"></span>
+    <br />
+    <span>Last key Pressed:</span> <span id="key" class="orangeText">None</span>
+  </body>
+
+</html>
