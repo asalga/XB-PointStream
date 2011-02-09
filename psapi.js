@@ -2,7 +2,6 @@
   Copyright (c) 2010  Seneca College
   MIT LICENSE
 */
-
 var PointStream = (function() {
 
   /**
