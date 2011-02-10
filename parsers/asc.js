@@ -1,26 +1,27 @@
-/*
+/**
   Copyright (c) 2010  Seneca College
   MIT LICENSE
-
-  Version:  0.1
-  Author:   Andor Salga
-            asalga.wordpress.com
-  Date:     November 16, 2010
-  
-  Notes:
-  This parser parses .ASC filetypes. These files are ASCII
-  files which have their data stored in one of the following ways:
-
-  X, Y, Z
-  X, Y, Z, R, G, B
-  X, Y, Z, I, J, K
-  X, Y, Z, R, G, B, I, J, K
 */
+/**
+  @class
+  Version:  0.1<br />
+  Author:   Andor Salga<br />
+            asalga.wordpress.com<br />
+  Date:     November 16, 2010<br />
+  <br />
+  This parser parses .ASC filetypes. These files are ASCII<br />
+  files which have their data stored in one of the following formats:<br />
 
+  X, Y, Z<br />
+  X, Y, Z, R, G, B<br />
+  X, Y, Z, I, J, K<br />
+  X, Y, Z, R, G, B, I, J, K<br />
+  <br />
+*/
 var ASCParser = (function() {
 
   /**
-    Constructor
+    @private
   */
   function ASCParser(config) {
     
@@ -155,7 +156,7 @@ var ASCParser = (function() {
       return VERTS_COLS;
     };
     
-    /*
+    /**
       Returns the version of this parser.
       
       @returns {String} parser version.
@@ -164,7 +165,7 @@ var ASCParser = (function() {
       return version;
     });
     
-    /*
+    /**
       Get the number of parsed points so far.
       
       @returns {Number} number of points parsed.
@@ -173,7 +174,7 @@ var ASCParser = (function() {
       return numParsedPoints;
     });
     
-    /*
+    /**
       Get the total number of points in the point cloud.
       
       @returns {Number}
@@ -214,6 +215,8 @@ var ASCParser = (function() {
       AJAX.parser = this;
 
       /**
+        @private
+        
         occurs exactly once when the resource begins
         to be downloaded
       */
@@ -221,7 +224,9 @@ var ASCParser = (function() {
         start(AJAX.parser);
       };
             
-      /*
+      /**
+        @private
+        
         occurs exactly once, when the file is done 
         being downloaded
       */
@@ -256,6 +261,7 @@ var ASCParser = (function() {
       }
       
       /**
+        @private
       */
       AJAX.parseChunk = function(chunkData){
         var chunk = chunkData;
@@ -349,6 +355,8 @@ var ASCParser = (function() {
       };
     
       /**
+        @private
+        
         On Minefield, this will occur zero or many times
         On Chrome/WebKit this will occur one or many times
       */

@@ -2,10 +2,14 @@
   Copyright (c) 2010  Seneca College
   MIT LICENSE
 */
+/**
+  @class XB PointStream is a WebGL library designed to efficiently stream and
+  render point cloud data in a canvas element.
+*/
 var PointStream = (function() {
 
   /**
-    Constructor
+    @private
   */
   function PointStream() {
     
@@ -148,6 +152,8 @@ var PointStream = (function() {
     }';
 
     /**
+      @private
+      
       Set a uniform integer
       
       @param programObj
@@ -171,10 +177,13 @@ var PointStream = (function() {
     }
 
     /**
+      @private
+      
       Set a uniform float
-      @param programObj
+      
+      @param {} programObj
       @param {String} varName
-      @param varValue
+      @param {} varValue
     */
     function uniformf(programObj, varName, varValue) {
       var varLocation = ctx.getUniformLocation(programObj, varName);
@@ -193,6 +202,7 @@ var PointStream = (function() {
     }
 
     /**
+      @private
     */
     function vertexAttribPointer(programObj, varName, size, VBO) {
       var varLocation = ctx.getAttribLocation(programObj, varName);
@@ -204,6 +214,7 @@ var PointStream = (function() {
     }
     
     /**
+      @private
     */
     function getParserIndex(parser){
       var i;
@@ -213,7 +224,9 @@ var PointStream = (function() {
       return i;
     }
     
-    /*
+    /**
+      @private
+      
       Create a buffer object which will contain
       the Vertex buffer object for the shader along
       with a reference to the original array
@@ -244,6 +257,8 @@ var PointStream = (function() {
     }
     
     /**
+      @private
+      
       @param {} programObj
       @param {String} varName
     */
@@ -255,6 +270,7 @@ var PointStream = (function() {
     }
     
     /**
+      @private
     */
     function getUserAgent(userAgentString){
       
@@ -271,7 +287,10 @@ var PointStream = (function() {
     }
 
     /**
+      @private
+      
       Sets a uniform matrix
+      
       @param {} programObj
       @param {String} varName
       @param {} transpose - must be false
@@ -292,6 +311,7 @@ var PointStream = (function() {
     }
 
     /**
+      @private
     */
     function createProgramObject(ctx, vetexShaderSource, fragmentShaderSource) {
       var vertexShaderObject = ctx.createShader(ctx.VERTEX_SHADER);
@@ -320,9 +340,14 @@ var PointStream = (function() {
     };
 
     /**
+      @private
+      
       Used by keyboard event handlers
+      
       @param {} code
       @param {} shift
+      
+      @returns
     */
     function keyCodeMap(code, shift) {
       // Letters
@@ -403,6 +428,8 @@ var PointStream = (function() {
     }
     
     /**
+      @private
+      
       @param {} evt
       @param {} type
     */
@@ -418,7 +445,9 @@ var PointStream = (function() {
 
     // tinylog lite JavaScript library
     // http://purl.eligrey.com/tinylog/lite
-    /*global tinylog,print*/
+    /**
+      @private
+    */
     var tinylogLite = (function() {
       "use strict";
 
@@ -495,7 +524,9 @@ var PointStream = (function() {
           view = doc.defaultView,
             docElem = doc.documentElement,
             docElemStyle = docElem[$style],
-
+          /**
+            @private
+          */
           setStyles = function() {
             var i = arguments.length,
               elemStyle, styles, style;
@@ -511,7 +542,9 @@ var PointStream = (function() {
               }
             }
           },
-
+          /**
+            @private
+          */
           observer = function(obj, event, handler) {
             if (obj.addEventListener) {
               obj.addEventListener(event, handler, False);
@@ -520,6 +553,9 @@ var PointStream = (function() {
             }
             return [obj, event, handler];
           },
+          /**
+            @private
+          */
           unobserve = function(obj, event, handler) {
             if (obj.removeEventListener) {
               obj.removeEventListener(event, handler, False);
@@ -527,6 +563,9 @@ var PointStream = (function() {
               obj.detachEvent("on" + event, handler);
             }
           },
+          /**
+            @private
+          */
           clearChildren = function(node) {
             var children = node.childNodes,
               child = children.length;
@@ -535,12 +574,21 @@ var PointStream = (function() {
               node.removeChild(children.item(0));
             }
           },
+          /**
+            @private
+          */
           append = function(to, elem) {
             return to.appendChild(elem);
           },
+          /**
+            @private
+          */
           createElement = function(localName) {
             return doc.createElement(localName);
           },
+          /**
+            @private
+          */
           createTextNode = function(text) {
             return doc.createTextNode(text);
           },
@@ -559,10 +607,16 @@ var PointStream = (function() {
               previousScrollTop = False,
               messages = 0,
 
+              /**
+                @private
+              */
               updateSafetyMargin = function() {
                 // have a blank space large enough to fit the output box at the page bottom
                 docElemStyle.paddingBottom = container.clientHeight + "px";
               },
+              /**
+                @private
+              */
               setContainerHeight = function(height) {
                 var viewHeight = view.innerHeight,
                   resizerHeight = resizer.clientHeight;
@@ -619,6 +673,9 @@ var PointStream = (function() {
                 })
               ];
 
+            /**
+              @private
+            */
             uninit = function() {
               // remove observers
               var i = observers.length;
@@ -681,6 +738,8 @@ var PointStream = (function() {
     /***************************************/
 
     /**
+      @private
+      
       The parser calls this when the parsing has started.
       
       @param {} parser
@@ -690,7 +749,9 @@ var PointStream = (function() {
       pointClouds[i].status = STARTED;
     }
     
-    /*
+    /**
+      @private
+      
       The parser will call this when it is done parsing a chunk of data.
       
       @param {Object} attributes - contains name/value pairs of arrays
@@ -721,7 +782,9 @@ var PointStream = (function() {
       }
     }
         
-    /*
+    /**
+      @private
+      
       The parser will call this when the file is done being downloaded.
       
       @param {} parser
@@ -764,6 +827,8 @@ var PointStream = (function() {
     }
     
     /**
+      @private
+      
       @param {} e
     */
     function renderLoop(e){
@@ -786,6 +851,7 @@ var PointStream = (function() {
     }
     
     /**
+      @private
     */
     function getAverage(arr){
       var objCenter = [0, 0, 0];
@@ -804,6 +870,8 @@ var PointStream = (function() {
     }
     
     /**
+      @private
+      
       Sets variables to default values.
     */
     function runDefault(){
@@ -841,6 +909,8 @@ var PointStream = (function() {
     };
     
     /**
+      @private
+      
       @param {} element
       @param {} type
       @param {Function} func
@@ -855,6 +925,8 @@ var PointStream = (function() {
     }
     
     /**
+      @private
+      
       These uniforms only need to be set once during the use of
       the program. Unless of course the user explicitly sets the
       point size, attenuation or projection.
@@ -865,6 +937,9 @@ var PointStream = (function() {
       uniformMatrix(currProgram, "ps_ProjectionMatrix", false, projectionMatrix);
     }
     
+    /**
+      @private
+    */
     function mouseScroll(evt){
       var delta = 0;
      
@@ -877,29 +952,47 @@ var PointStream = (function() {
       userMouseScroll(delta);
     }
     
+    /**
+      @private
+    */
     function mousePressed(){
       userMousePressed();
     }
     
+    /**
+      @private
+    */
     function mouseReleased(){
       userMouseReleased();
     }
     
+    /**
+      @private
+    */
     function mouseMoved(evt){
       mouseX = evt.pageX;
       mouseY = evt.pageY;
     }
     
+    /**
+      @private
+    */
     function keyDown(evt){
       key = keyFunc(evt, userKeyDown);
       userKeyDown();
     }
     
+    /**
+      @private
+    */
     function keyPressed(evt){
       key = keyFunc(evt, userKeyPressed);
       userKeyPressed();
     }
     
+    /**
+      @private
+    */
     function keyUp(evt){
       key = keyFunc(evt, userKeyUp);
       userKeyUp();
@@ -944,23 +1037,33 @@ var PointStream = (function() {
     this.__defineSetter__("onKeyUp", function(func){
       userKeyUp = func;
     });
-    
+
+    /**
+    */    
     this.__defineGetter__("mouseX", function(){
       return mouseX;
     });
     
+    /**
+    */
     this.__defineGetter__("mouseY", function(){
       return mouseY;
     });
     
+    /**
+    */
     this.__defineGetter__("key", function(){
       return key;
     });
 
+    /**
+    */
     this.__defineGetter__("width", function(){
       return width;
     });
 
+    /**
+    */
     this.__defineGetter__("height", function(){
       return height;
     });
@@ -981,7 +1084,7 @@ var PointStream = (function() {
     });
     
     /**
-      Sets the background color
+      Sets the background color.
       
       @param {Array} color Array of 4 values ranging from 0 to 1.
     */
@@ -990,7 +1093,7 @@ var PointStream = (function() {
     };  
     
     /**
-      Clears the color and depth buffers
+      Clears the color and depth buffers.
     */
     this.clear = function(){
       ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
@@ -998,6 +1101,7 @@ var PointStream = (function() {
     
     /**
       Get the version of the library.
+      
       @returns {String} library version
     */
     this.getVersion = function(){
@@ -1068,6 +1172,9 @@ var PointStream = (function() {
     };
     
     /**
+      Get a PNG of the current frame
+      
+      @returns
     */
     this.getPNG = function(){
       // Minefield throws and exception
@@ -1108,7 +1215,10 @@ var PointStream = (function() {
     };
     
     /**
-      Get the raw rgba values.
+      Get the raw RGBA values.
+      
+      @see getPNG
+      
       @returns
     */
     this.readPixels = function(){
@@ -1205,6 +1315,8 @@ var PointStream = (function() {
     /************************************/
 
     /**
+      @param {String} vertShader
+      @param {String} fragShader
     */
     this.createProgram = function(vertShader, fragShader){
       return createProgramObject(ctx, vertShader, fragShader);
@@ -1212,6 +1324,8 @@ var PointStream = (function() {
 
     /**
       If program is null, we use the default program object
+      
+      @param {} program
     */
     this.useProgram = function(program){
       currProgram = program ? program : defaultProgram;
@@ -1241,6 +1355,7 @@ var PointStream = (function() {
     };
     
     /**
+    
     */
     this.uniformf = function(varName, varValue){
       uniformf(currProgram, varName, varValue);
@@ -1253,8 +1368,11 @@ var PointStream = (function() {
     };
 
     /**
+      
     */
-    this.onRender = __empty_func;
+    this.onRender = function(){};
+    // don't set to __empty_func because that makes jsdoc-toolkit
+    // flag it as a field.
     
     /*
       Register a user's parser. When a resource is loaded with
@@ -1350,7 +1468,11 @@ var PointStream = (function() {
     };
     
     /**
-      @param {String} path - path to resource
+      Begins downloading and parsing a point cloud object.
+      
+      @param {String} path Path to the resource.
+      
+      @returns {} A point cloud object.
     */
     this.load = function(path){
 
@@ -1372,26 +1494,42 @@ var PointStream = (function() {
           attributes: {},
           
           progress: 0,
+          
+          /**
+            @private until fixed
+          */
           getProgress: function(){
             return this.progress;
           },
           
           status: -1,
+          /**
+            @private until fixed
+          */
           getStatus: function(){
             return this.status;
           },
           
           center: [0, 0, 0],
+          /**
+            @private until fixed
+          */
           getCenter: function(){
             return this.center;
           },
           
           numTotalPoints: -1,
+          /**
+            @private until fixed
+          */
           getNumTotalPoints: function(){
             return this.numTotalPoints;
           },
           
           numPoints: -1,
+          /**
+            @private until fixed
+          */
           getNumPoints: function(){
             return this.numPoints;
           }
