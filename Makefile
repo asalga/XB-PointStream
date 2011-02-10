@@ -9,7 +9,7 @@ all: release
 release: create-release-dirs create-release-files
 
 # final files to release
-create-release-files: create-release-docs minify example-min zip-min
+create-release-files: create-release-docs create-user-docs minify example-min zip-min
 
 # Minification strips out comments and most whitespace
 minify: create-release-dirs
@@ -34,6 +34,10 @@ example-min: create-release-dirs
 	mkdir ./xbps-min/clouds
 	cp ./clouds/acorn.asc ./xbps-min/clouds
 	cp ./example.* ./xbps-min
+
+# Create user documentation
+create-user-docs: create-release-dirs
+	./tools/jsdoc-toolkit/gendocs.sh 0
 
 # Copy over the documents into the release directory
 create-release-docs: create-release-dirs
