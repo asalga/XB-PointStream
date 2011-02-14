@@ -1007,7 +1007,8 @@ var PointStream = (function() {
     /**
       Set a function to run when a mouse button is pressed.
       @name PointStream#onMousePressed
-      @param {Function}
+      @event
+      @param {Function} func
     */
     this.__defineSetter__("onMousePressed", function(func){
       userMousePressed = func;
@@ -1016,7 +1017,8 @@ var PointStream = (function() {
     /**
       Set a function to run when a mouse button is released.
       @name PointStream#onMouseReleased
-      @param {Function}
+      @event
+      @param {Function} func
     */
     this.__defineSetter__("onMouseReleased", function(func){
       userMouseReleased = func;
@@ -1025,7 +1027,8 @@ var PointStream = (function() {
     /**
       Set a function to run when the mouse wheel is scrolled.
       @name PointStream#onMouseScroll
-      @param {Function}
+      @event
+      @param {Function} func
     */
     this.__defineSetter__("onMouseScroll", function(func){
       userMouseScroll = func;
@@ -1034,7 +1037,8 @@ var PointStream = (function() {
     /**
       Set a function to run when a key is pressed.
       @name PointStream#onKeyDown
-      @param {Function}
+      @event
+      @param {Function} func
     */
     this.__defineSetter__("onKeyDown", function(func){
       userKeyDown = func;
@@ -1043,7 +1047,8 @@ var PointStream = (function() {
     /**
       Set a function to run when a key is pressed and released.
       @name PointStream#onKeyPressed
-      @param {Function}
+      @event
+      @param {Function} func
     */
     this.__defineSetter__("onKeyPressed", function(func){
       userKeyPressed = func;
@@ -1052,7 +1057,8 @@ var PointStream = (function() {
     /**
       Set a function to run when a key is released.
       @name PointStream#onKeyUp
-      @param function
+      @event
+      @param {Function} func
     */
     this.__defineSetter__("onKeyUp", function(func){
       userKeyUp = func;
@@ -1061,6 +1067,7 @@ var PointStream = (function() {
     /**
       Set a function to run when a frame is to be rendered.
       @name PointStream#onRender
+      @event
       
       @example
       psInstance.onRender = function(){
