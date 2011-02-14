@@ -1,22 +1,23 @@
-/**
+/*
   Copyright (c) 2010  Seneca College
   MIT LICENSE
 */
 /**
-  @class
-  @version:  0.1
-  @author:  Andor Salga asalga.wordpress.com
-  
-  Date:     November 16, 2010<br />
-  <br />
-  This parser parses .ASC filetypes. These files are ASCII<br />
+  @class This parser parses .ASC filetypes. These files are ASCII
   files which have their data stored in one of the following formats:<br />
-
+  <br />
   X, Y, Z<br />
   X, Y, Z, R, G, B<br />
   X, Y, Z, I, J, K<br />
   X, Y, Z, R, G, B, I, J, K<br />
   <br />
+  Where XYZ refers to vertices, RGB refers to colors and IJK refers to normal
+  vectors. Vertices are always present and color components range from 0 to 255.
+  
+  @version:  0.1
+  @author:   Andor Salga asalga.wordpress.com
+  
+  Date:     November 16, 2010
 */
 var ASCParser = (function() {
 
@@ -34,8 +35,9 @@ var ASCParser = (function() {
     var parse = config.parse || __empty_func;
     var end = config.end || __empty_func;
     
-    var version = "0.1";
+    const VERSION = "0.1";
     
+    // XHR states
     const XHR_DONE = 4;
     const STARTED = 1;
     
@@ -67,13 +69,6 @@ var ASCParser = (function() {
     // Chrome/WebKit will call onprogress one or many times
     var onProgressCalled = false;
     var AJAX = null;
-    
-    // WebGL compatibility wrapper
-    try{
-      Float32Array;
-    }catch(ex){
-      Float32Array = WebGLFloatArray;
-    }
     
     /**
       @private
@@ -162,7 +157,7 @@ var ASCParser = (function() {
       @returns {String} parser version.
     */
     this.__defineGetter__("version", function(){
-      return version;
+      return VERSION;
     });
     
     /**
@@ -184,9 +179,10 @@ var ASCParser = (function() {
     });
     
     /**
-      Returns the progress of downloading the point cloud between zero and one.
+      Returns the progress of downloading the point cloud between zero and one or
+      -1 if the progress is unknown.
       @name ASCParser#progress
-      @returns {Number|-1} value from zero to one or -1 if unknown.
+      @returns {Number|-1}
     */
     this.__defineGetter__("progress", function(){
       return progress;
@@ -202,7 +198,7 @@ var ASCParser = (function() {
     });
     
     /**
-      @param {String} path Path to the resource
+      @param {String} path Path to the resource.
     */
     this.load = function(path){
       pathToFile = path;
@@ -274,20 +270,22 @@ var ASCParser = (function() {
             numValuesPerLine = -1;
             
             switch(layoutCode){
-              case 0: numValuesPerLine = 3;
-                      break;
-              case 1: numValuesPerLine = 6;
-                      colorsPresent = true;
-                      break;
-                      
-              // normals present
-              case 2: numValuesPerLine = 6;
-                      normalsPresent = true;
-                      break;
-              case 3: numValuesPerLine = 9;
-                      normalsPresent = true;
-                      colorsPresent = true;
-                      break;
+              case VERTS:
+                          numValuesPerLine = 3;
+                          break;
+              case VERTS_COLS:
+                          numValuesPerLine = 6;
+                          colorsPresent = true;
+                          break;
+              case VERTS_NORMS:
+                          numValuesPerLine = 6;
+                          normalsPresent = true;
+                          break;
+              case VERTS_COLS_NORMS:
+                          numValuesPerLine = 9;
+                          normalsPresent = true;
+                          colorsPresent = true;
+                          break;
             }
             gotLayout = true;
           }

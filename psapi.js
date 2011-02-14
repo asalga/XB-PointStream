@@ -5,6 +5,8 @@
 /**
   @class XB PointStream is a WebGL library designed to efficiently stream and
   render point cloud data in a canvas element.
+  
+  @version 0.5
 */
 var PointStream = (function() {
 
@@ -42,17 +44,7 @@ var PointStream = (function() {
     registeredParsers["asc"] = ASCParser;
     //registeredParsers["psi"] = PSIParser;
     
-    // WebGL compatibility wrapper
-    try{
-      Float32Array;
-    }catch(ex){
-      Float32Array = WebGLFloatArray;
-      Uint8Array = WebGLUnsignedByteArray;
-    }
-    const TYPED_ARRAY_FLOAT = Float32Array;
-    const TYPED_ARRAY_BYTE = Uint8Array;
-
-    const XBPS_VERSION  = "0.5";
+    const VERSION  = "0.5";
     
     // file status of point clouds
     const FILE_NOT_FOUND = -1;
@@ -158,9 +150,9 @@ var PointStream = (function() {
       
       Set a uniform integer
       
-      @param programObj
+      @param {WebGLProgram} programObj
       @param {String} varName
-      @param varValue
+      @param {Number} varValue
     */
     function uniformi(programObj, varName, varValue) {
       var varLocation = ctx.getUniformLocation(programObj, varName);
@@ -183,9 +175,9 @@ var PointStream = (function() {
       
       Set a uniform float
       
-      @param {} programObj
+      @param {WebGLProgram} programObj
       @param {String} varName
-      @param {} varValue
+      @param {Number} varValue
     */
     function uniformf(programObj, varName, varValue) {
       var varLocation = ctx.getUniformLocation(programObj, varName);
@@ -205,6 +197,11 @@ var PointStream = (function() {
 
     /**
       @private
+      
+      @param {WebGLProgram} programObj
+      @param {String} varName
+      @param {Number} size
+      @param {} VBO
     */
     function vertexAttribPointer(programObj, varName, size, VBO) {
       var varLocation = ctx.getAttribLocation(programObj, varName);
@@ -217,6 +214,8 @@ var PointStream = (function() {
     
     /**
       @private
+      
+      @param {} parser
     */
     function getParserIndex(parser){
       var i;
@@ -261,7 +260,7 @@ var PointStream = (function() {
     /**
       @private
       
-      @param {} programObj
+      @param {WebGLProgram} programObj
       @param {String} varName
     */
     function disableVertexAttribPointer(programObj, varName){
@@ -293,9 +292,9 @@ var PointStream = (function() {
       
       Sets a uniform matrix
       
-      @param {} programObj
+      @param {WebGLProgram} programObj
       @param {String} varName
-      @param {} transpose - must be false
+      @param {Boolean} transpose - must be false
       @param {Array} matrix
     */
     function uniformMatrix(programObj, varName, transpose, matrix) {
@@ -314,6 +313,10 @@ var PointStream = (function() {
 
     /**
       @private
+      
+      @param {} ctx
+      @param {String} vetexShaderSource
+      @param {String} fragmentShaderSource
     */
     function createProgramObject(ctx, vetexShaderSource, fragmentShaderSource) {
       var vertexShaderObject = ctx.createShader(ctx.VERTEX_SHADER);
@@ -744,7 +747,7 @@ var PointStream = (function() {
       
       The parser calls this when the parsing has started.
       
-      @param {} parser
+      @param {Object} parser
     */
     function startCallback(parser){
       var i = getParserIndex(parser);
@@ -789,7 +792,7 @@ var PointStream = (function() {
       
       The parser will call this when the file is done being downloaded.
       
-      @param {} parser
+      @param {Object} parser
     */
     function loadedCallback(parser){
 
@@ -803,7 +806,7 @@ var PointStream = (function() {
       var numPoints = pc.numTotalPoints = parsers[idx].numTotalPoints;
 
       // To calculate center
-      var verts = new TYPED_ARRAY_FLOAT(numPoints * 3);
+      var verts = new Float32Array(numPoints * 3);
       
       var names = [];
       for(var attribute in pc.attributes){
@@ -830,10 +833,8 @@ var PointStream = (function() {
     
     /**
       @private
-      
-      @param {} e
     */
-    function renderLoop(e){
+    function renderLoop(){
       frames++;
       var now = new Date();
 
@@ -941,6 +942,8 @@ var PointStream = (function() {
     
     /**
       @private
+      
+      @param {} evt
     */
     function mouseScroll(evt){
       var delta = 0;
@@ -970,6 +973,8 @@ var PointStream = (function() {
     
     /**
       @private
+      
+      @param {} evt
     */
     function mouseMoved(evt){
       mouseX = evt.pageX;
@@ -978,6 +983,8 @@ var PointStream = (function() {
     
     /**
       @private
+
+      @param {} evt
     */
     function keyDown(evt){
       key = keyFunc(evt, userKeyDown);
@@ -986,6 +993,8 @@ var PointStream = (function() {
     
     /**
       @private
+
+      @param {} evt
     */
     function keyPressed(evt){
       key = keyFunc(evt, userKeyPressed);
@@ -994,6 +1003,8 @@ var PointStream = (function() {
     
     /**
       @private
+      
+      @param {} evt
     */
     function keyUp(evt){
       key = keyFunc(evt, userKeyUp);
@@ -1005,9 +1016,11 @@ var PointStream = (function() {
     /*************************************/
     
     /**
-      Set a function to run when a mouse button is pressed.
       @name PointStream#onMousePressed
       @event
+
+      Set a function to run when a mouse button is pressed.
+
       @param {Function} func
     */
     this.__defineSetter__("onMousePressed", function(func){
@@ -1015,9 +1028,11 @@ var PointStream = (function() {
     });
     
     /**
-      Set a function to run when a mouse button is released.
       @name PointStream#onMouseReleased
       @event
+
+      Set a function to run when a mouse button is released.
+
       @param {Function} func
     */
     this.__defineSetter__("onMouseReleased", function(func){
@@ -1025,9 +1040,11 @@ var PointStream = (function() {
     });
     
     /**
-      Set a function to run when the mouse wheel is scrolled.
       @name PointStream#onMouseScroll
       @event
+
+      Set a function to run when the mouse wheel is scrolled.
+
       @param {Function} func
     */
     this.__defineSetter__("onMouseScroll", function(func){
@@ -1035,9 +1052,11 @@ var PointStream = (function() {
     });
     
     /**
-      Set a function to run when a key is pressed.
       @name PointStream#onKeyDown
       @event
+
+      Set a function to run when a key is pressed.
+
       @param {Function} func
     */
     this.__defineSetter__("onKeyDown", function(func){
@@ -1045,9 +1064,11 @@ var PointStream = (function() {
     });
     
     /**
-      Set a function to run when a key is pressed and released.
       @name PointStream#onKeyPressed
       @event
+
+      Set a function to run when a key is pressed and released.
+
       @param {Function} func
     */
     this.__defineSetter__("onKeyPressed", function(func){
@@ -1055,9 +1076,11 @@ var PointStream = (function() {
     });
     
     /**
-      Set a function to run when a key is released.
       @name PointStream#onKeyUp
       @event
+
+      Set a function to run when a key is released.
+
       @param {Function} func
     */
     this.__defineSetter__("onKeyUp", function(func){
@@ -1065,9 +1088,10 @@ var PointStream = (function() {
     });
     
     /**
-      Set a function to run when a frame is to be rendered.
       @name PointStream#onRender
       @event
+
+      Set a function to run when a frame is to be rendered.
       
       @example
       psInstance.onRender = function(){
@@ -1103,6 +1127,9 @@ var PointStream = (function() {
     });
     
     /**
+      Get the last key that was pressed by the user.
+      @name PointStream#key      
+      @returns {Number}
     */
     this.__defineGetter__("key", function(){
       return key;
@@ -1132,12 +1159,15 @@ var PointStream = (function() {
       @returns {String}
     */
     this.__defineGetter__("version", function(){
-      return XBPS_VERSION;
+      return VERSION;
     });
     
     /**
-      Get the current frame rate.
       @name PointStream#frameRate
+      
+      Get the last calculated frames per second. This is updated
+      every second.
+      
       @returns {Number}
     */
     this.__defineGetter__("frameRate", function(){
@@ -1159,18 +1189,9 @@ var PointStream = (function() {
     this.clear = function(){
       ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
     };
-    
+        
     /**
-      Get the version of the library.
-      
-      @returns {String} library version
-    */
-    this.getVersion = function(){
-      return XBPS_VERSION;
-    };
-    
-    /**
-      Renders a point cloud
+      Renders a point cloud.
       @param {} pointCloud
     */
     this.render = function(pointCloud){
@@ -1212,6 +1233,11 @@ var PointStream = (function() {
       Resize the viewport.
       This can be called after setup.
       
+      @example
+      window.onresize = function(){
+        ps.resize(window.innerWidth, window.innerHeight);
+      };
+
       @param {Number} pWidth
       @param {Number} pHeight
     */
@@ -1285,7 +1311,7 @@ var PointStream = (function() {
       }
       catch(e){
         if(!arr){
-          arr = new TYPED_ARRAY_BYTE(width * height * 4);
+          arr = new Uint8Array(width * height * 4);
           ctx.readPixels(0, 0, width, height, ctx.RGBA, ctx.UNSIGNED_BYTE, arr);
         }
       }
@@ -1296,9 +1322,12 @@ var PointStream = (function() {
     /********** Transformations **********/
     /*************************************/
 
-  /**
+   /**
       @name PointStream#scale
       @function
+      
+      Uniformly scale the model view matrix.
+      
       @param {Number} s
    */
    /**
@@ -1355,31 +1384,32 @@ var PointStream = (function() {
     /*********************************************/
 
     /**
-      Pushes on a copy of the matrix on top of the stack
+      Pushes on a copy of the topmost matrix on top of the stack.
     */
     this.pushMatrix = function(){
       matrixStack.push(this.peekMatrix());
     };
     
     /**
-      Pops off the matrix on top of the matrix stack
+      Pops off the matrix on top of the matrix stack.
     */
     this.popMatrix = function(){
       matrixStack.pop();
     };
     
     /**
-      Get a copy of the matrix at the top of the matrix stack
+      Get a copy of the matrix at the top of the matrix stack.
       
-      @returns {}
+      @returns {Float32Array}
     */
     this.peekMatrix = function(){
       return M4x4.clone(matrixStack[matrixStack.length - 1]);
     };
         
     /**
-      Set the matrix at the top of the matrix stack
-      @param {} mat
+      Set the matrix at the top of the matrix stack.
+      
+      @param {Float32Array} mat
     */
     this.loadMatrix = function(mat){
       matrixStack[matrixStack.length - 1] = mat;
@@ -1390,6 +1420,8 @@ var PointStream = (function() {
     /************************************/
 
     /**
+      Create a program object from a vertex and fragment shader.
+      
       @param {String} vertShader
       @param {String} fragShader
     */
@@ -1397,11 +1429,21 @@ var PointStream = (function() {
       return createProgramObject(ctx, vertShader, fragShader);
     };
 
-    /**
-      If program is null, we use the default program object
+   /**
+      @name PointStream#useProgram
+      @function
+            
+      Use the built-in program object. This program only renders
+      vertex positions and colors.
+   */
+   /**
+      @name PointStream#useProgram^2
+      @function
       
-      @param {} program
-    */
+      Use a user-defined program object.
+      
+      @param {WebGLProgram} program
+   */
     this.useProgram = function(program){
       currProgram = program ? program : defaultProgram;
       ctx.useProgram(currProgram);
@@ -1469,7 +1511,8 @@ var PointStream = (function() {
     console: window.console || tinylogLite;
 
     /**
-      prints a line to the console
+      Prints a line of text to the console.
+      
       @param {String} message
     */
     this.println = function(message) {
@@ -1487,7 +1530,15 @@ var PointStream = (function() {
     };
 
     /**
-      Prints a message
+      Add a message to a log buffer without printing to the
+      console. Flush the messages with println().
+      
+      @example
+      // prints: testing...1!testing...2!
+      ps.print('testing...1!');
+      ps.print('testing...2!');
+      ps.println();
+      
       @param {String} message
     */
     this.print = function(message) {
@@ -1495,8 +1546,12 @@ var PointStream = (function() {
     };
         
     /**
-      Must be called after the library has been created.
+      Must be called after the library has been instantiated.
       
+      @example
+      var ps = new PointStream();
+      ps.setup(document.getElementById('canvas'));
+  
       @param {canvas} cvs
     */
     this.setup = function(cvs){
@@ -1532,9 +1587,11 @@ var PointStream = (function() {
     };
     
     /**
-      @param {Number} constant - 
-      @param {Number} linear -   
-      @param {Number} quadratic - 
+      Set the point attenuation factors.
+      
+      @param {Number} constant
+      @param {Number} linear
+      @param {Number} quadratic
     */
     this.attenuation = function(constant, linear, quadratic){
       uniformf(currProgram, "ps_Attenuation", [constant, linear, quadratic]);

@@ -26,6 +26,7 @@ function zoom(amt){
   if(buttonDown){
     addPNG();
   }
+  ps.peekMatrix();
 }
 
 function mousePressed(){
@@ -95,7 +96,7 @@ function render(){
 
 function start(){
   ps = new PointStream();
-  document.getElementById('debug').innerHTML += "XB PointStream Version: " + ps.getVersion();
+  document.getElementById('debug').innerHTML += "XB PointStream Version: " + ps.version;
   
   ps.setup(document.getElementById('canvas'));
   
