@@ -4,9 +4,9 @@
 */
 /**
   @class
-  Version:  0.1<br />
-  Author:   Andor Salga<br />
-            asalga.wordpress.com<br />
+  @version:  0.1
+  @author:  Andor Salga asalga.wordpress.com
+  
   Date:     November 16, 2010<br />
   <br />
   This parser parses .ASC filetypes. These files are ASCII<br />
@@ -155,10 +155,10 @@ var ASCParser = (function() {
       // -0.57831 -3.08477 -7.04268    64 32 16
       return VERTS_COLS;
     };
-    
+
     /**
       Returns the version of this parser.
-      
+      @name ASCParser#version
       @returns {String} parser version.
     */
     this.__defineGetter__("version", function(){
@@ -167,7 +167,7 @@ var ASCParser = (function() {
     
     /**
       Get the number of parsed points so far.
-      
+      @name ASCParser#numParsedPoints
       @returns {Number} number of points parsed.
     */
     this.__defineGetter__("numParsedPoints", function(){
@@ -176,8 +176,8 @@ var ASCParser = (function() {
     
     /**
       Get the total number of points in the point cloud.
-      
-      @returns {Number}
+      @name ASCParser#numTotalPoints
+      @returns {Number} number of points in the point cloud.
     */
     this.__defineGetter__("numTotalPoints", function(){
       return numTotalPoints;
@@ -185,8 +185,8 @@ var ASCParser = (function() {
     
     /**
       Returns the progress of downloading the point cloud between zero and one.
-      
-      @returns {Number} value from zero to one or -1 if unknown.
+      @name ASCParser#progress
+      @returns {Number|-1} value from zero to one or -1 if unknown.
     */
     this.__defineGetter__("progress", function(){
       return progress;
@@ -194,7 +194,7 @@ var ASCParser = (function() {
     
     /**
       Returns the file size of the resource in bytes.
-      
+      @name ASCParser#fileSize
       @returns {Number} size of resource in bytes.
     */
     this.__defineGetter__("fileSize", function(){
@@ -202,7 +202,7 @@ var ASCParser = (function() {
     });
     
     /**
-      @param path Path to the resource
+      @param {String} path Path to the resource
     */
     this.load = function(path){
       pathToFile = path;

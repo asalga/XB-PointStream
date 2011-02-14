@@ -1003,48 +1003,76 @@ var PointStream = (function() {
     /*************************************/
     
     /**
+      Set a function to run when a mouse button is pressed.
+      @name PointStream#onMousePressed
+      @param {Function}
     */
     this.__defineSetter__("onMousePressed", function(func){
       userMousePressed = func;
     });
     
     /**
+      Set a function to run when a mouse button is released.
+      @name PointStream#onMouseReleased
+      @param {Function}
     */
     this.__defineSetter__("onMouseReleased", function(func){
       userMouseReleased = func;
     });
     
     /**
+      Set a function to run when the mouse wheel is scrolled.
+      @name PointStream#onMouseScroll
+      @param {Function}
     */
     this.__defineSetter__("onMouseScroll", function(func){
       userMouseScroll = func;
     });
     
     /**
+      Set a function to run when a key is pressed.
+      @name PointStream#onKeyDown
+      @param {Function}
     */
     this.__defineSetter__("onKeyDown", function(func){
       userKeyDown = func;
     });
     
     /**
+      Set a function to run when a key is pressed and released.
+      @name PointStream#onKeyPressed
+      @param {Function}
     */
     this.__defineSetter__("onKeyPressed", function(func){
       userKeyPressed = func;
     });
     
     /**
+      Set a function to run when a key is released.
+      @name PointStream#onKeyUp
+      @param {Function} function
     */
     this.__defineSetter__("onKeyUp", function(func){
       userKeyUp = func;
     });
-
+    
+    /*************************************/
+    /********** Transformations **********/
+    /*************************************/
+    
     /**
+      Get the current mouse cursor's x coordinate 
+      @name PointStream#mouseX
+      @returns {Number}
     */    
     this.__defineGetter__("mouseX", function(){
       return mouseX;
     });
     
     /**
+      Get the current mouse cursor's y coordinate
+      @name PointStream#mouseY
+      @returns {Number}
     */
     this.__defineGetter__("mouseY", function(){
       return mouseY;
@@ -1057,12 +1085,18 @@ var PointStream = (function() {
     });
 
     /**
+      Get the width of the canvas.
+      @name PointStream#width
+      @returns {Number}
     */
     this.__defineGetter__("width", function(){
       return width;
     });
 
     /**
+      Get the height of the canvas.
+      @name PointStream#height
+      @returns {Number}
     */
     this.__defineGetter__("height", function(){
       return height;
@@ -1070,14 +1104,17 @@ var PointStream = (function() {
     
     /**
       Get the version of the library.
-      
-      @returns {String} library version
+      @name PointStream#version
+      @returns {String}
     */
     this.__defineGetter__("version", function(){
       return XBPS_VERSION;
     });
     
     /**
+      Get the current frame rate.
+      @name PointStream#frameRate
+      @returns {Number}
     */
     this.__defineGetter__("frameRate", function(){
       return frameRate;
@@ -1149,7 +1186,7 @@ var PointStream = (function() {
         
     /**
       Resize the viewport.
-      This can be called after setup
+      This can be called after setup.
       
       @param {Number} pWidth
       @param {Number} pHeight
@@ -1172,26 +1209,16 @@ var PointStream = (function() {
     };
     
     /**
-      Get a PNG of the current frame
-      
-      @returns
+      Get a PNG of the current frame.
+
+      @example
+      var img = document.createElement('img');
+      img.src = pointStreamInstance.getPNG();
+
+      @returns HTMLCanvasElement.toDataURL()
     */
     this.getPNG = function(){
-      // Minefield throws and exception
-      try{
-        var arr = ctx.readPixels(0, 0, width, height, ctx.RGBA, ctx.UNSIGNED_BYTE);
-        
-        // Chrome posts an error
-        if(ctx.getError()){
-          throw "readPixels exception";
-        }
-      }
-      catch(e){
-        if(!arr){
-          arr = new TYPED_ARRAY_BYTE(width * height * 4);
-          ctx.readPixels(0, 0, width, height, ctx.RGBA, ctx.UNSIGNED_BYTE, arr);
-        }
-      }
+      var arr = this.readPixels();
       
       var cvs = document.createElement('canvas');
       cvs.width = width;
@@ -1219,20 +1246,44 @@ var PointStream = (function() {
       
       @see getPNG
       
-      @returns
+      @returns {Uint8Array}
     */
     this.readPixels = function(){
-      return ctx.readPixels(0, 0, xb.width, xb.height, ctx.RGBA, ctx.UNSIGNED_BYTE);
+      var arr;
+      // Minefield throws and exception
+      try{
+        var arr = ctx.readPixels(0, 0, width, height, ctx.RGBA, ctx.UNSIGNED_BYTE);
+        
+        // Chrome posts an error
+        if(ctx.getError()){
+          throw "readPixels exception";
+        }
+      }
+      catch(e){
+        if(!arr){
+          arr = new TYPED_ARRAY_BYTE(width * height * 4);
+          ctx.readPixels(0, 0, width, height, ctx.RGBA, ctx.UNSIGNED_BYTE, arr);
+        }
+      }
+      return arr;
     };
     
     /*************************************/
     /********** Transformations **********/
     /*************************************/
 
-    /**
-      1 arg = uniform scaling
-      3 args = independant scaling
-    */
+  /**
+      @name PointStream#scale
+      @function
+      @param {Number} s
+   */
+   /**
+      @name PointStream#scale^2
+      @function
+      @param {Number} sx
+      @param {Number} sy
+      @param {Number} sz
+   */
     this.scale = function(sx, sy, sz){
       var smat = (!sy && !sz) ? M4x4.scale1(sx, M4x4.I) : 
                                 M4x4.scale3(sx, sy, sz, M4x4.I);
