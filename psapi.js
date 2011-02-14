@@ -1328,13 +1328,16 @@ var PointStream = (function() {
       @name PointStream#scale
       @function
       
-      Uniformly scale the model view matrix.
+      Multiplies the top of the matrix stack with a uniformly scaled matrix.
       
       @param {Number} s
    */
    /**
       @name PointStream#scale^2
       @function
+
+      Multiplies the top of the matrix stack with a scaled matrix.
+      
       @param {Number} sx
       @param {Number} sy
       @param {Number} sz
@@ -1358,6 +1361,9 @@ var PointStream = (function() {
     };
         
     /**
+      Multiply the matrix at the top of the model view matrix
+      stack with a rotation matrix about the x axis.
+      
       @param {Number} radians
     */
     this.rotateX = function(radians){
@@ -1366,6 +1372,9 @@ var PointStream = (function() {
     };
     
     /**
+      Multiply the matrix at the top of the model view matrix
+      stack with a rotation matrix about the y axis.
+
       @param {Number} radians
     */
     this.rotateY = function(radians){
@@ -1374,6 +1383,9 @@ var PointStream = (function() {
     };
 
     /**
+      Multiply the matrix at the top of the model view matrix
+      stack with a rotation matrix about the z axis.
+
       @param {Number} radians
     */
     this.rotateZ = function(radians){
@@ -1386,7 +1398,7 @@ var PointStream = (function() {
     /*********************************************/
 
     /**
-      Pushes on a copy of the topmost matrix on top of the stack.
+      Pushes on a copy of the matrix at the top of the matrix stack.
     */
     this.pushMatrix = function(){
       matrixStack.push(this.peekMatrix());
@@ -1464,10 +1476,10 @@ var PointStream = (function() {
         programCaches.push(currProgram);
       }
     };
-    
+
     /**
-      useProgram must be called before trying to
-      assign a uniform variable in that program.
+      Set a uniform integer variable in the currently loaded program. useProgram() 
+      must be called before trying to assign a uniform variable.
       
       @param {String} varName
       @param {Number} varValue
@@ -1477,8 +1489,8 @@ var PointStream = (function() {
     };
     
     /**
-      useProgram must be called before trying to
-      assign a uniform variable in that program.
+      Set a uniform float variable in the currently loaded program. useProgram() 
+      must be called before trying to assign a uniform variable.
 
       @param {String} varName
       @param {Number} varValue
@@ -1488,8 +1500,8 @@ var PointStream = (function() {
     };
     
     /**
-      useProgram must be called before trying to
-      assign a uniform variable in that program.
+      Set a uniform matrix variable in the currently loaded program. useProgram() 
+      must be called before trying to assign a uniform variable.
 
       @param {String} varName
       @param {Number} varValue
