@@ -31,6 +31,8 @@ var PointStream = (function() {
     var userKeyPressed = __empty_func;
     var key = 0;
     
+    var usersRender = __empty_func;
+    
     // These are parallel arrays. Each parser
     // has a point cloud it works with
     var parsers = [];
@@ -838,7 +840,7 @@ var PointStream = (function() {
       matrixStack.push(M4x4.I);
 
       // now call user's stuff
-      e.onRender();
+      usersRender();
       
       matrixStack.pop();
       
@@ -1050,10 +1052,25 @@ var PointStream = (function() {
     /**
       Set a function to run when a key is released.
       @name PointStream#onKeyUp
-      @param {Function} function
+      @param function
     */
     this.__defineSetter__("onKeyUp", function(func){
       userKeyUp = func;
+    });
+    
+    /**
+      Set a function to run when a frame is to be rendered.
+      @name PointStream#onRender
+      
+      @example
+      psInstance.onRender = function(){
+        psInstance.translate(0, 0, -25);
+        psInstance.clear();
+        psInstance.render(pointCloudObj);
+      };
+    */
+    this.__defineSetter__("onRender", function(func){
+      usersRender = func;
     });
     
     /*************************************/
@@ -1398,32 +1415,37 @@ var PointStream = (function() {
     };
     
     /**
-      useProgram must be called before trying
-      assign a uniform variable in that program
+      useProgram must be called before trying to
+      assign a uniform variable in that program.
+      
+      @param {String} varName
+      @param {Number} varValue
     */
     this.uniformi = function(varName, varValue){
       uniformi(currProgram, varName, varValue);
     };
     
     /**
-    
+      useProgram must be called before trying to
+      assign a uniform variable in that program.
+
+      @param {String} varName
+      @param {Number} varValue
     */
     this.uniformf = function(varName, varValue){
       uniformf(currProgram, varName, varValue);
     };
     
     /**
+      useProgram must be called before trying to
+      assign a uniform variable in that program.
+
+      @param {String} varName
+      @param {Number} varValue
     */
     this.uniformMatrix = function(varName, varValue){
       uniformMatrix(currProgram, varName, false, varValue);
     };
-
-    /**
-      
-    */
-    this.onRender = function(){};
-    // don't set to __empty_func because that makes jsdoc-toolkit
-    // flag it as a field.
     
     /*
       Register a user's parser. When a resource is loaded with
