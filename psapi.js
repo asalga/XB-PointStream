@@ -294,7 +294,7 @@ var PointStream = (function() {
       
       @param {WebGLProgram} programObj
       @param {String} varName
-      @param {Boolean} transpose - must be false
+      @param {Boolean} transpose must be false
       @param {Array} matrix
     */
     function uniformMatrix(programObj, varName, transpose, matrix) {
@@ -1092,6 +1092,8 @@ var PointStream = (function() {
       @event
 
       Set a function to run when a frame is to be rendered.
+      
+      @param {Function} func
       
       @example
       psInstance.onRender = function(){
