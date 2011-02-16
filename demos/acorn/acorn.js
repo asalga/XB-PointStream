@@ -26,7 +26,6 @@ function zoom(amt){
   if(buttonDown){
     addPNG();
   }
-  ps.peekMatrix();
 }
 
 function mousePressed(){

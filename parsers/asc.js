@@ -36,10 +36,7 @@ var ASCParser = (function() {
     var end = config.end || __empty_func;
     
     const VERSION = "0.1";
-    
-    // XHR states
     const XHR_DONE = 4;
-    const STARTED = 1;
     
     // The .ASC file can contain different types of data
     const UNKNOWN = -1;
@@ -320,7 +317,7 @@ var ASCParser = (function() {
             valueOffset = 3;
           }
 
-          // xyz  rgb  normals
+          // xyz  rgb  ijk
           for(var i = 0, j = 0, len = chunk.length; i < len; i += numValuesPerLine, j += 3){
             verts[j]   = parseFloat(chunk[i]);
             verts[j+1] = parseFloat(chunk[i+1]);

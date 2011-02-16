@@ -1114,7 +1114,7 @@ var PointStream = (function() {
       Get the current mouse cursor's x coordinate 
       @name PointStream#mouseX
       @returns {Number}
-    */    
+    */
     this.__defineGetter__("mouseX", function(){
       return mouseX;
     });
@@ -1130,7 +1130,7 @@ var PointStream = (function() {
     
     /**
       Get the last key that was pressed by the user.
-      @name PointStream#key      
+      @name PointStream#key
       @returns {Number}
     */
     this.__defineGetter__("key", function(){
@@ -1301,22 +1301,8 @@ var PointStream = (function() {
       @returns {Uint8Array}
     */
     this.readPixels = function(){
-      var arr;
-      // Minefield throws and exception
-      try{
-        var arr = ctx.readPixels(0, 0, width, height, ctx.RGBA, ctx.UNSIGNED_BYTE);
-        
-        // Chrome posts an error
-        if(ctx.getError()){
-          throw "readPixels exception";
-        }
-      }
-      catch(e){
-        if(!arr){
-          arr = new Uint8Array(width * height * 4);
-          ctx.readPixels(0, 0, width, height, ctx.RGBA, ctx.UNSIGNED_BYTE, arr);
-        }
-      }
+      var arr = new Uint8Array(width * height * 4);
+      ctx.readPixels(0, 0, width, height, ctx.RGBA, ctx.UNSIGNED_BYTE, arr);
       return arr;
     };
     
@@ -1446,7 +1432,7 @@ var PointStream = (function() {
    /**
       @name PointStream#useProgram
       @function
-            
+      
       Use the built-in program object. This program only renders
       vertex positions and colors.
    */
@@ -1478,7 +1464,7 @@ var PointStream = (function() {
     };
 
     /**
-      Set a uniform integer variable in the currently loaded program. useProgram() 
+      Set a uniform integer variable in the currently loaded program. useProgram()
       must be called before trying to assign a uniform variable.
       
       @param {String} varName
@@ -1489,7 +1475,7 @@ var PointStream = (function() {
     };
     
     /**
-      Set a uniform float variable in the currently loaded program. useProgram() 
+      Set a uniform float variable in the currently loaded program. useProgram()
       must be called before trying to assign a uniform variable.
 
       @param {String} varName
