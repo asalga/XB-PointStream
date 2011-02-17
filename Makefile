@@ -43,6 +43,9 @@ create-example: create-release-dir
 	echo "  </head>" >> ./xbps-min/example.html
 	echo "  <body onLoad=\"start();\">" >> ./xbps-min/example.html
 	echo "    <canvas id=\"canvas\" style=\"border: 1px solid black;\" width=\"400\" height=\"400\"></canvas>" >>./xbps-min/example.html
+	echo "    <pre>" >> ./xbps-min/example.html
+	cat example.js >> ./xbps-min/example.html
+	echo "    </pre>" >> ./xbps-min/example.html
 	echo "  </body>" >> ./xbps-min/example.html
 	echo "</html>" >> ./xbps-min/example.html
 	cp example.js ./xbps-min/
