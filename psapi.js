@@ -39,10 +39,11 @@ var PointStream = (function() {
     // has a point cloud it works with
     var parsers = [];
     var pointClouds = [];
-    
-    var registeredParsers = {};
-    registeredParsers["asc"] = ASCParser;
-    //registeredParsers["psi"] = PSIParser;
+
+    var registeredParsers = {
+      asc: ASCParser
+      //psi: PSIParser
+    };
     
     const VERSION  = "0.5";
     
@@ -1603,6 +1604,19 @@ var PointStream = (function() {
     this.pointSize = function(size){
       uniformf(currProgram, "ps_PointSize", size);
     };
+
+    /**
+    */
+    this.stop = function(path){
+      // get the parser associated with this path
+      
+      // tell the parser to stop
+      for(var i = 0; i < parsers.length; i++){
+        if(parsers[i].cloudName === path){
+          parsers[i].stop();
+        }
+      }
+    };
     
     /**
       Begins downloading and parsing a point cloud object.
@@ -1623,6 +1637,7 @@ var PointStream = (function() {
         var parser = new parserObject({ start: startCallback,
                                         parse: parseCallback,
                                         end: loadedCallback});
+        parser.cloudName = path;
         
         // !! fix (private vars are visible in user script)
         var newPointCloud = {

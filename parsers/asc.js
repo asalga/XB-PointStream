@@ -194,6 +194,12 @@ var ASCParser = (function() {
       return fileSizeInBytes;
     });
     
+    this.stop = function(){
+      if(AJAX){
+        AJAX.abort();
+      }
+    };
+    
     /**
       @param {String} path Path to the resource.
     */
