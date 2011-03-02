@@ -54,6 +54,7 @@ var sundae = {};
             isDone[who] = true;
             if(who == "curr" && func && aCanvas){
                 runTest(func, aCanvas);
+               // window.setTimeout(function(){}, 7500);
                 reportResult(r, t, e);
             }
             if(isDone.curr === true && isDone.orig === true){
@@ -63,8 +64,10 @@ var sundae = {};
                 compare(a, b, c);
             }
         };
-        injectOrig(a, test.referenceImageURL, whenDone);
+        window.setTimeout(function(){injectOrig(a, test.referenceImageURL, whenDone);
+          }, 3000);
         injectCurr(b, test.run, whenDone);
+      
     }
     function injectOrig(aCanvas, url, callback){
         var ctx = aCanvas.getContext("2d");
@@ -102,6 +105,7 @@ var sundae = {};
         c.id = id;
         c.width = w;
         c.height = h;
+        c.style.border = "1px solid black";
         parent.appendChild(c);
         return c;
     }
@@ -215,6 +219,7 @@ var sundae = {};
     }
     function compare(a, b, c){
         var failed = false;
+        var pixelsOff = 0;
         var valueEpsilon = _epsilon * 255;
         //Get pixel arrays from canvases
         var aPix = getPixels(a, false); 
@@ -227,11 +232,13 @@ var sundae = {};
             var cCtx = c.getContext('2d');
             var cPix = cCtx.createImageData(c.width, c.height);
             var len = bPix.length;
-            for (var j=0; j < len; j+=4){
-                if (Math.abs(bPix[j] - aPix[j]) < valueEpsilon  &&
-                    Math.abs(bPix[j + 1] - aPix[j + 1]) < valueEpsilon &&
-                    Math.abs(bPix[j + 2] - aPix[j + 2]) < valueEpsilon &&
-                    Math.abs(bPix[j + 3] - aPix[j + 3]) < valueEpsilon){
+            var row = 400;
+            var col = 0;
+            for (var j=0; j < len; j+=4,col+=4){
+                if (Math.abs(bPix[len+col-row] - aPix[j]) < valueEpsilon  &&
+                    Math.abs(bPix[len+col-row + 1] - aPix[j+ 1]) < valueEpsilon &&
+                    Math.abs(bPix[len+col-row + 2] - aPix[j + 2]) < valueEpsilon &&
+                    Math.abs(bPix[len+col-row + 3] - aPix[j + 3]) < valueEpsilon){
                     cPix.data[j] = cPix.data[j+1] = cPix.data[j+2] = cPix.data[j+3] = 0;
                 } //Pixel difference in c
                 else{
@@ -239,10 +246,12 @@ var sundae = {};
                     cPix.data[j+1] = cPix.data[j+2] = 0;
                     cPix.data[j+3] = 255;
                     failed = true;                 
+                    pixelsOff++;
                 }
+                if(col == 400){col = 0;row += 400;}                             
             }
             //Display pixel difference in _c
-            if(failed){
+            if(pixelsOff >= 2){
                 cCtx.putImageData(cPix, 0, 0);
             }
             else{

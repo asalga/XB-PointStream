@@ -1,5 +1,4 @@
 function start(cvs){
-  var pointCloud;
   var ps = new PointStream();
   ps.setup(cvs);
   ps.pointSize(5);
@@ -12,5 +11,5 @@ function start(cvs){
       ps.onRender = function(){};
     }
   };
-  pointCloud = ps.load('../../clouds/acorn_only_verts.asc');
+  var pointCloud = ps.load('../../clouds/acorn_only_verts.asc');
 }
