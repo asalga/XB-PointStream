@@ -7,7 +7,7 @@ function start(cvs){
     ps.uniformi("reflection", false);
     ps.uniformf("lightPos", [0, 50, 10]);
     ps.uniformf("uReflection", [1, 1, 1, 1]);
-    ps.translate(0, 10, -80);
+    ps.translate(0, 0, -70);
     ps.render(pointCloud);
     if(pointCloud.status === 3){
       ps.onRender = function(){};

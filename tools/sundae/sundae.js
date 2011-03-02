@@ -232,26 +232,30 @@ var sundae = {};
             var cCtx = c.getContext('2d');
             var cPix = cCtx.createImageData(c.width, c.height);
             var len = bPix.length;
-            var row = 400;
+            
             var col = 0;
-            for (var j=0; j < len; j+=4,col+=4){
-                if (Math.abs(bPix[len+col-row] - aPix[j]) < valueEpsilon  &&
-                    Math.abs(bPix[len+col-row + 1] - aPix[j+ 1]) < valueEpsilon &&
-                    Math.abs(bPix[len+col-row + 2] - aPix[j + 2]) < valueEpsilon &&
-                    Math.abs(bPix[len+col-row + 3] - aPix[j + 3]) < valueEpsilon){
-                    cPix.data[j] = cPix.data[j+1] = cPix.data[j+2] = cPix.data[j+3] = 0;
-                } //Pixel difference in c
-                else{
-                    cPix.data[j] = 255;
-                    cPix.data[j+1] = cPix.data[j+2] = 0;
-                    cPix.data[j+3] = 255;
-                    failed = true;                 
-                    pixelsOff++;
-                }
-                if(col == 400){col = 0;row += 400;}                             
+            var row = (4 * c.width * c.height) - (4 * c.width);
+            
+            for (var j = 0; j < len; j += 4, col+=4){
+              if(col === 4 * c.width){
+                col = 0;
+                row -= 4 * c.width;
+              }
+              if (Math.abs(bPix[row+col] - aPix[j]) < valueEpsilon  &&
+                  Math.abs(bPix[row+col + 1] - aPix[j+ 1]) < valueEpsilon &&
+                  Math.abs(bPix[row+col + 2] - aPix[j + 2]) < valueEpsilon &&
+                  Math.abs(bPix[row+col + 3] - aPix[j + 3]) < valueEpsilon){
+                  cPix.data[j] = cPix.data[j+1] = cPix.data[j+2] = cPix.data[j+3] = 0;
+              } //Pixel difference in c
+              else{
+                  cPix.data[j] = 255;
+                  cPix.data[j+1] = cPix.data[j+2] = 0;
+                  cPix.data[j+3] = 255;
+                  failed = true;
+              }
             }
             //Display pixel difference in _c
-            if(pixelsOff >= 2){
+            if(failed){
                 cCtx.putImageData(cPix, 0, 0);
             }
             else{
@@ -321,3 +325,4 @@ var sundae = {};
         }
     } catch(e) {}
 })(window);
+
