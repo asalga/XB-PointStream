@@ -1,5 +1,5 @@
 /*!
- * Sundae Javascript Library v0.4
+ * Sundae Javascript Library v0.5
  * http://sundae.lighthouseapp.com/dashboard
  *
  * The MIT License
@@ -54,7 +54,6 @@ var sundae = {};
             isDone[who] = true;
             if(who == "curr" && func && aCanvas){
                 runTest(func, aCanvas);
-               // window.setTimeout(function(){}, 7500);
                 reportResult(r, t, e);
             }
             if(isDone.curr === true && isDone.orig === true){
@@ -64,10 +63,10 @@ var sundae = {};
                 compare(a, b, c);
             }
         };
-        window.setTimeout(function(){injectOrig(a, test.referenceImageURL, whenDone);
-          }, 3000);
+        setTimeout(function(){
+          injectOrig(a, test.referenceImageURL, whenDone);
+        }, 3000);
         injectCurr(b, test.run, whenDone);
-      
     }
     function injectOrig(aCanvas, url, callback){
         var ctx = aCanvas.getContext("2d");
