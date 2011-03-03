@@ -34,7 +34,7 @@ var PointStream = (function() {
     
     var registeredParsers = {};
     registeredParsers["asc"] = ASCParser;
-    //registeredParsers["psi"] = PSIParser;
+    registeredParsers["psi"] = PSI_Parser;
     
     // WebGL compatibility wrapper
     try{
