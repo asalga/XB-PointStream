@@ -71,7 +71,7 @@ function start(){
     
   progObj = ps.createProgram(vertShader, fragShader);
   ps.useProgram(progObj);
-  ps.pointSize(1);
+  ps.pointSize(8);
 
-  mickey = ps.load("../../clouds/monkey2.asc");
+  mickey = ps.load("../../clouds/monkey.asc");
 }
