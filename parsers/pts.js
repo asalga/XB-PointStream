@@ -48,7 +48,7 @@ var PTSParser = (function() {
     
     /**
       Returns the version of this parser.
-      @name ASCParser#version
+      @name PTSParser#version
       @returns {String} parser version.
     */
     this.__defineGetter__("version", function(){
@@ -131,7 +131,7 @@ var PTSParser = (function() {
         }
         // otherwise the onprogress event was called at least once,
         // that means we need to get the data from a specific point to the end.
-        else if(ascData.length - AJAX.lastNewLineIndex > 1){
+        else if(data.length - AJAX.lastNewLineIndex > 1){
           chunk = data.substring(AJAX.lastNewLineIndex, data.length);
         }
 
@@ -157,7 +157,10 @@ var PTSParser = (function() {
         
         // this occurs over network connections, but not locally.
         if(chunk !== ""){
-                    
+          
+          numPoints = chunk.match(/^[0-9]+\n/);
+          numTotalPoints += parseInt(numPoints);
+          
           // trim trailing spaces
           chunk = chunk.replace(/\s+$/,"");
           
@@ -166,39 +169,24 @@ var PTSParser = (function() {
           
           // split on white space
           chunk = chunk.split(/\s+/);
-          
+
+          const numValuesPerLine = 7;
           var numVerts = chunk.length/numValuesPerLine;
           numParsedPoints += numVerts;
           
           var verts = new Float32Array(numVerts * 3);
-          var cols = colorsPresent ? new Float32Array(numVerts * 3) : null;
+          var cols =  new Float32Array(numVerts * 3);
 
-          // depending if there are colors, 
-          // we'll need to read different indices.
-          // if there aren't:
-          // x  y  z  r  g  b  i  j  k
-          // 0  1  2  3  4  5  6  7  8 <- normals start at index 6
-          //
-          // if there are:
-          // x  y  z  i  j  k
-          // 0  1  2  3  4  5 <- normals start at index 3
-          var valueOffset = 0;
-          if(colorsPresent){
-            valueOffset = 3;
-          }
+          // x y z  intensity r g b
 
-          // xyz  rgb  ijk
-          for(var i = 0, j = 0, len = chunk.length; i < len; i += numValuesPerLine, j += 3){
+          for(var i = 0, j = 0; i < chunk.length; i += numValuesPerLine, j += 3){
             verts[j]   = parseFloat(chunk[i]);
             verts[j+1] = parseFloat(chunk[i+1]);
             verts[j+2] = parseFloat(chunk[i+2]);
 
-            // XBPS spec for parsers requires colors to be normalized
-            if(cols){
-              cols[j]   = parseInt(chunk[i+3])/255;
-              cols[j+1] = parseInt(chunk[i+4])/255;
-              cols[j+2] = parseInt(chunk[i+5])/255;
-            }          
+            cols[j]   = parseInt(chunk[i+4])/255;
+            cols[j+1] = parseInt(chunk[i+5])/255;
+            cols[j+2] = parseInt(chunk[i+6])/255;
           }
                     
           // XB PointStream expects an object with named/value pairs
@@ -207,7 +195,6 @@ var PTSParser = (function() {
           var attributes = {};
           if(verts){attributes["ps_Vertex"] = verts;}
           if(cols){attributes["ps_Color"] = cols;}
-          if(intensity){attributes["ps_Color"] = cols;}
           
           parse(AJAX.parser, attributes);
         }
@@ -233,7 +220,7 @@ var PTSParser = (function() {
           var data = AJAX.responseText;
 
           // we likely stopped getting data somewhere in the middle of 
-          // a line in the ASC file
+          // a line in the PTS file
           
           // 5.813 2.352 6.500 0 0 0 2.646 3.577 2.516\n
           // 1.079 1.296 9.360 0 0 0 4.307 1.181 5.208\n
@@ -258,7 +245,7 @@ var PTSParser = (function() {
           // if we still have more data to go
           else{
             // Start of the next chunk starts after the newline.
-            var chunk = ascData.substring(AJAX.startOfNextChunk, lastNewLineIndex + 1);
+            var chunk = data.substring(AJAX.startOfNextChunk, lastNewLineIndex + 1);
             AJAX.startOfNextChunk = lastNewLineIndex + 1;
             AJAX.parseChunk(chunk);
           }

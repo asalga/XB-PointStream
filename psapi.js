@@ -42,6 +42,7 @@ var PointStream = (function() {
     
     var registeredParsers = {};
     registeredParsers["asc"] = ASCParser;
+    registeredParsers["pts"] = PTSParser;
     //registeredParsers["psi"] = PSIParser;
     
     const VERSION  = "0.5";
