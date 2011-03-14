@@ -1,5 +1,5 @@
 var ps, mickey;
-var x,z;
+var x, z;
 
 function render() {
   ps.translate(0, 0, -50);
