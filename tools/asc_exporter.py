@@ -8,7 +8,6 @@ Tooltip: 'Export selected meshes to an ASC file'
 """
 
 __author__ = 'Andor Salga'
-
 import Blender
 import BPyMessages
 import bpy
