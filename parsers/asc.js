@@ -208,6 +208,9 @@ var ASCParser = (function() {
       return fileSizeInBytes;
     });
     
+    /**
+      Stop downloading and parsing the associated point cloud.
+    */
     this.stop = function(){
       if(AJAX){
         AJAX.abort();

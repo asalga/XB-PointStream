@@ -1,5 +1,9 @@
 var ps, mickey;
-var x, z;
+
+// set these values in case the device used does not
+// have MozOrientation. At least we can render the point cloud
+var x = 0;
+var z = 0;
 
 function render() {
   ps.translate(0, 0, -50);

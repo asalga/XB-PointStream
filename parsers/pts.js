@@ -93,6 +93,15 @@ var PTSParser = (function() {
     });
     
     /**
+      Stop downloading and parsing the associated point cloud.
+    */
+    this.stop = function(){
+      if(AJAX){
+        AJAX.abort();
+      }
+    };
+    
+    /**
       @param {String} path Path to the resource.
     */
     this.load = function(path){

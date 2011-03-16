@@ -5,6 +5,8 @@ var zoomed = -50;
 var rot =[0, 0];
 var curCoords = [0, 0];
 
+const KEY_ESC = 27;
+
 function zoom(amt){
   var invert = document.getElementById('invertScroll').checked ? -1: 1;
   zoomed += amt * 2 * invert;
@@ -18,6 +20,12 @@ function mousePressed(){
 
 function mouseReleased(){
   buttonDown = false;
+}
+
+function keyDown(){
+  if(ps.key == KEY_ESC){
+    ps.stop("../../clouds/lion.asc");
+  }
 }
 
 function render() {
@@ -97,6 +105,7 @@ function start(){
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
+  ps.onKeyDown = keyDown;
   
   lion = ps.load("../../clouds/lion.asc");
 }
