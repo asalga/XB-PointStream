@@ -225,9 +225,9 @@ var PTSParser = (function() {
           // we likely stopped getting data somewhere in the middle of 
           // a line in the PTS file
           
-          // 5.813 2.352 6.500 0 0 0 2.646 3.577 2.516\n
-          // 1.079 1.296 9.360 0 0 0 4.307 1.181 5.208\n
-          // 3.163 2.225 6.139 0 0 0 0.6<-- stopped here
+          // 5.813 2.352 6.500 255 255 255 \n
+          // 1.079 1.296 9.360 128 0 0 \n
+          // 3.163 2.225 6.1<-- stopped here
           
           // So find the last known newline. Everything from the last
           // request to this last newline can be placed in a buffer.
