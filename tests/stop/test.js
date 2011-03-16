@@ -4,10 +4,14 @@ var r = 0.0;
 function switchCloud(i){
   switch(i){
     case 1: ps.stop("../../clouds/mickey.asc");
-            cloud = ps.load("../../clouds/eggenburg.asc");break;
+            cloud = ps.load("../../clouds/eggenburg.asc");
+            document.getElementById('mickey').checked = false;
+            break;
     
     case 2: ps.stop("../../clouds/eggenburg.asc");
-            cloud = ps.load("../../clouds/mickey.asc");break;
+            cloud = ps.load("../../clouds/mickey.asc");
+            document.getElementById('eggenburg').checked = false;
+            break;
   }
 }
 

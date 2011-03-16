@@ -39,7 +39,7 @@ var PointStream = (function() {
     // has a point cloud it works with
     var parsers = [];
     var pointClouds = [];
-
+    
     var registeredParsers = {};
     registeredParsers["asc"] = ASCParser;
     //registeredParsers["psi"] = PSIParser;
