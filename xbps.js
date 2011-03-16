@@ -16,3 +16,4 @@ var ps_include = function(path){
 ps_include('mjs.js');
 ps_include('psapi.js');
 ps_include('parsers/asc.js');
+ps_include('parsers/pts.js');
