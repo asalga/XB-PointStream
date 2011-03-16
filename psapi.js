@@ -42,6 +42,7 @@ var PointStream = (function() {
     
     var registeredParsers = {};
     registeredParsers["asc"] = ASCParser;
+    registeredParsers["pts"] = PTSParser;
     //registeredParsers["psi"] = PSIParser;
     
     const VERSION  = "0.5";
@@ -1252,7 +1253,7 @@ var PointStream = (function() {
       canvas.style.width = width = pWidth;
       canvas.style.height = height = pHeight;
       
-      ctx = canvas.getContext("experimental-webgl");
+      ctx = canvas.getContext("experimental-webgl", {"antialias":false});
 
       // parseInt hack used for Chrome/Chromium
       ctx.viewport(0, 0, parseInt(pWidth), parseInt(pHeight));

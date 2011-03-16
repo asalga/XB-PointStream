@@ -56,12 +56,18 @@ var mickeyVertShader =
 "    }" +
 "    gl_Position = ps_ProjectionMatrix * ecPos4;" +
 "  }" +
+
 "  else{" +
 "    float intensity = 0.0;" +
 "    PointLight(intensity, ecPos, transNorm);" +
-"    gl_PointSize = 4.0;" + 
-"    if(intensity > 0.0){gl_PointSize = 0.0;}" + 
 "    frontColor = vec4(0.0, 0.0, 0.0, 1.0);" +
-"    gl_Position = ps_ProjectionMatrix * ps_ModelViewMatrix * vec4(ps_Vertex + ps_Normal/5.0, 1.0);" +
+"    if(intensity > 0.0){" +
+"      gl_PointSize = 0.0;"+
+"      gl_Position = ps_ProjectionMatrix * ps_ModelViewMatrix * vec4(0.0,0.0,0.0,1.0);" +
+"    }" +
+"    else{" +
+"      gl_PointSize = 4.0;" + 
+"      gl_Position = ps_ProjectionMatrix * ps_ModelViewMatrix * vec4(ps_Vertex + ps_Normal/5.0, 1.0);" +
+"    }" +
 "  }" +
 "}";

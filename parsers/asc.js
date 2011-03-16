@@ -76,14 +76,10 @@ var ASCParser = (function() {
       X, Y, Z, I, J, K
       X, Y, Z, R, G, B, I, J, K
       
-      @returns {Number}
-      0 first case
-      1 second case
-      2 third case
-      3 fourth case
+      @returns {Number} VERTS | VERTS_COLS | VERTS_NORMS | VERTS_COLS_NORMS
     */
     var getDataLayout = function(values){
-            
+    
       // The first thing we can do is find out how many components there are.
       // If there are 9, we know we are dealing with:
       // x y z   r g b   i j k
@@ -116,36 +112,54 @@ var ASCParser = (function() {
       // vertices and normals
       
       var str = "";
-      
+     
       // We're going to try the first 500 characters and hopefully
       // figure out what we're dealing with by then.
-      for(var i = 0; i < 500; i++){
+      for(var i = 0; i < 500 && i < values.length; i++){
         str += values[i];
       }
       
       var str_split = str.split(/\s+/);
       var data = [];
       
-      for(var i = 3; i < str_split.length;){
+      // start at three since the first 3 values
+      // are x,y,z.
+      for(var i = 3; i < str_split.length;i+=3){
         data.push(str_split[i++]);
         data.push(str_split[i++]);
         data.push(str_split[i++]);
-        i += 3;
       }
-      
-      //
-      for(var i = 0; i < data.length; i++){
-        // if we have a component which is less than 0 or greater than 1, 
+
+      // Pass 1
+      for(var i = 0; i < data.length; i+=3){
+        // if there is any component less than 0,
         // it must represent a part of a normal vector
-        if(data[i] < 0){
-          // 1.916 -2.421 -4.0   -0.3727 -0.2476 -0.8942
+        if(data[i] < 0 || data[i+1] < 0 || data[i+2] < 0){
           return VERTS_NORMS;
+        }
+        
+        // if there is any component greater than 1,
+        // safely assume we are dealing with colors
+        if(data[i] > 1 || data[i+1] > 1 || data[i+2] > 1){
+          return VERTS_COLS;
         }
       }
       
-      // vertices and colors:
-      // -0.57831 -3.08477 -7.04268    64 32 16
-      return VERTS_COLS;
+      // Pass 2
+      // If we reached this point, we're still not sure,
+      // so we can try this:
+      // if the length of the components add up to 1 consistently,
+      // it's likely normal data
+      for(var i = 0; i < data.length; i+=3){
+        var mag = data[i]*data[i] + data[i+1]*data[i+1] + data[i+2]*data[i+2];
+        // allow a little slack for precision issues
+        if( mag > 1.0001 || mag < 0.999){
+          return VERTS_COLS;
+        }
+      }
+      
+      // if all the values we sampled were unit length, assume we have normals.
+      return VERTS_NORMS;
     };
 
     /**
@@ -226,11 +240,9 @@ var ASCParser = (function() {
       /**
         @private
         
-        occurs exactly once, when the file is done 
-        being downloaded
+        occurs exactly once, when the file is done being downloaded
       */
       AJAX.onload = function(evt){
-      
         var ascData = AJAX.responseText;
         var chunk = null;
 
@@ -253,7 +265,7 @@ var ASCParser = (function() {
 
         numTotalPoints = numParsedPoints;
         
-        // Indicate parsing is done. ranges from 0 to 1
+        // Indicate parsing is done. Ranges from 0 to 1
         progress = 1;
         
         end(AJAX.parser);
@@ -261,16 +273,21 @@ var ASCParser = (function() {
       
       /**
         @private
+        
+        The first time this function is called it will determine the contents
+        of the .ASC file by calling getDataLayout. Before calling this, make sure
+        the data set is large enough to determine this.
+        
+        This check can't be done in getDataLayout since that function has no knowledge
+        of the size of the data set.
       */
-      AJAX.parseChunk = function(chunkData){
-        var chunk = chunkData;
+      AJAX.parseChunk = function(chunk){
         
         // this occurs over network connections, but not locally.
         if(chunk !== ""){
           
           if(layoutCode === UNKNOWN){
             layoutCode = getDataLayout(chunk);
-            numValuesPerLine = -1;
             
             switch(layoutCode){
               case VERTS:
@@ -290,7 +307,6 @@ var ASCParser = (function() {
                           colorsPresent = true;
                           break;
             }
-            gotLayout = true;
           }
           
           // trim trailing spaces
@@ -358,7 +374,10 @@ var ASCParser = (function() {
       /**
         @private
         
-        On Minefield, this will occur zero or many times
+        On Minefield, this will occur zero or many times. If this function
+        isn't called, that means we downloaded the entire point cloud in one
+        go, which means onload was called exactly once.
+        
         On Chrome/WebKit this will occur one or many times
       */
       AJAX.onprogress = function(evt){
@@ -370,16 +389,22 @@ var ASCParser = (function() {
 
         onProgressCalled = true;
 
-        // if we have something to actually parse
-        if(AJAX.responseText){
+        // if we have something to actually parse..
+        //
+        // Before calling parseChunk, we need to make sure
+        // we have enough data to determine the contents of the .ASC file.
+        // A line in a .ASC file is ~50-70 bytes, so we can grab the first
+        // 10 lines which should be enough for getDataLayout to determine
+        // the contents.
+        if(AJAX.responseText && AJAX.responseText.length > 500){
           var ascData = AJAX.responseText;
 
           // we likely stopped getting data somewhere in the middle of 
           // a line in the ASC file
           
-          // 5.813 2.352 6.500 0 0 0 2.646 3.577 2.516\n
-          // 1.079 1.296 9.360 0 0 0 4.307 1.181 5.208\n
-          // 3.163 2.225 6.139 0 0 0 0.6<-- stopped here
+          // 5.813 2.352 6.500 0 0 0 2.646 3.577 2.516
+          // 1.079 1.296 9.360 0 0 0 4.307 1.181 5.208
+          // 3.163 2.225 6.139 0 0 0 0.6<-- stopped here for example
           
           // So find the last known newline. Everything from the last
           // request to this last newline can be placed in a buffer.
@@ -407,10 +432,12 @@ var ASCParser = (function() {
         }
       };// onprogress
       
-      // open an asynchronous request to the path
+      // Prevent Minefield from reporting a syntax error on the console
       if(AJAX.overrideMimeType){
         AJAX.overrideMimeType("application/json");
       }
+      
+      // open an asynchronous request to the path
       AJAX.open("GET", path, true);
       AJAX.send(null);
     };// load
