@@ -1,26 +1,28 @@
 /*
   Copyright (c) 2010  Seneca College
   MIT LICENSE
-
-  Version:  0.1
-  Author:   Andor Salga
-            asalga.wordpress.com
-  Date:     November 16, 2010
-  
-  Notes:
-  This parser parses .ASC filetypes. These files are ASCII
-  files which have their data stored in one of the following ways:
-
-  X, Y, Z
-  X, Y, Z, R, G, B
-  X, Y, Z, I, J, K
-  X, Y, Z, R, G, B, I, J, K
 */
-
+/**
+  @class This parser parses .ASC filetypes. These files are ASCII
+  files which have their data stored in one of the following formats:<br />
+  <br />
+  X, Y, Z<br />
+  X, Y, Z, R, G, B<br />
+  X, Y, Z, I, J, K<br />
+  X, Y, Z, R, G, B, I, J, K<br />
+  <br />
+  Where XYZ refers to vertices, RGB refers to colors and IJK refers to normal
+  vectors. Vertices are always present and color components range from 0 to 255.
+  
+  @version:  0.1
+  @author:   Andor Salga asalga.wordpress.com
+  
+  Date:     November 16, 2010
+*/
 var ASCParser = (function() {
 
   /**
-    Constructor
+    @private
   */
   function ASCParser(config) {
     
@@ -33,10 +35,8 @@ var ASCParser = (function() {
     var parse = config.parse || __empty_func;
     var end = config.end || __empty_func;
     
-    var version = "0.1";
-    
+    const VERSION = "0.1";
     const XHR_DONE = 4;
-    const STARTED = 1;
     
     // The .ASC file can contain different types of data
     const UNKNOWN = -1;
@@ -67,13 +67,6 @@ var ASCParser = (function() {
     var onProgressCalled = false;
     var AJAX = null;
     
-    // WebGL compatibility wrapper
-    try{
-      Float32Array;
-    }catch(ex){
-      Float32Array = WebGLFloatArray;
-    }
-    
     /**
       @private
       
@@ -83,14 +76,10 @@ var ASCParser = (function() {
       X, Y, Z, I, J, K
       X, Y, Z, R, G, B, I, J, K
       
-      @returns {Number}
-      0 first case
-      1 second case
-      2 third case
-      3 fourth case
+      @returns {Number} VERTS | VERTS_COLS | VERTS_NORMS | VERTS_COLS_NORMS
     */
     var getDataLayout = function(values){
-            
+    
       // The first thing we can do is find out how many components there are.
       // If there are 9, we know we are dealing with:
       // x y z   r g b   i j k
@@ -123,69 +112,88 @@ var ASCParser = (function() {
       // vertices and normals
       
       var str = "";
-      
+     
       // We're going to try the first 500 characters and hopefully
       // figure out what we're dealing with by then.
-      for(var i = 0; i < 500; i++){
+      for(var i = 0; i < 500 && i < values.length; i++){
         str += values[i];
       }
       
       var str_split = str.split(/\s+/);
       var data = [];
       
-      for(var i = 3; i < str_split.length;){
+      // start at three since the first 3 values
+      // are x,y,z.
+      for(var i = 3; i < str_split.length;i+=3){
         data.push(str_split[i++]);
         data.push(str_split[i++]);
         data.push(str_split[i++]);
-        i += 3;
       }
-      
-      //
-      for(var i = 0; i < data.length; i++){
-        // if we have a component which is less than 0 or greater than 1, 
+
+      // Pass 1
+      for(var i = 0; i < data.length; i+=3){
+        // if there is any component less than 0,
         // it must represent a part of a normal vector
-        if(data[i] < 0){
-          // 1.916 -2.421 -4.0   -0.3727 -0.2476 -0.8942
+        if(data[i] < 0 || data[i+1] < 0 || data[i+2] < 0){
           return VERTS_NORMS;
+        }
+        
+        // if there is any component greater than 1,
+        // safely assume we are dealing with colors
+        if(data[i] > 1 || data[i+1] > 1 || data[i+2] > 1){
+          return VERTS_COLS;
         }
       }
       
-      // vertices and colors:
-      // -0.57831 -3.08477 -7.04268    64 32 16
-      return VERTS_COLS;
-    };
-    
-    /*
-      Returns the version of this parser.
+      // Pass 2
+      // If we reached this point, we're still not sure,
+      // so we can try this:
+      // if the length of the components add up to 1 consistently,
+      // it's likely normal data
+      for(var i = 0; i < data.length; i+=3){
+        var mag = data[i]*data[i] + data[i+1]*data[i+1] + data[i+2]*data[i+2];
+        // allow a little slack for precision issues
+        if( mag > 1.0001 || mag < 0.999){
+          return VERTS_COLS;
+        }
+      }
       
+      // if all the values we sampled were unit length, assume we have normals.
+      return VERTS_NORMS;
+    };
+
+    /**
+      Returns the version of this parser.
+      @name ASCParser#version
       @returns {String} parser version.
     */
     this.__defineGetter__("version", function(){
-      return version;
+      return VERSION;
     });
     
-    /*
+    /**
       Get the number of parsed points so far.
-      
+      @name ASCParser#numParsedPoints
       @returns {Number} number of points parsed.
     */
     this.__defineGetter__("numParsedPoints", function(){
       return numParsedPoints;
     });
     
-    /*
+    /**
       Get the total number of points in the point cloud.
-      
-      @returns {Number}
+      @name ASCParser#numTotalPoints
+      @returns {Number} number of points in the point cloud.
     */
     this.__defineGetter__("numTotalPoints", function(){
       return numTotalPoints;
     });
     
     /**
-      Returns the progress of downloading the point cloud between zero and one.
-      
-      @returns {Number} value from zero to one or -1 if unknown.
+      Returns the progress of downloading the point cloud between zero and one or
+      -1 if the progress is unknown.
+      @name ASCParser#progress
+      @returns {Number|-1}
     */
     this.__defineGetter__("progress", function(){
       return progress;
@@ -193,7 +201,7 @@ var ASCParser = (function() {
     
     /**
       Returns the file size of the resource in bytes.
-      
+      @name ASCParser#fileSize
       @returns {Number} size of resource in bytes.
     */
     this.__defineGetter__("fileSize", function(){
@@ -201,7 +209,16 @@ var ASCParser = (function() {
     });
     
     /**
-      @param path Path to the resource
+      Stop downloading and parsing the associated point cloud.
+    */
+    this.stop = function(){
+      if(AJAX){
+        AJAX.abort();
+      }
+    };
+    
+    /**
+      @param {String} path Path to the resource.
     */
     this.load = function(path){
       pathToFile = path;
@@ -214,6 +231,8 @@ var ASCParser = (function() {
       AJAX.parser = this;
 
       /**
+        @private
+        
         occurs exactly once when the resource begins
         to be downloaded
       */
@@ -221,12 +240,12 @@ var ASCParser = (function() {
         start(AJAX.parser);
       };
             
-      /*
-        occurs exactly once, when the file is done 
-        being downloaded
+      /**
+        @private
+        
+        occurs exactly once, when the file is done being downloaded
       */
       AJAX.onload = function(evt){
-      
         var ascData = AJAX.responseText;
         var chunk = null;
 
@@ -249,41 +268,48 @@ var ASCParser = (function() {
 
         numTotalPoints = numParsedPoints;
         
-        // Indicate parsing is done. ranges from 0 to 1
+        // Indicate parsing is done. Ranges from 0 to 1
         progress = 1;
         
         end(AJAX.parser);
       }
       
       /**
+        @private
+        
+        The first time this function is called it will determine the contents
+        of the .ASC file by calling getDataLayout. Before calling this, make sure
+        the data set is large enough to determine this.
+        
+        This check can't be done in getDataLayout since that function has no knowledge
+        of the size of the data set.
       */
-      AJAX.parseChunk = function(chunkData){
-        var chunk = chunkData;
+      AJAX.parseChunk = function(chunk){
         
         // this occurs over network connections, but not locally.
         if(chunk !== ""){
           
           if(layoutCode === UNKNOWN){
             layoutCode = getDataLayout(chunk);
-            numValuesPerLine = -1;
             
             switch(layoutCode){
-              case 0: numValuesPerLine = 3;
-                      break;
-              case 1: numValuesPerLine = 6;
-                      colorsPresent = true;
-                      break;
-                      
-              // normals present
-              case 2: numValuesPerLine = 6;
-                      normalsPresent = true;
-                      break;
-              case 3: numValuesPerLine = 9;
-                      normalsPresent = true;
-                      colorsPresent = true;
-                      break;
+              case VERTS:
+                          numValuesPerLine = 3;
+                          break;
+              case VERTS_COLS:
+                          numValuesPerLine = 6;
+                          colorsPresent = true;
+                          break;
+              case VERTS_NORMS:
+                          numValuesPerLine = 6;
+                          normalsPresent = true;
+                          break;
+              case VERTS_COLS_NORMS:
+                          numValuesPerLine = 9;
+                          normalsPresent = true;
+                          colorsPresent = true;
+                          break;
             }
-            gotLayout = true;
           }
           
           // trim trailing spaces
@@ -316,7 +342,7 @@ var ASCParser = (function() {
             valueOffset = 3;
           }
 
-          // xyz  rgb  normals
+          // xyz  rgb  ijk
           for(var i = 0, j = 0, len = chunk.length; i < len; i += numValuesPerLine, j += 3){
             verts[j]   = parseFloat(chunk[i]);
             verts[j+1] = parseFloat(chunk[i+1]);
@@ -349,7 +375,12 @@ var ASCParser = (function() {
       };
     
       /**
-        On Minefield, this will occur zero or many times
+        @private
+        
+        On Minefield, this will occur zero or many times. If this function
+        isn't called, that means we downloaded the entire point cloud in one
+        go, which means onload was called exactly once.
+        
         On Chrome/WebKit this will occur one or many times
       */
       AJAX.onprogress = function(evt){
@@ -361,16 +392,22 @@ var ASCParser = (function() {
 
         onProgressCalled = true;
 
-        // if we have something to actually parse
-        if(AJAX.responseText){
+        // if we have something to actually parse..
+        //
+        // Before calling parseChunk, we need to make sure
+        // we have enough data to determine the contents of the .ASC file.
+        // A line in a .ASC file is ~50-70 bytes, so we can grab the first
+        // 10 lines which should be enough for getDataLayout to determine
+        // the contents.
+        if(AJAX.responseText && AJAX.responseText.length > 500){
           var ascData = AJAX.responseText;
 
           // we likely stopped getting data somewhere in the middle of 
           // a line in the ASC file
           
-          // 5.813 2.352 6.500 0 0 0 2.646 3.577 2.516\n
-          // 1.079 1.296 9.360 0 0 0 4.307 1.181 5.208\n
-          // 3.163 2.225 6.139 0 0 0 0.6<-- stopped here
+          // 5.813 2.352 6.500 0 0 0 2.646 3.577 2.516
+          // 1.079 1.296 9.360 0 0 0 4.307 1.181 5.208
+          // 3.163 2.225 6.139 0 0 0 0.6<-- stopped here for example
           
           // So find the last known newline. Everything from the last
           // request to this last newline can be placed in a buffer.
@@ -398,10 +435,12 @@ var ASCParser = (function() {
         }
       };// onprogress
       
-      // open an asynchronous request to the path
+      // Prevent Minefield from reporting a syntax error on the console
       if(AJAX.overrideMimeType){
         AJAX.overrideMimeType("application/json");
       }
+      
+      // open an asynchronous request to the path
       AJAX.open("GET", path, true);
       AJAX.send(null);
     };// load
