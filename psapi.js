@@ -40,10 +40,9 @@ var PointStream = (function() {
     var parsers = [];
     var pointClouds = [];
 
-    var registeredParsers = {
-      asc: ASCParser
-      //psi: PSIParser
-    };
+    var registeredParsers = {};
+    registeredParsers["asc"] = ASCParser;
+    //registeredParsers["psi"] = PSIParser;
     
     const VERSION  = "0.5";
     
@@ -1637,6 +1636,10 @@ var PointStream = (function() {
         var parser = new parserObject({ start: startCallback,
                                         parse: parseCallback,
                                         end: loadedCallback});
+
+        // The parser needs to keep track of the file
+        // it is loading since the user may want to
+        // later cancel loading by file path.
         parser.cloudName = path;
         
         // !! fix (private vars are visible in user script)
