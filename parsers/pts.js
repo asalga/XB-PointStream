@@ -160,7 +160,10 @@ var PTSParser = (function() {
           
           numPoints = chunk.match(/^[0-9]+\n/);
           numTotalPoints += parseInt(numPoints);
-          
+
+          // get rid of the point count to simplify the rest of the parsing
+          chunk = chunk.replace(/^[0-9]+\n/, "");
+
           // trim trailing spaces
           chunk = chunk.replace(/\s+$/,"");
           
@@ -174,11 +177,11 @@ var PTSParser = (function() {
           var numVerts = chunk.length/numValuesPerLine;
           numParsedPoints += numVerts;
           
+          //invalid arguments
           var verts = new Float32Array(numVerts * 3);
           var cols =  new Float32Array(numVerts * 3);
 
           // x y z  intensity r g b
-
           for(var i = 0, j = 0; i < chunk.length; i += numValuesPerLine, j += 3){
             verts[j]   = parseFloat(chunk[i]);
             verts[j+1] = parseFloat(chunk[i+1]);
