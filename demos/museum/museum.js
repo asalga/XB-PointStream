@@ -89,7 +89,8 @@ public class Easel{
     
     pushMatrix();
     rotateX(PI);
-    translate(position.x,-9,-position.z);
+
+    translate(position.x, -5,-position.z);
     scale(0.4, 0.15, 0.5);
     model.drawMode(POLYGON);
     popMatrix();
