@@ -7,6 +7,13 @@ final int KEY_A = 65;
 final int KEY_B = 66;
 final int KEY_C = 67; 
 final int KEY_D = 68;  // debugging
+final int KEY_E = 69;
+final int KEY_F = 70;
+final int KEY_G = 71;
+final int KEY_H = 72;
+final int KEY_I = 73;
+
+final int KEY_S = 83;
 
 final int KEY_W = 87; // wireframe
 

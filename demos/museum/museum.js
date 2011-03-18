@@ -1,11 +1,12 @@
 // import processing.opengl.*;
 /* @pjs preload="images/floor.jpg,images/acorn.jpg,images/wall.jpg,images/lion.jpg,images/mickey.jpg"; */
 
+var moving = false;
+
 var rot = 0;
 var ps, acorn;
 var zoomed = 0;
 
-var drawingMuseum = false;
 var fading = false;
 var fadeValue = 0;
 
@@ -15,22 +16,18 @@ var viewingPointCloud = false;
 final int GAME_WIDTH = 800;
 final int GAME_HEIGHT = 500;
 
-PVector pos = new PVector(0,0,0);
-PVector dir = new PVector(0,0,-1);
-
-//Plane acornStand;
-
-float rot = 0;
+PVector pos = new PVector(0, 0, 0);
+PVector dir = new PVector(0, 0, -1);
 
 float lastTime = 0.0f;
 
-Plane wall;
 User user;
 Keyboard keyboard;
 OBJModel model;
 var pointCloudCanvas;
 var museumCanvas;
 
+ArrayList walls;
 ArrayList easels;
 
 ///////////////////////////
@@ -54,6 +51,7 @@ public class Easel{
   private String cloud;
   private boolean isDrawingCloud;
   private Plane preview;
+  var func;
 
   public Easel(){
     isDrawingCloud = false;
@@ -85,63 +83,103 @@ public class Easel{
     angle = a;
   }
   
+  void setPointCloudRendering(f){
+    func = f;
+  }
+  
   void draw(){
-    
+
     pushMatrix();
     rotateX(PI);
-
     translate(position.x, -5,-position.z);
+    rotateY(-angle);
     scale(0.4, 0.15, 0.5);
     model.drawMode(POLYGON);
     popMatrix();
 
     pushMatrix();
-      translate(position.x + 3, position.y, position.z);
+      translate(position.x + 5, position.y-1, position.z);
       scale(3, 4, 3);
-      rotateX(PI/2.0 - 0.2);
+      rotateY(angle);
+      rotateX(PI/2.0 - 0.3);
+      stroke(0);
       preview.draw();
     popMatrix();
   }
   
   void endDrawing(){
    if(ps && isDrawingCloud){
-      fadeValue = 1.0;
-      ps.stop(cloud);
+      //fadeValue = 1.0;
       ps.onRender = function(){};
+      ps.stop(cloud);
     }
     ps = null;
   }
   
   void startDrawing(){
     isDrawingCloud = true;
-    //
-    if(!ps){      
-      ps = new PointStream();
-      ps.setup(document.getElementById('xbps'));
-      ps.pointSize(5);
-      ps.background([0, 0, 0, 0.5]);
+    func(cloud);
+  }  
+}
 
-      ps.onMouseScroll = function(amt){
-        zoomed += amt * 1.0;
+// acorn
+function a(c){
+  if(!ps){
+    var cl;
+    var buttonDown = false;
+    var zoomed = -20;
+    var rot = [0, 0];
+    var curCoords = [0, 0];
+
+    ps = new PointStream();
+    ps.setup(document.getElementById('xbps'));
+    ps.pointSize(5);
+    ps.background([0, 0, 0, 0.5]);
+
+    ps.onMouseScroll = function(amt){
+      zoomed += amt * 1.0;
+    };
+    
+    ps.onMousePressed = function mousePressed(){
+      curCoords[0] = ps.mouseX;
+      curCoords[1] = ps.mouseY;
+      buttonDown = true;
+    };
+    
+    ps.onMouseReleased = function(){ buttonDown = false;};
+
+    ps.onRender = function(){
+      var deltaX = ps.mouseX - curCoords[0];
+      var deltaY = ps.mouseY - curCoords[1];
+  
+      if(buttonDown){
+        rot[0] += deltaX / ps.width * 5;
+        rot[1] += deltaY / ps.height * 5;
+        
+        curCoords[0] = ps.mouseX;
+        curCoords[1] = ps.mouseY;
       }
 
-      ps.onRender = function(){
-        ps.translate(0, 0, -25 + zoomed);
-        ps.rotateX(rot-=0.01);
-        ps.clear();
-        ps.render(acorn);
-      };
-      acorn = ps.load(cloud);
-    }
-  }  
+      ps.translate(0, 0, zoomed);
+      
+      ps.rotateY(rot[0]);
+      ps.rotateX(rot[1]);
+
+      ps.clear();
+      ps.render(cl);
+    };
+    cl = ps.load(c);
+  }
 }
 
 ////////////////////////////////////
 public class Plane{
 
   private Vector position;
+  private Vector direction;
   private PImage img;
-
+  private float angle;
+  
   void setImage(PImage img){
     this.img = img;
   }
@@ -150,17 +188,37 @@ public class Plane{
     position = pos;
   }
 
+  void setAngle(float a){
+    angle = a;
+  }
+    
+  void setDirection(PVector dir){
+    direction = dir;
+  }
+  
+  PVector getDirection(){
+    return direction;
+  }
+  
   void draw(){
-    noStroke();
     texture(img);
+    
+    pushMatrix();
+    if(position){
+      translate(position.x, position.y, position.z);
+      scale(10, 10, 10);
+    }
+    if(angle){
+      rotateY(angle);
+    }
+    
     beginShape(QUADS);
-
     vertex(-1, -1,  1, 0, 0);
     vertex( 1, -1,  1, 1, 0);
     vertex( 1,  1,  1, 1, 1);
     vertex(-1,  1,  1, 0, 1);
-
     endShape();
+    popMatrix();
   }
   
   void update(float deltaTime){
@@ -179,7 +237,7 @@ void setup()
   wallImg = loadImage("images/wall.jpg");
   floorImg = loadImage("images/floor.jpg");
   
-    model = new OBJModel();
+  model = new OBJModel();
   model.load("easel.obj");
   
   acornImg = loadImage("images/acorn.jpg");
@@ -188,20 +246,54 @@ void setup()
 
   keyboard = new Keyboard();
   user = new User();
-
-  wall = new Plane();
-  wall.setImage(wallImg);
-  
-  //acornStand = new Plane();
-  //acornStand.setImage(acornImg);
   
   easels = new ArrayList();
+  walls = new ArrayList();
+
+  for(int i = 0 ; i < 10; i++){
+    Plane wall = new Plane();
+    wall.setPosition(new PVector(-100, 0, -100 + i * 20));
+    wall.setDirection(new PVector(1,0,0));
+    wall.setAngle(radians(90));
+    wall.setImage(wallImg);
+    walls.add(wall);
+  }
+
+  // front walls
+  for(int i = 0 ; i < 10; i++){
+    Plane wall = new Plane();
+    wall.setPosition(new PVector(-100 + i *20, 0, -100));
+    wall.setDirection(new PVector(0, 0, 1));
+    wall.setAngle(radians(0));
+    wall.setImage(wallImg);
+    walls.add(wall);
+  }
+
+  for(int i = 0 ; i < 10; i++){
+    Plane wall = new Plane();
+    wall.setPosition(new PVector(100, 0, -100 + i *20));
+    wall.setDirection(new PVector(-1, 0, 0));
+    wall.setAngle(radians(-90));
+    wall.setImage(wallImg);
+    walls.add(wall);
+  }
+
+  // back
+  for(int i = 0 ; i < 10; i++){
+    Plane wall = new Plane();
+    wall.setPosition(new PVector(-100+ i* 20, 0, 100 ));
+    wall.setDirection(new PVector(0, 0, -1));
+    wall.setAngle(radians(180));
+    wall.setImage(wallImg);
+    walls.add(wall);
+  }
 
   // center
   easel1 = new Easel();
   easel1.setPosition(new PVector(0, 5, 0));
   easel1.setImage(acornImg);
   easel1.setCloud("../../clouds/acorn.asc");
+  easel1.setPointCloudRendering(a);
   easels.add(easel1);
 
   // front right
@@ -210,6 +302,7 @@ void setup()
   easel2.setDirection(-Math.PI/4);
   easel2.setImage(mickeyImg);
   easel2.setCloud("../../clouds/mickey.asc");
+  easel2.setPointCloudRendering(a);
   easels.add(easel2);
 
   // front left
@@ -232,23 +325,24 @@ void keyPressed(){
 }
 
 void update(float deltaTime){
-  drawingMuseum = false;
-  if(keyboard.isKeyDown(KEY_LEFT)){
+  moving = false;
+
+  if(keyboard.isKeyDown(KEY_LEFT) || keyboard.isKeyDown(KEY_A) ){
     user.turnLeft(deltaTime);
-    drawingMuseum = true;
+    moving = true;
   }
-  else if(keyboard.isKeyDown(KEY_RIGHT)){
+  else if(keyboard.isKeyDown(KEY_RIGHT) || keyboard.isKeyDown(KEY_D) ){
     user.turnRight(deltaTime);
-    drawingMuseum = true;
+    moving = true;
   }
-  if(keyboard.isKeyDown(KEY_UP)){
+  if(keyboard.isKeyDown(KEY_UP) || keyboard.isKeyDown(KEY_W) ){
     user.goForward(deltaTime);
-    drawingMuseum = true;
+    moving = true;
   }
   
-  if(keyboard.isKeyDown(KEY_DOWN)){
+  if(keyboard.isKeyDown(KEY_DOWN) || keyboard.isKeyDown(KEY_S) ){
     user.goBackward(deltaTime);
-    drawingMuseum = true;
+    moving = true;
   }
   
   user.update(deltaTime);
@@ -256,27 +350,18 @@ void update(float deltaTime){
 
 void draw()
 {
+
   update((millis() - lastTime) / 1000.0f);
   lastTime = millis();
+  
+  if(moving){
+    camera(0.0, 0.0, 0.0, 0.0, 0.0, -0.000001, 0, 1, 0);	
 
-	camera(0.0, 0.0, 0.0, 0.0, 0.0, -0.000001, 0, 1, 0);	
+    PVector pos = user.getPosition();
+    rotateY(-user.getFacing());
+    translate(-pos.x, pos.y, -pos.z);
 
-  PVector pos = user.getPosition();
-  rotateY(-user.getFacing());
-  translate(-pos.x, pos.y, -pos.z);
-
-  background(#3366AA);
-
-   /* if(fading){  
-      fadeValue -= 0.01;
-      if(fadeValue >= 0 && fadeValue <= 1 ){
-        document.getElementById('xbps').style.opacity = fadeValue;
-      }
-      if(fadeValue <= 0)
-      {
-        fading = false;
-      }
-    }*/
+    background(#3366AA);
 
     pushMatrix();
       translate(0, 10, 0);
@@ -324,69 +409,15 @@ void draw()
       museumCanvas.style.opacity = 1.0;
       pointCloudCanvas.style.opacity = 0;
     }
-    
-          /*
-          ps = new PointStream();
-          ps.setup(document.getElementById('xbps'));
-          ps.pointSize(5);
-          ps.background([0, 0, 0, 0.5]);
 
-          drawingMuseum = false;
-          viewingPointCloud = true;
-          
-          ps.onMouseScroll = function(amt){
-            zoomed += amt * 1.0;
-          }
-
-          ps.onRender = function(){
-            ps.translate(0, 0, -25 + zoomed);
-            ps.rotateX(rot-=0.01);
-            ps.clear();
-            ps.render(acorn);
-          };
-          acorn = ps.load("clouds/acorn.asc");
-        }*/
-        //}
-    
-    // draw walls
-    for(int i = 0 ; i < 10; i++){
-      pushMatrix();
-        translate(-80 + i *20, 0, 80);
-        scale(10, 10, 10);
+    noStroke();
+    for(int i = 0; i < walls.size(); i++){
+      Plane wall = (Plane)walls.get(i);
+      PVector two = user.getDirection();
+      if(two.dot(wall.getDirection()) > -0.6){
         wall.draw();
-      popMatrix();
+      }
     }
-
-    for(int i = 0 ; i < 10; i++){
-      pushMatrix();
-        translate(-100 + i *20, 0, -100);
-        scale(10, 10, 10);
-        wall.draw();
-      popMatrix();
-    }
-
-    for(int i = 0 ; i < 10; i++){
-      pushMatrix();
-        translate(-100, 0, -100 + i *20);
-        rotateY(radians(90));
-        scale(10, 10, 10);
-        wall.draw();
-      popMatrix();
-    }
-    for(int i = 0 ; i < 10; i++){
-      pushMatrix();
-        translate(100, 0, -100 + i *20);
-        rotateY(radians(-90));
-        scale(10, 10, 10);
-        wall.draw();
-      popMatrix();
-    }
-  
-    pushMatrix();
-      translate(100, 0, 100);
-      scale(10, 10, 10);
-      wall.draw();
-    popMatrix();
-  
+  }  
   document.getElementById('debug').innerHTML = Math.floor(frameRate);
 }

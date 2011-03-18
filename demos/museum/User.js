@@ -37,6 +37,10 @@ class User{
   public void setDirection(PVector dir){
     direction = direction;
   }
+  
+  public PVector getDirection(){
+    return direction;
+  }
 
   public void turnLeft(float deltaTime){
     rot += turnSpeed * deltaTime;
