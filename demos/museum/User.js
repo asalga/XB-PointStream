@@ -13,7 +13,7 @@ class User{
   private float rot;
 
   public User(){
-    position = new PVector(0, 3, 50);
+    position = new PVector(0, 3, 10);
     direction = new PVector(0, 0, 1);
     
     turnSpeed = DEF_USER_TURN_SPEED;
@@ -55,9 +55,9 @@ class User{
   }
 
   public void goForward(deltaTime){
-	  position.x -= direction.x * deltaTime * moveSpeed;
-	  position.y -= direction.y * deltaTime;
-	  position.z -= direction.z * deltaTime * moveSpeed;
+    position.x -= direction.x * deltaTime * moveSpeed;
+    position.y -= direction.y * deltaTime;
+    position.z -= direction.z * deltaTime * moveSpeed;
   }
 
   public void goBackward(deltaTime){

@@ -1,7 +1,7 @@
 // import processing.opengl.*;
 /* @pjs preload="images/floor.jpg,images/acorn.jpg,images/wall.jpg,images/lion.jpg,images/mickey.jpg"; */
 
-var moving = false;
+var userMoving = false;
 
 var rot = 0;
 var ps, acorn;
@@ -15,9 +15,6 @@ var viewingPointCloud = false;
 
 final int GAME_WIDTH = 800;
 final int GAME_HEIGHT = 500;
-
-PVector pos = new PVector(0, 0, 0);
-PVector dir = new PVector(0, 0, -1);
 
 float lastTime = 0.0f;
 
@@ -112,8 +109,8 @@ public class Easel{
       //fadeValue = 1.0;
       ps.onRender = function(){};
       ps.stop(cloud);
+      ps = null;
     }
-    ps = null;
   }
   
   void startDrawing(){
@@ -325,24 +322,58 @@ void keyPressed(){
 }
 
 void update(float deltaTime){
-  moving = false;
+  userMoving = false;
 
   if(keyboard.isKeyDown(KEY_LEFT) || keyboard.isKeyDown(KEY_A) ){
     user.turnLeft(deltaTime);
-    moving = true;
+    userMoving = true;
   }
   else if(keyboard.isKeyDown(KEY_RIGHT) || keyboard.isKeyDown(KEY_D) ){
     user.turnRight(deltaTime);
-    moving = true;
+    userMoving = true;
   }
   if(keyboard.isKeyDown(KEY_UP) || keyboard.isKeyDown(KEY_W) ){
-    user.goForward(deltaTime);
-    moving = true;
+    
+    PVector position = user.getPosition();
+    PVector direction = user.getDirection();
+    
+    // front
+    if(position.z - (direction.z * deltaTime * 30) < -80){
+      float amt = 1 + direction.dot(new PVector(0, 0, -1));
+      PVector wallPerp = new PVector(direction.x >= 0 ? 1 : -1, 0, 0);            
+      wallPerp.x *= max(0.5, amt);
+      position.x -= wallPerp.x * deltaTime * 30;
+    }
+    //back
+    else if(position.z - (direction.z * deltaTime * 30) >= 80){
+      float amt = 1 + direction.dot(new PVector(0, 0, 1));
+      PVector wallPerp = new PVector( direction.x >= 0 ? -1 : 1, 0, 0);
+      wallPerp.x *= max(0.5, amt);
+      position.x += wallPerp.x * deltaTime * 30;
+    }
+    // left
+    else if(position.x - (direction.x * deltaTime * 30) < -80){
+      float amt = 1 + direction.dot(new PVector(-1, 0, 0));
+      PVector wallPerp = new PVector(0, 0, direction.z >= 0 ? 1 : -1);
+      wallPerp.z *= max(0.5, amt);
+      position.z -= wallPerp.z * deltaTime * 30;
+    }
+    // right
+    else if(position.x - (direction.x * deltaTime * 30) >= 80){
+      float amt = 1 + direction.dot(new PVector(1, 0, 0));
+      PVector wallPerp = new PVector(0, 0, direction.z >= 0 ? -1 : 1);
+      wallPerp.z *= max(0.5, amt);
+      position.z += wallPerp.z * deltaTime * 30;
+    }
+    else{
+      user.goForward(deltaTime);
+    }
+    userMoving = true;
   }
   
   if(keyboard.isKeyDown(KEY_DOWN) || keyboard.isKeyDown(KEY_S) ){
-    user.goBackward(deltaTime);
-    moving = true;
+//    user.goBackward(deltaTime);
+  //  moving = true;
   }
   
   user.update(deltaTime);
@@ -354,12 +385,14 @@ void draw()
   update((millis() - lastTime) / 1000.0f);
   lastTime = millis();
   
-  if(moving){
+  if(userMoving){
     camera(0.0, 0.0, 0.0, 0.0, 0.0, -0.000001, 0, 1, 0);	
 
     PVector pos = user.getPosition();
     rotateY(-user.getFacing());
     translate(-pos.x, pos.y, -pos.z);
+
+
 
     background(#3366AA);
 
