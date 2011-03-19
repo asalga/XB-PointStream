@@ -1573,8 +1573,22 @@ var PointStream = (function() {
       ctx.useProgram(currProgram);
       setDefaultUniforms();
       
-      // our render loop will call the users render function
-      setInterval(renderLoop, 10, this);
+      window.PSrequestAnimationFrame = (function(){
+        return window.requestAnimationFrame ||
+               window.webkitRequestAnimationFrame ||
+               window.mozRequestAnimationFrame ||
+               window.oRequestAnimationFrame ||
+               window.msRequestAnimationFrame ||
+               function(callback, cvs){
+                 window.setTimeout(callback, 1000.0/60.0);
+               };
+      })();
+
+      // call the user's render function
+      (function animationLoop(){
+        renderLoop();
+        PSrequestAnimationFrame(animationLoop, canvas);
+      })();
 
       attach(cvs, "mouseup", mouseReleased);
       attach(cvs, "mousedown", mousePressed);
