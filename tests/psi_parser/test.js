@@ -22,10 +22,10 @@ function render() {
 function start(){
   ps = new PointStream(); 
   ps.setup(document.getElementById('canvas'));
-  ps.registerParser("psi", PSI_Parser);
+  ps.registerParser("psi", PSIParser);
   ps.onRender = render;
   ps.onMouseScroll = zoom;
-	ps.background([1, 1, 1, 1]);
+	ps.background([0.25, 0.25, 0.25, 1]);
   ps.pointSize(5);
 
   mickey = ps.load("../../clouds/Mickey_Mouse.psi");

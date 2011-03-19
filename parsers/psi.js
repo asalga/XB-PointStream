@@ -12,12 +12,12 @@
   files which have their data stored in one of the following ways:
 */
 
-var PSI_Parser = (function() {
+var PSIParser = (function() {
 
   /**
     Constructor
   */
-  function PSI_Parser(config) {
+  function PSIParser(config) {
   
   	// Declare tags
     var bgnDocument   = "<PsDocument>",
@@ -126,7 +126,8 @@ var PSI_Parser = (function() {
     var numPtStr  = "<NumPoints=",
         sptSzStr  = "<SpotSize=",
         posMinStr = "<Min=",
-        posMaxStr = "<Max=";
+        posMaxStr = "<Max=",
+        endXMLStr = ">";
     
     var undef;
     
@@ -178,6 +179,8 @@ var PSI_Parser = (function() {
     //
     var bgnTag = "";
     var endTag = "";
+    var tagExists;
+    var endTagExists
     
     // keep track if onprogress event handler was called to 
     // handle Chrome/WebKit vs. Minefield differences.
@@ -282,14 +285,6 @@ var PSI_Parser = (function() {
         to be downloaded
       */
       AJAX.onloadstart = function(evt){
-        // mickey
-        numTotalPoints = 754276;
-        xMax = 23.5032;
-        xMin = -23.5032;
-        yMax = 28.161;
-        yMin = -28.161;
-        zMax = 16.3532;
-        zMin = -16.3532;
         sfactor = Math.pow(2.0, 24.0);
         nfactor = -0.5 + Math.pow(2.0, 10.0);
         
@@ -303,20 +298,39 @@ var PSI_Parser = (function() {
       AJAX.onload = function(evt){
       
         var textData = AJAX.responseText;
-        /* var binData = AJAX.mozResponseArrayBuffer;
-        if(binData){
-          var byteArray = new UInt8Array(binData);
-        }*/
-        var chunk = null;
-
+        var chunkLength = textData.length;
+        
+        if(firstRun){
+          AJAX.firstLoad(textData);
+        }
+        
+        endTag = "</Level>";
+        tagExists = textData.indexOf(bgnTag);
+        var infoEnd = textData.indexOf(endTag);
+        var infoStart;
+        
+        if(tagExists !== -1){
+          tagLen = bgnTag.length + 2;               // +2 for offset values
+          infoStart = tagExists + tagLen;
+          if(AJAX.startOfNextChunk === 0){
+            AJAX.startOfNextChunk = infoStart;
+          }
+        }
+        
+        var last12 = Math.floor((chunkLength - infoStart) / 12);
+        AJAX.last12Index = ((last12 * 12) + infoStart);
+        
+        if(infoEnd !== -1){
+          AJAX.last12Index = infoEnd;
+        }
         // if the onprogress event didn't get called--we simply got
         // the file in one go, we can parse from start to finish.
         if(onProgressCalled === false){
-          chunk = textData;
+          var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
         }
         // otherwise the onprogress event was called at least once,
         // that means we need to get the data from a specific point to the end.
-        else if(textData.length - AJAX.lastNewLineIndex > 1){
+        /*else if(textData.length - AJAX.lastNewLineIndex > 1){
           chunk = textData.substring(AJAX.lastNewLineIndex, textData.length);
         }
 
@@ -341,16 +355,18 @@ var PSI_Parser = (function() {
         
         // !! fix this
         // this occurs over network connections, but not locally.
-        if(chunk !== ""){
+        if(chunk !== null){
         
           var numVerts = chunk.length/12;
           numParsedPoints += numVerts;
           
-					var numBytes = chunk.length;
+          var numBytes = chunk.length;
 
-          var verts = new Float32Array(numVerts * 3);
-          var cols = null;
-          var norms = null;
+					if(numVerts > 0){
+            var verts = new Float32Array(numVerts * 3);
+            var cols = null;
+            var norms = null;
+          }
 
           if(colorsPresent){
             cols = new Float32Array(numVerts * 3);
@@ -399,9 +415,9 @@ var PSI_Parser = (function() {
           	  verts[j+2] = ((zMax - zMin) * getXYZ(chunk, i+6)) / sfactor + zMin;
             
       	      if(cols){
-        	      cols[j] = getRGB(chunk, i+9);
-          	    cols[j+1] = getRGB(chunk, i+10);
-            	  cols[j+2] = getRGB(chunk, i+11);
+        	      cols[j] = getRGB(chunk, i+9) / 255;
+          	    cols[j+1] = getRGB(chunk, i+10) / 255;
+            	  cols[j+2] = getRGB(chunk, i+11) / 255;
             	}
       	    }
           //}
@@ -410,12 +426,53 @@ var PSI_Parser = (function() {
           var attributes = {};
           if(verts){attributes["ps_Vertex"] = verts;}
           if(cols){attributes["ps_Color"] = cols;}
-          if(norms){attributes["ps_Normal"] = norms;}
+          //if(norms){attributes["ps_Normal"] = norms;}
           
           parse(AJAX.parser, attributes);
 
         }
       };
+      
+      AJAX.firstLoad = function(textData){
+        var chunkLength = textData.length;
+          
+        var temp;
+        
+        //numPtStr
+        tagExists = textData.indexOf(numPtStr);
+        if(tagExists !== -1){
+          endTagExists = textData.indexOf(endXMLStr, tagExists);
+          temp = textData.substring((tagExists + numPtStr.length), endTagExists);
+          var numPtArr = temp.split(" ");
+          numTotalPoints = numPtArr[1] * 1;
+        }
+        
+        //sptSzStr
+        
+        //posMinStr
+        tagExists = textData.indexOf(posMinStr);
+        if(tagExists !== -1){
+          endTagExists = textData.indexOf(endXMLStr, tagExists);
+          temp = textData.substring((tagExists + posMinStr.length), endTagExists);
+          var posMinArr = temp.split(" ");
+          xMin = posMinArr[1] * 1;
+          yMin = posMinArr[2] * 1;
+          zMin = posMinArr[3] * 1;
+        }
+        
+        //posMaxStr
+        tagExists = textData.indexOf(posMaxStr);
+        if(tagExists !== -1){
+          endTagExists = textData.indexOf(endXMLStr, tagExists);
+          temp = textData.substring((tagExists + posMaxStr.length), endTagExists);
+          var posMaxArr = temp.split(" ");
+          xMax = posMaxArr[1] * 1;
+          yMax = posMaxArr[2] * 1;
+          zMax = posMaxArr[3] * 1;
+          
+          bgnTag = textData.substring(tagExists, (endTagExists + 1));
+        }
+      }
     
       /**
         On Minefield, this will occur zero or many times
@@ -433,20 +490,15 @@ var PSI_Parser = (function() {
         // if we have something to actually parse
         if(AJAX.responseText){
           var textData = AJAX.responseText;
-          /*var binData = AJAX.mozResponseArrayBuffer;
-          if(binData){
-            var byteArray = new UInt8Array(binData);
-          }*/
-          
           var chunkLength = textData.length;
-          var totalPointsInBytes = numTotalPoints * 12;
+
+          if(firstRun){
+            AJAX.firstLoad(textData);
+          }
           
-          bgnTag = "<Max= 23\.5032 28\.161 16\.3532 >";           // mickey
           endTag = "</Level>";
-          var rgxBgnTag = new RegExp(bgnTag);
-          var rgxEndTag = new RegExp(endTag);
-          var tagExists = textData.search(rgxBgnTag);
-          var infoEnd = textData.search(rgxEndTag);
+          tagExists = textData.indexOf(bgnTag);
+          var infoEnd = textData.indexOf(endTag);
           var infoStart;
           
           if(tagExists !== -1){
@@ -464,6 +516,8 @@ var PSI_Parser = (function() {
             AJAX.last12Index = infoEnd;
           }
           
+          var totalPointsInBytes = (numTotalPoints * 12) + infoStart;
+          
           // if the status just changed and we finished downloading the
           // file, grab everyting until the end. If there is only a bunch
           // of whitespace, make a note of that and don't bother parsing.
@@ -477,14 +531,16 @@ var PSI_Parser = (function() {
             //}
           }
           // handles parsing up to the end of position and colors
-          else if((totalPointsInBytes > AJAX.startOfNextChunk) && (totalPointsInBytes < AJAX.last12Index)){
+          else*/ if((totalPointsInBytes > AJAX.startOfNextChunk) && (totalPointsInBytes < AJAX.last12Index)){
             var chunk	= textData.substring(AJAX.startOfNextChunk, totalPointsInBytes);
-            AJAX.startOfNextChunk = totalPointsInBytes + 1;
+            AJAX.startOfNextChunk = totalPointsInBytes;
             
-            AJAX.parseChunk(chunk);
+            if(chunk.length > 0){
+            	AJAX.parseChunk(chunk);
+            }
           }
           // parse position and colors
-          else*/ if(AJAX.last12Index <= totalPointsInBytes){
+          else if(AJAX.last12Index <= totalPointsInBytes){
           	if(firstRun){
            	  var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
 							firstRun = false;
@@ -513,5 +569,5 @@ var PSI_Parser = (function() {
       AJAX.send(null);
     };// load
   }//ctor
-  return PSI_Parser;
+  return PSIParser;
 }());
