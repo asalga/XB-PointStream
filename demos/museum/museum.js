@@ -40,6 +40,9 @@ public void drawFloor(){
   endShape();
 }
 
+/*
+  Podium for a museum
+*/
 public class Easel{
   private Vector position;
   private Vector direction;
@@ -381,7 +384,6 @@ void update(float deltaTime){
 
 void draw()
 {
-
   update((millis() - lastTime) / 1000.0f);
   lastTime = millis();
   
@@ -392,15 +394,12 @@ void draw()
     rotateY(-user.getFacing());
     translate(-pos.x, pos.y, -pos.z);
 
-
-
     background(#3366AA);
 
     pushMatrix();
       translate(0, 10, 0);
       drawFloor();
     popMatrix();
-
 
     //
     var closeToEasel = false;
