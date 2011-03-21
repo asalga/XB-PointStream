@@ -372,7 +372,7 @@ var PSIParser = (function() {
             cols = new Float32Array(numVerts * 3);
           }
           
-          /*if(normalsPresent){
+          if(normalsPresent){
             norms = new Float32Array(numVerts * 3);
             var nzsign, nx11bits, ny11bits, ivalue;
             var nvec = new Float32Array(3);
@@ -382,12 +382,12 @@ var PSIParser = (function() {
               nzsign = ((ivalue >> 22) & 0x0001);
               nx11bits = ((ivalue) & 0x07ff);
               ny11bits = ((ivalue >> 11) & 0x07ff);
-              nvec[0] = (nx11bits/nfactor) - 1;
-              nvec[1] = (ny11bits/nfactor) - 1;
               
               if(nx11bits >= 0 && nx11bits < 2048){
               	if(ny11bits >= 0 && ny11bits < 2048){
-              
+                  nvec[0] = (nx11bits/nfactor) - 1;
+                  nvec[1] = (ny11bits/nfactor) - 1;
+                  
       		        var nxnymag = (nvec[0]*nvec[0] + nvec[1]+nvec[1]);
           		    if (nxnymag > 1){ nxnymag = 1; }
             		  if (nxnymag < -1){ nxnymag = -1; }
@@ -398,17 +398,20 @@ var PSIParser = (function() {
 		              if (nzsign){ nvec[2] = -nvec[2]; }
     		          var dNorm = (nvec[0]*nvec[0] + nvec[1]*nvec[1] + nvec[2]*nvec[2]);
         		      if (dNorm > 0){ dNorm = Math.sqrt(dNorm); }
-            		  else{ dNorm = 1 }
+            		  else{ dNorm = 1; }
               
 		              norms[i] = nvec[0]/dNorm;
     		          norms[i+1] = nvec[1]/dNorm;
         		      norms[i+2] = nvec[2]/dNorm;
 								}
               }
-              else{ alert("Nope");}
+              else{ alert("Nope"); }
+              if(i < 100){
+                console.log(norms[i] + " " + norms[i+1] + " " + norms[i+2] + "\n");
+              }
             }
           }
-          else{*/
+          else{
           	for(var i = 0, j = 0; i < numBytes; i+=12, j += 3){
             	verts[j] = ((xMax - xMin) * getXYZ(chunk, i)) / sfactor + xMin;
         	    verts[j+1] = ((yMax - yMin) * getXYZ(chunk, i+3)) / sfactor + yMin;
@@ -420,7 +423,7 @@ var PSIParser = (function() {
             	  cols[j+2] = getRGB(chunk, i+11) / 255;
             	}
       	    }
-          //}
+          }
           
           
           var attributes = {};
@@ -555,11 +558,15 @@ var PSIParser = (function() {
 						}
           }
           // parse normals
-          /*else if((AJAX.last12Index > totalPointsInBytes) && (AJAX.startOfNextChunk > totalPointsInBytes)){
-            var chunk	= textData.substring(AJAX.startOfNextChunk, AJAX.last12Index + 1);
+          else if((AJAX.last12Index > totalPointsInBytes) && (AJAX.startOfNextChunk >= totalPointsInBytes)){
+            var chunk	= textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
             normalsPresent = true;
-            AJAX.parseChunk(chunk);
-          }*/
+            
+            if(chunk.length > 0){
+							AJAX.startOfNextChunk = AJAX.last12Index;
+            	AJAX.parseChunk(chunk);
+						}
+          }
         }//AJAX.responseText
       };//onprogress
       
