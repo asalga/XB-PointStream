@@ -2,6 +2,7 @@
 /* @pjs preload="images/floor.jpg,images/acorn.jpg,images/wall.jpg,images/lion.jpg,images/mickey.jpg"; */
 
 var userMoving = false;
+var firstTime = true;
 
 var rot = 0;
 var ps, acorn;
@@ -13,8 +14,8 @@ var fadeValue = 0;
 var fadingPointCloud = false;
 var viewingPointCloud = false;
 
-final int GAME_WIDTH = 800;
-final int GAME_HEIGHT = 500;
+final int CVS_WIDTH = 800;
+final int CVS_HEIGHT = 500;
 
 float lastTime = 0.0f;
 
@@ -122,7 +123,7 @@ public class Easel{
   }  
 }
 
-// acorn
+// 
 function a(c){
   if(!ps){
     var cl;
@@ -130,14 +131,26 @@ function a(c){
     var zoomed = -20;
     var rot = [0, 0];
     var curCoords = [0, 0];
+    var drawit = true;
 
     ps = new PointStream();
     ps.setup(document.getElementById('xbps'));
+    
+    pointCloudCanvas.style.height = museumCanvas.height - 50;
+    var top = window.innerHeight/2 - parseInt(pointCloudCanvas.style.height)/2;
+    pointCloudCanvas.style.top = top + "px";
+
+    // make it square
+    pointCloudCanvas.style.width = pointCloudCanvas.style.height;
+    var left = window.innerWidth/2 - parseInt(pointCloudCanvas.style.width)/2;
+    pointCloudCanvas.style.left = left + "px";
+
     ps.pointSize(5);
     ps.background([0, 0, 0, 0.5]);
 
     ps.onMouseScroll = function(amt){
       zoomed += amt * 1.0;
+      drawit = true;
     };
     
     ps.onMousePressed = function mousePressed(){
@@ -149,24 +162,27 @@ function a(c){
     ps.onMouseReleased = function(){ buttonDown = false;};
 
     ps.onRender = function(){
-      var deltaX = ps.mouseX - curCoords[0];
-      var deltaY = ps.mouseY - curCoords[1];
-  
-      if(buttonDown){
-        rot[0] += deltaX / ps.width * 5;
-        rot[1] += deltaY / ps.height * 5;
+      if(drawit){
+        var deltaX = ps.mouseX - curCoords[0];
+        var deltaY = ps.mouseY - curCoords[1];
+    
+        if(buttonDown){
+          rot[0] += deltaX / ps.width * 5;
+          rot[1] += deltaY / ps.height * 5;
+          
+          curCoords[0] = ps.mouseX;
+          curCoords[1] = ps.mouseY;
+        }
+
+        ps.translate(0, 0, zoomed);
         
-        curCoords[0] = ps.mouseX;
-        curCoords[1] = ps.mouseY;
+        ps.rotateY(rot[0]);
+        ps.rotateX(rot[1]);
+
+        ps.clear();
+        ps.render(cl);
       }
-
-      ps.translate(0, 0, zoomed);
-      
-      ps.rotateY(rot[0]);
-      ps.rotateX(rot[1]);
-
-      ps.clear();
-      ps.render(cl);
+      drawit = true;
     };
     cl = ps.load(c);
   }
@@ -226,8 +242,8 @@ public class Plane{
 }
 
 void setup()
-{
-  size(GAME_WIDTH, GAME_HEIGHT, OPENGL);
+{  
+  size(window.innerWidth, window.innerHeight, OPENGL);
   perspective(PI/3.0, width/height, 1, 1000.0);
 
   pointCloudCanvas = document.getElementById('xbps');
@@ -311,6 +327,7 @@ void setup()
   easel3.setDirection(Math.PI/4);
   easel3.setImage(lionImg);
   easel3.setCloud("../../clouds/lion.asc");
+  easel3.setPointCloudRendering(a);
   easels.add(easel3);
   
   textureMode(NORMALIZED);
@@ -324,6 +341,55 @@ void keyPressed(){
   keyboard.setKeyDown(keyCode);
 }
 
+
+void move(PVector position, PVector direction, deltaTime){ 
+  // front
+  if(position.z - (direction.z * deltaTime * 30) < -80 ){
+    float amt = 1 + direction.dot(new PVector(0, 0, -1));
+    PVector wallPerp = new PVector(direction.x >= 0 ? 1 : -1, 0, 0);            
+    wallPerp.x *= max(0.5, amt);
+    position.x -= wallPerp.x * deltaTime * 30;
+    
+    if(position.x >  80){position.x =  80;}
+    if(position.x < -80){position.x = -80;}
+  }
+  //back
+  else if(position.z - (direction.z * deltaTime * 30) >= 80){
+    float amt = 1 + direction.dot(new PVector(0, 0, 1));
+    PVector wallPerp = new PVector( direction.x >= 0 ? -1 : 1, 0, 0);
+    wallPerp.x *= max(0.5, amt);
+    position.x += wallPerp.x * deltaTime * 30;
+    if(position.x < -80){position.x = -80;}
+    if(position.x >  80){position.x =  80;}
+  }    
+  // left
+  else if(position.x - (direction.x * deltaTime * 30) < -80){
+    float amt = 1 + direction.dot(new PVector(-1, 0, 0));
+    PVector wallPerp = new PVector(0, 0, direction.z >= 0 ? 1 : -1);
+    wallPerp.z *= max(0.5, amt);
+    position.z -= wallPerp.z * deltaTime * 30;
+    if(position.z < -80){position.z = -80;}
+    if(position.z >  80){position.z =  80;}
+  }
+  // right
+  else if(position.x - (direction.x * deltaTime * 30) > 80){
+    float amt = 1 + direction.dot(new PVector(1, 0, 0));
+    PVector wallPerp = new PVector(0, 0, direction.z >= 0 ? -1 : 1);
+    wallPerp.z *= max(0.5, amt);
+    position.z += wallPerp.z * deltaTime * 30;
+    
+    if(position.z >  80){position.z = 80;}
+    if(position.z < -80){position.z = -80;}
+  }
+
+  else{
+	  position.x -= direction.x * deltaTime * 30;
+	  position.y -= direction.y * deltaTime;
+	  position.z -= direction.z * deltaTime * 30;
+  }
+  userMoving = true;
+}
+
 void update(float deltaTime){
   userMoving = false;
 
@@ -335,51 +401,18 @@ void update(float deltaTime){
     user.turnRight(deltaTime);
     userMoving = true;
   }
-  if(keyboard.isKeyDown(KEY_UP) || keyboard.isKeyDown(KEY_W) ){
-    
+  if(keyboard.isKeyDown(KEY_UP) || keyboard.isKeyDown(KEY_W) ){    
     PVector position = user.getPosition();
     PVector direction = user.getDirection();
-    
-    // front
-    if(position.z - (direction.z * deltaTime * 30) < -80){
-      float amt = 1 + direction.dot(new PVector(0, 0, -1));
-      PVector wallPerp = new PVector(direction.x >= 0 ? 1 : -1, 0, 0);            
-      wallPerp.x *= max(0.5, amt);
-      position.x -= wallPerp.x * deltaTime * 30;
-    }
-    //back
-    else if(position.z - (direction.z * deltaTime * 30) >= 80){
-      float amt = 1 + direction.dot(new PVector(0, 0, 1));
-      PVector wallPerp = new PVector( direction.x >= 0 ? -1 : 1, 0, 0);
-      wallPerp.x *= max(0.5, amt);
-      position.x += wallPerp.x * deltaTime * 30;
-    }
-    // left
-    else if(position.x - (direction.x * deltaTime * 30) < -80){
-      float amt = 1 + direction.dot(new PVector(-1, 0, 0));
-      PVector wallPerp = new PVector(0, 0, direction.z >= 0 ? 1 : -1);
-      wallPerp.z *= max(0.5, amt);
-      position.z -= wallPerp.z * deltaTime * 30;
-    }
-    // right
-    else if(position.x - (direction.x * deltaTime * 30) >= 80){
-      float amt = 1 + direction.dot(new PVector(1, 0, 0));
-      PVector wallPerp = new PVector(0, 0, direction.z >= 0 ? -1 : 1);
-      wallPerp.z *= max(0.5, amt);
-      position.z += wallPerp.z * deltaTime * 30;
-    }
-    else{
-      user.goForward(deltaTime);
-    }
-    userMoving = true;
+    move(position, direction, deltaTime);
   }
-  
   if(keyboard.isKeyDown(KEY_DOWN) || keyboard.isKeyDown(KEY_S) ){
-//    user.goBackward(deltaTime);
-  //  moving = true;
+    PVector position = user.getPosition();
+    PVector direction = user.getDirection();
+    direction = new PVector(-direction.x, direction.y, -direction.z);
+    move(position, direction, deltaTime);
   }
-  
-  user.update(deltaTime);
+  //user.update(deltaTime);
 }
 
 void draw()
@@ -387,7 +420,8 @@ void draw()
   update((millis() - lastTime) / 1000.0f);
   lastTime = millis();
   
-  if(userMoving){
+  if(firstTime || userMoving){
+    firstTime = false;
     camera(0.0, 0.0, 0.0, 0.0, 0.0, -0.000001, 0, 1, 0);	
 
     PVector pos = user.getPosition();
@@ -446,10 +480,10 @@ void draw()
     for(int i = 0; i < walls.size(); i++){
       Plane wall = (Plane)walls.get(i);
       PVector two = user.getDirection();
-      if(two.dot(wall.getDirection()) > -0.6){
+      if(two.dot(wall.getDirection()) > -0.7){
         wall.draw();
       }
     }
   }  
-  document.getElementById('debug').innerHTML = Math.floor(frameRate);
+//  document.getElementById('debug').innerHTML = Math.floor(frameRate);
 }
