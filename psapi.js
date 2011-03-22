@@ -1253,7 +1253,19 @@ var PointStream = (function() {
       canvas.style.width = width = pWidth;
       canvas.style.height = height = pHeight;
       
-      ctx = canvas.getContext("experimental-webgl", {"antialias":false});
+      var contextNames = ["webgl","experimental-webgl", "moz-webgl","webkit-3d"];
+      
+      for(var i = 0; i < contextNames.length; i++){
+        try{
+          ctx = canvas.getContext(contextNames[i], {"antialias":false});
+          if(ctx){
+            break;
+          }
+        }catch(e){}
+      }
+      if(!ctx){
+        this.println("Your browser does not support WebGL.");
+      }
 
       // parseInt hack used for Chrome/Chromium
       ctx.viewport(0, 0, parseInt(pWidth), parseInt(pHeight));
