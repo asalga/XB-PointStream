@@ -355,7 +355,7 @@ var PSIParser = (function() {
         
         // !! fix this
         // this occurs over network connections, but not locally.
-        if(chunk !== null){
+        if(chunk){
         
           var numVerts = chunk.length/12;
           numParsedPoints += numVerts;

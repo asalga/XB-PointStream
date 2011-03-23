@@ -1,7 +1,7 @@
 var ps, mickey;
 var i = 0.0;
-var j = 5.0;
-var zoomed = -20;
+var j = 0.0;
+var zoomed = -50;
 
 function zoom(amt){
   zoomed += amt * 2 * 1;
