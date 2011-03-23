@@ -6,7 +6,7 @@
   @class XB PointStream is a WebGL library designed to efficiently stream and
   render point cloud data in a canvas element.
   
-  @version 0.5
+  @version 0.6
 */
 var PointStream = (function() {
 
@@ -45,7 +45,7 @@ var PointStream = (function() {
     registeredParsers["psi"] = PSIParser;
     registeredParsers["pts"] = PTSParser;
     
-    const VERSION  = "0.5";
+    const VERSION  = "0.6";
     
     // file status of point clouds
     const FILE_NOT_FOUND = -1;
