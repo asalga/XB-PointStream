@@ -760,6 +760,7 @@ var PointStream = (function() {
       
       The parser will call this when it is done parsing a chunk of data.
       
+      @param {} parser -
       @param {Object} attributes - contains name/value pairs of arrays
       
       For example, if using a custom parser, the attributes may be:
@@ -776,15 +777,37 @@ var PointStream = (function() {
       pointClouds[i].progress = parser.progress;
       pointClouds[i].numPoints = parsers[i].numParsedPoints;
       
-      for(var semantic in attributes){
+      // assume the first attribute is vertex data
+      var gotVertexData = false;
       
-       // if not yet created  
-       if(!pointClouds[i].attributes[semantic]){
+      for(var semantic in attributes){
+        
+        // if not yet created
+        if(!pointClouds[i].attributes[semantic]){
           pointClouds[i].attributes[semantic] = [];
         }
         
         var buffObj = createBufferObject(attributes[semantic]);
         pointClouds[i].attributes[semantic].push(buffObj);
+        
+        if(gotVertexData === false){
+          gotVertexData = true;
+          var addedVertices = [0,0,0];
+          
+          for(var j = 0; j < attributes[semantic].length; j+= 3){
+            addedVertices[0] += attributes[semantic][j];
+            addedVertices[1] += attributes[semantic][j+1];
+            addedVertices[2] += attributes[semantic][j+2];
+          }
+
+          pointClouds[i].addedVertices[0] += addedVertices[0];
+          pointClouds[i].addedVertices[1] += addedVertices[1];
+          pointClouds[i].addedVertices[2] += addedVertices[2];
+          
+          pointClouds[i].center[0] = pointClouds[i].addedVertices[0] / pointClouds[i].numPoints;
+          pointClouds[i].center[1] = pointClouds[i].addedVertices[1] / pointClouds[i].numPoints;
+          pointClouds[i].center[2] = pointClouds[i].addedVertices[2] / pointClouds[i].numPoints;
+        }
       }
     }
         
@@ -826,8 +849,6 @@ var PointStream = (function() {
         }
       }
       
-      // !! fix
-      pc.center = getAverage(verts);
       pc.status = COMPLETE;
       pc.progress = parser.progress;
     }
@@ -1671,7 +1692,7 @@ var PointStream = (function() {
         
         // !! fix (private vars are visible in user script)
         var newPointCloud = {
-
+          
           VBOs: [],
           attributes: {},
           
@@ -1692,6 +1713,9 @@ var PointStream = (function() {
             return this.status;
           },
           
+          // this vector will be continuously incremented
+          // as more data is downloaded.
+          addedVertices: [0, 0, 0],
           center: [0, 0, 0],
           /**
             @private until fixed

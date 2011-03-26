@@ -2,7 +2,7 @@ var ps, lion;
 
 var buttonDown = false;
 var zoomed = -50;
-var rot =[0, 0];
+var rot = [0, 0];
 var curCoords = [0, 0];
 
 const KEY_ESC = 27;
@@ -45,8 +45,8 @@ function render() {
   ps.rotateY(rot[0]);
   ps.rotateX(rot[1]);
  
-  // !! fix 
-  ps.translate(281.32617943646534,205.61656736098982,290.55082983174293);  
+  var c = lion.getCenter();
+  ps.translate(-c[0], -c[1], -c[2]);
   ps.clear();
   ps.render(lion);
   
