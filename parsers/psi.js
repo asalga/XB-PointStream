@@ -265,6 +265,15 @@ var PSIParser = (function() {
     });
     
     /**
+      Stop downloading and parsing the associated point cloud.
+    */
+    this.stop = function(){
+      if(AJAX){
+        AJAX.abort();
+      }
+    };
+    
+    /**
       pathToFile
     */
     this.load = function(path){
