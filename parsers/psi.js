@@ -394,10 +394,10 @@ var PSIParser = (function() {
               
               if(nx11bits >= 0 && nx11bits < 2048){
               	if(ny11bits >= 0 && ny11bits < 2048){
-                  nvec[0] = (nx11bits/nfactor) - 1;
-                  nvec[1] = (ny11bits/nfactor) - 1;
+                  nvec[0] = (nx11bits/nfactor) - 1.0;
+                  nvec[1] = (ny11bits/nfactor) - 1.0;
                   
-      		        var nxnymag = (nvec[0]*nvec[0] + nvec[1]+nvec[1]);
+      		        var nxnymag = (nvec[0]*nvec[0] + nvec[1]*nvec[1]);
           		    if (nxnymag > 1){ nxnymag = 1; }
             		  if (nxnymag < -1){ nxnymag = -1; }
 		              nxnymag = 1 - nxnymag;
@@ -413,10 +413,6 @@ var PSIParser = (function() {
     		          norms[i+1] = nvec[1]/dNorm;
         		      norms[i+2] = nvec[2]/dNorm;
 								}
-              }
-              else{ alert("Nope"); }
-              if(i < 100){
-                console.log(norms[i] + " " + norms[i+1] + " " + norms[i+2] + "\n");
               }
             }
           }
