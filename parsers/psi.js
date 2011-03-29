@@ -2,14 +2,30 @@
   Copyright (c) 2010  Seneca College
   MIT LICENSE
 
-  Version:  0.1
+  Version:  0.6
   Author:   Mickael Medel
             asydik.wordpress.com
-  Date:     February 2011
+  Created:  February 2011
+  Updated:  March 2011
   
   Notes:
   This parser parses .PSI filetypes. These files are Arius3D Proprietary
   files which have their data stored in one of the following ways:
+  
+  <xml tags>
+  <that have relevant>
+  <information= about the file>
+  Binary Data...
+  ...
+  ...
+  ...
+  ...
+  ...
+  ...
+  ...
+  <more tags>
+  <to close opening tags>
+  <and provide more information>
 */
 
 var PSIParser = (function() {
@@ -294,6 +310,8 @@ var PSIParser = (function() {
         to be downloaded
       */
       AJAX.onloadstart = function(evt){
+      
+        // values to be used in decompression of PSI
         sfactor = Math.pow(2.0, 24.0);
         nfactor = -0.5 + Math.pow(2.0, 10.0);
         
@@ -309,6 +327,7 @@ var PSIParser = (function() {
         var textData = AJAX.responseText;
         var chunkLength = textData.length;
         
+        // checks if this is the first run
         if(firstRun){
           AJAX.firstLoad(textData);
         }
@@ -343,12 +362,6 @@ var PSIParser = (function() {
           chunk = textData.substring(AJAX.lastNewLineIndex, textData.length);
         }
 
-        // if the last chunk doesn't have any digits (just spaces)
-        // don't parse it.
-        /*if(chunk && chunk.match(/[0-9]/)){
-          AJAX.parseChunk(chunk);
-        }*/
-        
         AJAX.parseChunk(chunk);
 
         progress = 1;
@@ -381,6 +394,7 @@ var PSIParser = (function() {
             cols = new Float32Array(numVerts * 3);
           }
           
+          // parsing normal values
           if(normalsPresent){
             norms = new Float32Array(numVerts * 3);
             var nzsign, nx11bits, ny11bits, ivalue;
@@ -416,6 +430,7 @@ var PSIParser = (function() {
               }
             }
           }
+          // parsing xyz and rgb values
           else{
           	for(var i = 0, j = 0; i < numBytes; i+=12, j += 3){
             	verts[j] = ((xMax - xMin) * getXYZ(chunk, i)) / sfactor + xMin;
@@ -441,6 +456,10 @@ var PSIParser = (function() {
         }
       };
       
+      /**
+        First load of file...
+        obtains valuable information like the number of points in the file.
+      */
       AJAX.firstLoad = function(textData){
         var chunkLength = textData.length;
           
