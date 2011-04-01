@@ -13,7 +13,7 @@ create-release-files: create-release-docs create-user-docs minify create-example
 
 # Minification strips out comments and most whitespace
 minify: create-release-dir
-	cat psapi.js mjs.js ./parsers/asc.js ./parsers/pts.js > ./xbps-min/xbps-temp.js
+	cat psapi.js mjs.js ./parsers/asc.js ./parsers/pts.js ./parsers/psi.js > ./xbps-min/xbps-temp.js
 	rm -fr tools-bin
 	mkdir tools-bin/
 	cc -o tools-bin/minifier tools/jsmin.c

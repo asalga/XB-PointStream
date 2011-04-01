@@ -1,22 +1,33 @@
 var ps, mickey;
 
-// set these values in case the device used does not
-// have MozOrientation. At least we can render the point cloud
+// If these values aren't set and the device used does
+// not support MozOrientation, nothing will render.
 var x = 0;
-var z = 0;
+var y = 0;
 
 function render() {
   ps.translate(0, 0, -50);
-  ps.rotateX(x * 2.5);
-  ps.rotateZ(z * 2.5);
+
+  // When the user tilts the device down, the point cloud
+  // should rotate about X in the opposite direction
+  // which gives the illusion the point cloud is behind the device  
+  var invertX = document.getElementById('invert').checked ? -1 : 1;
+  ps.rotateX(x * invertX * 2.5);
+  ps.rotateY(y * 2.5);
   
   ps.clear();
   ps.render(mickey);
 }
 
 function handleOrientation(data){
+  // swap the values to make the orientation make sense.
+  // if the device is pitched forward or backward, (moz y)
+  // convert to a rotation about x.
+  
+  // if the device is rolled left or right, (moz x)
+  // convert to a rotation about y
   x = data.y;
-  z = data.x;
+  y = data.x;
 }
 
 function getShaderSrc(id) {
