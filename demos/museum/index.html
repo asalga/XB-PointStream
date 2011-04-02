@@ -1,7 +1,8 @@
 <html>
   <head>
-    <script src="xbps.js"></script>
+    <script src="../../xbps.js"></script>
     <script src="processing.js"></script>
+    <script src="podium.obj"></script>
   </head> 
   <style>
   html{
@@ -15,7 +16,13 @@
   
   <body>
     <canvas id="museum" data-processing-sources = "museum.js user.js keyboard.js utils.js"></canvas>
-    <canvas id="xbps" width="400" height="300" style="opacity:0; position:absolute;top: 100; left: 200px; -moz-box-shadow:0px 0px 20px black;"></canvas>
+
+    <!--
+      When the museum is loaded we don't want to display the xbps
+      canvas since the user won't be looking at a point cloud object.
+      So set opacity to 0.
+    -->
+    <canvas id="xbps" width="400" height="400" style="opacity:0; position:absolute;top: 100; left: 200px; -moz-box-shadow:0px 0px 20px black;"></canvas>
     <span id="debug"></span>
   </body>
 </html>

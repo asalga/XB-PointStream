@@ -4,26 +4,23 @@
 var userMoving = false;
 var firstTime = true;
 
-var rot = 0;
-var ps, acorn;
-var zoomed = 0;
+window.ps;
 
+/*
 var fading = false;
 var fadeValue = 0;
-
 var fadingPointCloud = false;
-var viewingPointCloud = false;
-
-final int CVS_WIDTH = 800;
-final int CVS_HEIGHT = 500;
+*/
+var XBPSHasFocus = false;
 
 float lastTime = 0.0f;
 
 User user;
 Keyboard keyboard;
-OBJModel model;
-var pointCloudCanvas;
-var museumCanvas;
+OBJModel podium;
+
+window.pointCloudCanvas;
+window.museumCanvas;
 
 ArrayList walls;
 ArrayList easels;
@@ -61,6 +58,7 @@ public class Easel{
   
   void setCloud(String s){
     cloud = s;
+    console.log(cloud);
   }
   
   boolean drawingCloud(){
@@ -95,7 +93,7 @@ public class Easel{
     translate(position.x, -5,-position.z);
     rotateY(-angle);
     scale(0.4, 0.15, 0.5);
-    model.drawMode(POLYGON);
+    podium.drawMode(POLYGON);
     popMatrix();
 
     pushMatrix();
@@ -109,11 +107,12 @@ public class Easel{
   }
   
   void endDrawing(){
-   if(ps && isDrawingCloud){
+   if(window.ps && isDrawingCloud){
+//     console.log("end Drawing...");
       //fadeValue = 1.0;
-      ps.onRender = function(){};
-      ps.stop(cloud);
-      ps = null;
+      window.ps.stop(cloud);
+      window.ps.onRender = function(){};
+     // window.ps = null;
     }
   }
   
@@ -121,71 +120,6 @@ public class Easel{
     isDrawingCloud = true;
     func(cloud);
   }  
-}
-
-// 
-function a(c){
-  if(!ps){
-    var cl;
-    var buttonDown = false;
-    var zoomed = -20;
-    var rot = [0, 0];
-    var curCoords = [0, 0];
-    var drawit = true;
-
-    ps = new PointStream();
-    ps.setup(document.getElementById('xbps'));
-    
-    pointCloudCanvas.style.height = museumCanvas.height - 50;
-    var top = window.innerHeight/2 - parseInt(pointCloudCanvas.style.height)/2;
-    pointCloudCanvas.style.top = top + "px";
-
-    // make it square
-    pointCloudCanvas.style.width = pointCloudCanvas.style.height;
-    var left = window.innerWidth/2 - parseInt(pointCloudCanvas.style.width)/2;
-    pointCloudCanvas.style.left = left + "px";
-
-    ps.pointSize(5);
-    ps.background([0, 0, 0, 0.5]);
-
-    ps.onMouseScroll = function(amt){
-      zoomed += amt * 1.0;
-      drawit = true;
-    };
-    
-    ps.onMousePressed = function mousePressed(){
-      curCoords[0] = ps.mouseX;
-      curCoords[1] = ps.mouseY;
-      buttonDown = true;
-    };
-    
-    ps.onMouseReleased = function(){ buttonDown = false;};
-
-    ps.onRender = function(){
-      if(drawit){
-        var deltaX = ps.mouseX - curCoords[0];
-        var deltaY = ps.mouseY - curCoords[1];
-    
-        if(buttonDown){
-          rot[0] += deltaX / ps.width * 5;
-          rot[1] += deltaY / ps.height * 5;
-          
-          curCoords[0] = ps.mouseX;
-          curCoords[1] = ps.mouseY;
-        }
-
-        ps.translate(0, 0, zoomed);
-        
-        ps.rotateY(rot[0]);
-        ps.rotateX(rot[1]);
-
-        ps.clear();
-        ps.render(cl);
-      }
-      drawit = true;
-    };
-    cl = ps.load(c);
-  }
 }
 
 ////////////////////////////////////
@@ -242,25 +176,27 @@ public class Plane{
 }
 
 void setup()
-{  
+{
   size(window.innerWidth, window.innerHeight, OPENGL);
   perspective(PI/3.0, width/height, 1, 1000.0);
 
-  pointCloudCanvas = document.getElementById('xbps');
-  museumCanvas = document.getElementById('museum');
-  museumCanvas.focus();
+  window.pointCloudCanvas = document.getElementById('xbps');
+  window.museumCanvas = document.getElementById('museum');
+  window.museumCanvas.focus();
 
   wallImg = loadImage("images/wall.jpg");
   floorImg = loadImage("images/floor.jpg");
   
-  model = new OBJModel();
-  model.load("easel.obj");
-  
+  podium = new OBJModel();
+  podium.load("podium.obj");
+
+  // podium images  
   acornImg = loadImage("images/acorn.jpg");
   mickeyImg = loadImage("images/mickey.jpg");
   lionImg = loadImage("images/lion.jpg");
 
   keyboard = new Keyboard();
+  window.kb = keyboard;
   user = new User();
   
   easels = new ArrayList();
@@ -396,6 +332,13 @@ void update(float deltaTime){
   if(keyboard.isKeyDown(KEY_LEFT) || keyboard.isKeyDown(KEY_A) ){
     user.turnLeft(deltaTime);
     userMoving = true;
+    
+    // if the user clicked on the point cloud canvas  but then
+    // pressed a key, assume they want to move away
+    //if(XBPSHasFocus){
+    //alert('f');
+    //}
+    
   }
   else if(keyboard.isKeyDown(KEY_RIGHT) || keyboard.isKeyDown(KEY_D) ){
     user.turnRight(deltaTime);
@@ -456,14 +399,21 @@ void draw()
      for(int j = 0; j < easels.size(); j++){ 
         Easel e = (Easel)easels.get(j);
         e.endDrawing();
-        museumCanvas.focus();
+        window.museumCanvas.focus();
      }
     }
       
     if(closeToEasel){
-      museumCanvas.style.opacity = 0.3;
-      pointCloudCanvas.style.opacity = 1;
-      pointCloudCanvas.focus();
+      window.museumCanvas.style.opacity = 0.3;
+      window.pointCloudCanvas.style.opacity = 1;
+      window.pointCloudCanvas.focus();
+//      window.pointCloudCanvas.hasFocus = true;
+      XBPSHasFocus = true;
+//      alert(window.pointCloudCanvas.focus);
+
+      window.pointCloudCanvas.style.zIndex = 1;
+      window.museumCanvas.style.zIndex = -1;
+      
       closeToEasel = true;
       if(index != -1){
         Easel e = (Easel)easels.get(index);
@@ -471,9 +421,17 @@ void draw()
       }
 
     }
+    
+    // If we aren't close to a podium, hide the xbps canvas
     else{
-      museumCanvas.style.opacity = 1.0;
-      pointCloudCanvas.style.opacity = 0;
+      window.museumCanvas.style.opacity = 1.0;
+      window.pointCloudCanvas.style.opacity = 1.0;
+            //window.pointCloudCanvas.hasFocus = false;
+      
+      window.pointCloudCanvas.style.zIndex = -1;
+      window.museumCanvas.style.zIndex = 1;
+//      window.pointCloudCanvas.onclick = function(){alert('f');};
+      
     }
 
     noStroke();
@@ -485,5 +443,102 @@ void draw()
       }
     }
   }  
-//  document.getElementById('debug').innerHTML = Math.floor(frameRate);
+  document.getElementById('debug').innerHTML = Math.floor(frameRate);
+}
+
+
+function a(cloudPath){
+
+  var cloud;
+
+  var zoomed = -50;
+  var rot = [0, 0];
+  
+  // Don't waste cycles rendering static point clouds
+  // only render if the object is being transformed
+  // by the user.
+  var curCoords = [0, 0];
+  var buttonDown = false;
+  var scrolled = false;
+  
+  if(!window.ps){
+    window.ps = new PointStream();
+    ps = window.ps;
+    ps.setup(document.getElementById('xbps'));
+    ps.pointSize(3);
+    ps.background([0, 0, 0, 0.5]);    
+  }
+  // Center the XBPS canvas in the users window
+  pointCloudCanvas.style.height = museumCanvas.height - 50;
+  var top = window.innerHeight/2 - parseInt(pointCloudCanvas.style.height)/2;
+  pointCloudCanvas.style.top = top + "px";
+
+  // make it square
+  pointCloudCanvas.style.width = pointCloudCanvas.style.height;
+  var left = window.innerWidth/2 - parseInt(pointCloudCanvas.style.width)/2;
+  pointCloudCanvas.style.left = left + "px";
+
+
+  ps.onMouseScroll = function(amt){
+    zoomed += amt * 1.0;
+    scrolled = true;
+  };
+  
+  ps.onKeyDown = function(){
+//  console.log(window.pointCloudCanvas.onClick);
+window.pointCloudCanvas.onkeypressed = function(){alert('d');};
+
+//   = function(){alert('f');};
+  
+  //var kb = window.kb;
+
+  if(keyboard.isKeyDown(37) || keyboard.isKeyDown(65) ||
+     keyboard.isKeyDown(39) || keyboard.isKeyDown(68) ||
+     keyboard.isKeyDown(38) || keyboard.isKeyDown(87) || 
+     keyboard.isKeyDown(40) || keyboard.isKeyDown(83))
+    {
+    console.log('d');
+    }
+    console.log('dd');
+  }
+  
+  ps.onMousePressed = function mousePressed(){
+    curCoords[0] = window.ps.mouseX;
+    curCoords[1] = window.ps.mouseY;
+    buttonDown = true;
+  };
+  
+  ps.onMouseReleased = function(){
+    buttonDown = false;
+  };
+
+  ps.onRender = function(){
+  
+    if(scrolled || (buttonDown && (ps.mouseX != curCoords[0] ||
+      ps.mouseY != curCoords[1]))){
+    
+      var deltaX = ps.mouseX - curCoords[0];
+      var deltaY = ps.mouseY - curCoords[1];
+  
+      if(buttonDown){
+        rot[0] += deltaX / ps.width * 5;
+        rot[1] += deltaY / ps.height * 5;
+        
+        curCoords[0] = ps.mouseX;
+        curCoords[1] = ps.mouseY;
+      }
+
+      ps.translate(0, 0, zoomed);
+      
+      ps.rotateY(rot[0]);
+      ps.rotateX(rot[1]);
+      
+      var center = cloud.getCenter();
+      ps.translate(-center[0], -center[1], -center[2]);
+
+      ps.clear();
+      ps.render(cloud);
+    }
+  };
+  cloud = ps.load(cloudPath);
 }
