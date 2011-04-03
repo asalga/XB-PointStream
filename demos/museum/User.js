@@ -13,7 +13,7 @@ class User{
   private float rot;
 
   public User(){
-    position = new PVector(0, 3, 10);
+    position = new PVector(0, 3, 35);
     direction = new PVector(0, 0, 1);
     
     turnSpeed = DEF_USER_TURN_SPEED;

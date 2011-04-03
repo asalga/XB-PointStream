@@ -4,14 +4,8 @@
 var userMoving = false;
 var firstTime = true;
 
-window.ps;
-
-/*
-var fading = false;
-var fadeValue = 0;
-var fadingPointCloud = false;
-*/
-var XBPSHasFocus = false;
+var inPodiumRange = false;
+var closeToPodium = false;
 
 float lastTime = 0.0f;
 
@@ -19,11 +13,12 @@ User user;
 Keyboard keyboard;
 OBJModel podium;
 
+window.ps;
 window.pointCloudCanvas;
 window.museumCanvas;
 
 ArrayList walls;
-ArrayList easels;
+ArrayList podiums;
 
 ///////////////////////////
 
@@ -38,10 +33,21 @@ public void drawFloor(){
   endShape();
 }
 
+var keysDown = new Array(128);
+
+window.addEventListener('keydown', function(e){
+  keysDown[e.keyCode] = true;
+},false);
+
+window.addEventListener('keyup', function(e){
+  keysDown[e.keyCode] = false;
+},false);
+
+
 /*
   Podium for a museum
 */
-public class Easel{
+public class Podium{
   private Vector position;
   private Vector direction;
   private PImage img;
@@ -51,14 +57,13 @@ public class Easel{
   private Plane preview;
   var func;
 
-  public Easel(){
+  public Podium(){
     isDrawingCloud = false;
     preview = new Plane();
   }
   
   void setCloud(String s){
     cloud = s;
-    console.log(cloud);
   }
   
   boolean drawingCloud(){
@@ -108,11 +113,9 @@ public class Easel{
   
   void endDrawing(){
    if(window.ps && isDrawingCloud){
-//     console.log("end Drawing...");
-      //fadeValue = 1.0;
       window.ps.stop(cloud);
+      window.ps.clear();
       window.ps.onRender = function(){};
-     // window.ps = null;
     }
   }
   
@@ -171,8 +174,7 @@ public class Plane{
     popMatrix();
   }
   
-  void update(float deltaTime){
-  }
+  void update(float deltaTime){}
 }
 
 void setup()
@@ -199,7 +201,7 @@ void setup()
   window.kb = keyboard;
   user = new User();
   
-  easels = new ArrayList();
+  podiums = new ArrayList();
   walls = new ArrayList();
 
   for(int i = 0 ; i < 10; i++){
@@ -240,31 +242,31 @@ void setup()
     walls.add(wall);
   }
 
-  // center
-  easel1 = new Easel();
-  easel1.setPosition(new PVector(0, 5, 0));
-  easel1.setImage(acornImg);
-  easel1.setCloud("../../clouds/acorn.asc");
-  easel1.setPointCloudRendering(a);
-  easels.add(easel1);
+  // center podium 
+  Podium podium1 = new Podium();
+  podium1.setPosition(new PVector(0, 5, 0));
+  podium1.setImage(acornImg);
+  podium1.setCloud("../../clouds/acorn.asc");
+  podium1.setPointCloudRendering(pointCloudCB);
+  podiums.add(podium1);
 
-  // front right
-  easel2 = new Easel();
-  easel2.setPosition(new PVector(60, 5, -60));
-  easel2.setDirection(-Math.PI/4);
-  easel2.setImage(mickeyImg);
-  easel2.setCloud("../../clouds/mickey.asc");
-  easel2.setPointCloudRendering(a);
-  easels.add(easel2);
+  // far right podium
+  Podium podium2 = new Podium();
+  podium2.setPosition(new PVector(60, 5, -60));
+  // podium2.setDirection(-Math.PI/4);
+  podium2.setImage(mickeyImg);
+  podium2.setCloud("../../clouds/mickey.asc");
+  podium2.setPointCloudRendering(pointCloudCB);
+  podiums.add(podium2);
 
-  // front left
-  easel3 = new Easel();
-  easel3.setPosition(new PVector(-60, 5, -60));
-  easel3.setDirection(Math.PI/4);
-  easel3.setImage(lionImg);
-  easel3.setCloud("../../clouds/lion.asc");
-  easel3.setPointCloudRendering(a);
-  easels.add(easel3);
+  // far left podium
+  podium3 = new Podium();
+  podium3.setPosition(new PVector(-60, 5, -60));
+  // podium3.setDirection(Math.PI/4);
+  podium3.setImage(lionImg);
+  podium3.setCloud("../../clouds/lion.asc");
+  podium3.setPointCloudRendering(pointCloudCB);
+  podiums.add(podium3);
   
   textureMode(NORMALIZED);
 }
@@ -276,7 +278,6 @@ void keyReleased(){
 void keyPressed(){
   keyboard.setKeyDown(keyCode);
 }
-
 
 void move(PVector position, PVector direction, deltaTime){ 
   // front
@@ -329,33 +330,33 @@ void move(PVector position, PVector direction, deltaTime){
 void update(float deltaTime){
   userMoving = false;
 
-  if(keyboard.isKeyDown(KEY_LEFT) || keyboard.isKeyDown(KEY_A) ){
+  if(keyboard.isKeyDown(KEY_LEFT) || keyboard.isKeyDown(KEY_A) ||
+    keysDown[37] || keysDown[65]){
     user.turnLeft(deltaTime);
     userMoving = true;
-    
+
+    // TODO:    
     // if the user clicked on the point cloud canvas  but then
     // pressed a key, assume they want to move away
-    //if(XBPSHasFocus){
-    //alert('f');
-    //}
-    
   }
-  else if(keyboard.isKeyDown(KEY_RIGHT) || keyboard.isKeyDown(KEY_D) ){
+  else if(keyboard.isKeyDown(KEY_RIGHT) || keyboard.isKeyDown(KEY_D) ||
+      keysDown[39] || keysDown[68]){
     user.turnRight(deltaTime);
     userMoving = true;
   }
-  if(keyboard.isKeyDown(KEY_UP) || keyboard.isKeyDown(KEY_W) ){    
+  if(keyboard.isKeyDown(KEY_UP) || keyboard.isKeyDown(KEY_W) ||
+     keysDown[38] || keysDown[87]){
     PVector position = user.getPosition();
     PVector direction = user.getDirection();
     move(position, direction, deltaTime);
   }
-  if(keyboard.isKeyDown(KEY_DOWN) || keyboard.isKeyDown(KEY_S) ){
+  if(keyboard.isKeyDown(KEY_DOWN) || keyboard.isKeyDown(KEY_S) ||
+     keysDown[40] || keysDown[83]){
     PVector position = user.getPosition();
     PVector direction = user.getDirection();
     direction = new PVector(-direction.x, direction.y, -direction.z);
     move(position, direction, deltaTime);
   }
-  //user.update(deltaTime);
 }
 
 void draw()
@@ -363,7 +364,8 @@ void draw()
   update((millis() - lastTime) / 1000.0f);
   lastTime = millis();
   
-  if(firstTime || userMoving){
+  // frameCount hack to force drawing podiums
+  if(firstTime || userMoving || frameCount < 10){
     firstTime = false;
     camera(0.0, 0.0, 0.0, 0.0, 0.0, -0.000001, 0, 1, 0);	
 
@@ -377,61 +379,78 @@ void draw()
       translate(0, 10, 0);
       drawFloor();
     popMatrix();
+    
+    // draw all the podiums
+    for(int i = 0; i < podiums.size(); i++){ 
+      Podium p = (Podium)podiums.get(i);
+      p.draw();
+    }
 
-    //
-    var closeToEasel = false;
-    int i = 0;
-    int index = -1;
-    for(; i < easels.size(); i++){ 
-      Easel e = (Easel)easels.get(i);
-      e.draw();
-      PVector easelPos = e.getPosition();
+    // check again to see if the user is close to the podium
+    if(closeToPodium === false){
+      int i = 0;
+      int index = -1;
+      for(; i < podiums.size(); i++){ 
+        Podium e = (Podium)podiums.get(i);
+        PVector podiumPos = e.getPosition();
 
-      // check to see if the user is near any of the easels
-      if(mag(pos.x - easelPos.x, pos.z - easelPos.z) <= 8)
-      {
-        closeToEasel = true;
-        index = i;
+        // check to see if the user is near any of the podiums
+        if(mag(pos.x - podiumPos.x, pos.z - podiumPos.z) <= 8)
+        {
+          closeToPodium = true;
+          index = i;
+        }
+      }
+      if(closeToPodium){
+        window.museumCanvas.style.opacity = 0.3;
+        window.pointCloudCanvas.style.opacity = 1;
+        window.pointCloudCanvas.focus();
+
+        window.pointCloudCanvas.style.zIndex = 1;
+        window.museumCanvas.style.zIndex = -1;
+      
+        closeToPodium = true;
+        if(index != -1){
+          Podium e = (Podium)podiums.get(index);
+          e.startDrawing();
+        }
       }
     }
     
-    if(closeToEasel === false){
-     for(int j = 0; j < easels.size(); j++){ 
-        Easel e = (Easel)easels.get(j);
-        e.endDrawing();
-        window.museumCanvas.focus();
-     }
-    }
-      
-    if(closeToEasel){
-      window.museumCanvas.style.opacity = 0.3;
-      window.pointCloudCanvas.style.opacity = 1;
-      window.pointCloudCanvas.focus();
-//      window.pointCloudCanvas.hasFocus = true;
-      XBPSHasFocus = true;
-//      alert(window.pointCloudCanvas.focus);
-
-      window.pointCloudCanvas.style.zIndex = 1;
-      window.museumCanvas.style.zIndex = -1;
-      
-      closeToEasel = true;
-      if(index != -1){
-        Easel e = (Easel)easels.get(index);
-        e.startDrawing();
-      }
-
-    }
-    
-    // If we aren't close to a podium, hide the xbps canvas
+    // check to see if the user is leaving a podium
     else{
-      window.museumCanvas.style.opacity = 1.0;
-      window.pointCloudCanvas.style.opacity = 1.0;
-            //window.pointCloudCanvas.hasFocus = false;
-      
-      window.pointCloudCanvas.style.zIndex = -1;
-      window.museumCanvas.style.zIndex = 1;
-//      window.pointCloudCanvas.onclick = function(){alert('f');};
-      
+      if(closeToPodium === true){
+        var stillNear = false;
+
+        for(int i = 0; i < podiums.size(); i++){ 
+          Podium e = (Podium)podiums.get(i);
+          PVector podiumPos = e.getPosition();
+
+          // check to see if the user is near any of the podiums
+          if(mag(pos.x - podiumPos.x, pos.z - podiumPos.z) <= 8)
+          {
+            stillNear = true;
+            break;
+          }
+        }
+        
+        // left the podium area
+        if(stillNear == false){
+          for(int j = 0; j < podiums.size(); j++){ 
+            Podium e = (Podium)podiums.get(j);
+            e.endDrawing();
+          }
+          
+          closeToPodium = false;
+          // If we aren't close to a podium, hide the xbps canvas
+          window.museumCanvas.focus();
+          window.museumCanvas.style.opacity = 1.0;
+          window.pointCloudCanvas.style.opacity = 1.0;
+          
+          window.pointCloudCanvas.style.zIndex = -1;
+          window.museumCanvas.style.zIndex = 1;
+        } 
+      }
     }
 
     noStroke();
@@ -443,14 +462,13 @@ void draw()
       }
     }
   }  
-  document.getElementById('debug').innerHTML = Math.floor(frameRate);
+  document.getElementById('pjsFPS').innerHTML = Math.floor(frameRate);  
 }
 
 
-function a(cloudPath){
-
-  var cloud;
-
+function pointCloudCB(cloudPath){
+  var cloud = null;
+  var firstTime = true;
   var zoomed = -50;
   var rot = [0, 0];
   
@@ -462,12 +480,12 @@ function a(cloudPath){
   var scrolled = false;
   
   if(!window.ps){
-    window.ps = new PointStream();
-    ps = window.ps;
+    ps = window.ps = new PointStream();
     ps.setup(document.getElementById('xbps'));
-    ps.pointSize(3);
+    ps.pointSize(5);
     ps.background([0, 0, 0, 0.5]);    
   }
+  
   // Center the XBPS canvas in the users window
   pointCloudCanvas.style.height = museumCanvas.height - 50;
   var top = window.innerHeight/2 - parseInt(pointCloudCanvas.style.height)/2;
@@ -478,29 +496,18 @@ function a(cloudPath){
   var left = window.innerWidth/2 - parseInt(pointCloudCanvas.style.width)/2;
   pointCloudCanvas.style.left = left + "px";
 
-
   ps.onMouseScroll = function(amt){
     zoomed += amt * 1.0;
     scrolled = true;
   };
   
-  ps.onKeyDown = function(){
-//  console.log(window.pointCloudCanvas.onClick);
-window.pointCloudCanvas.onkeypressed = function(){alert('d');};
-
-//   = function(){alert('f');};
   
-  //var kb = window.kb;
-
+/*
   if(keyboard.isKeyDown(37) || keyboard.isKeyDown(65) ||
      keyboard.isKeyDown(39) || keyboard.isKeyDown(68) ||
      keyboard.isKeyDown(38) || keyboard.isKeyDown(87) || 
      keyboard.isKeyDown(40) || keyboard.isKeyDown(83))
-    {
-    console.log('d');
-    }
-    console.log('dd');
-  }
+    {*/
   
   ps.onMousePressed = function mousePressed(){
     curCoords[0] = window.ps.mouseX;
@@ -513,10 +520,20 @@ window.pointCloudCanvas.onkeypressed = function(){alert('d');};
   };
 
   ps.onRender = function(){
-  
-    if(scrolled || (buttonDown && (ps.mouseX != curCoords[0] ||
-      ps.mouseY != curCoords[1]))){
-    
+
+    // render if we are still streaming or if the user is transforming 
+    // the point cloud
+
+    // if the cloud downloaded too quickly, we'll need to test
+    // for that case by 
+   if( (cloud.status === 3 && firstTime) || 
+        cloud.status === 2  || scrolled || 
+       (buttonDown && (ps.mouseX != curCoords[0] || ps.mouseY != curCoords[1]))){
+      
+      if(cloud.status === 3){
+        firstTime = false;
+      }
+      
       var deltaX = ps.mouseX - curCoords[0];
       var deltaY = ps.mouseY - curCoords[1];
   
@@ -529,7 +546,7 @@ window.pointCloudCanvas.onkeypressed = function(){alert('d');};
       }
 
       ps.translate(0, 0, zoomed);
-      
+
       ps.rotateY(rot[0]);
       ps.rotateX(rot[1]);
       
