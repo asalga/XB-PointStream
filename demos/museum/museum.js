@@ -365,7 +365,7 @@ void draw()
   lastTime = millis();
   
   // frameCount hack to force drawing podiums
-  if(firstTime || userMoving || frameCount < 10){
+  if(firstTime || userMoving || frameCount < 50){
     firstTime = false;
     camera(0.0, 0.0, 0.0, 0.0, 0.0, -0.000001, 0, 1, 0);	
 
