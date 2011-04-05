@@ -1,5 +1,5 @@
 // scanlines
-var scan_fragShader = 
+var scanlineFrag = 
 "#ifdef GL_ES\n" +
 "  precision highp float;\n" +
 "#endif\n" +
@@ -10,7 +10,7 @@ var scan_fragShader =
 "  gl_FragColor = frontColor;" +
 "}";
 
-var scan_vertShader = 
+var scanlineVert = 
 "varying vec4 frontColor;" +
 
 "attribute vec3 ps_Vertex;" +

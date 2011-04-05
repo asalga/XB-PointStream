@@ -52,10 +52,10 @@ function start(){
   ps.onRender = render;
   addEventListener("MozOrientation", handleOrientation, true);
 
-  var progObj = ps.createProgram(getShaderSrc("shader-vs"), getShaderSrc("shader-fs"));
+  var progObj = ps.createProgram(fixedFunctionVert, fixedFunctionFrag);
   ps.useProgram(progObj);
   ps.pointSize(10);
   
-  ps.uniformf("lightPos", [0, 50, 10]);
+  //ps.uniformf("lightPos", [-900, 50, 100]);
   mickey = ps.load("../../clouds/mickey.asc");
 }
