@@ -461,8 +461,7 @@ void draw()
         wall.draw();
       }
     }
-  }  
-  document.getElementById('pjsFPS').innerHTML = Math.floor(frameRate);  
+  }
 }
 
 
