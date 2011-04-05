@@ -414,9 +414,9 @@ var PSIParser = (function() {
         		      norms[i+2] = nvec[2]/dNorm;
 								}
               }
-              else{ alert("Nope"); }
+              else{ /*alert("Nope");*/ }
               if(i < 100){
-                console.log(norms[i] + " " + norms[i+1] + " " + norms[i+2] + "\n");
+                //console.log(norms[i] + " " + norms[i+1] + " " + norms[i+2] + "\n");
               }
             }
           }
