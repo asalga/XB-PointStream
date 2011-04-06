@@ -180,7 +180,6 @@ var PSIParser = (function() {
     var parsedNorms = [];
     
     var firstRun = true;
-    var firstParserRun = true;
     
     //
     var xMax = 0;
@@ -332,7 +331,7 @@ var PSIParser = (function() {
           AJAX.firstLoad(textData);
         }
         
-        endTag = "</Level>";
+        endTag = endLvlStr;
         tagExists = textData.indexOf(bgnTag);
         var infoEnd = textData.indexOf(endTag);
         var infoStart;
@@ -358,9 +357,9 @@ var PSIParser = (function() {
         }
         // otherwise the onprogress event was called at least once,
         // that means we need to get the data from a specific point to the end.
-        /*else if(textData.length - AJAX.lastNewLineIndex > 1){
-          chunk = textData.substring(AJAX.lastNewLineIndex, textData.length);
-        }*/
+        else if(infoEnd !== -1){
+          var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
+        }
 
         AJAX.parseChunk(chunk);
 
@@ -523,7 +522,7 @@ var PSIParser = (function() {
             AJAX.firstLoad(textData);
           }
           
-          endTag = "</Level>";
+          endTag = endLvlStr;
           tagExists = textData.indexOf(bgnTag);
           var infoEnd = textData.indexOf(endTag);
           var infoStart;
@@ -544,21 +543,9 @@ var PSIParser = (function() {
           }
           
           var totalPointsInBytes = (numTotalPoints * 12) + infoStart;
-          
-          // if the status just changed and we finished downloading the
-          // file, grab everyting until the end. If there is only a bunch
-          // of whitespace, make a note of that and don't bother parsing.
-          /*if(AJAX.readyState === XHR_DONE){
-            var chunk = textData.substring(AJAX.startOfNextChunk, infoEnd);
-            AJAX.parseChunk(chunk);
-            // If the last chunk doesn't have any digits (just spaces)
-            // don't parse it.
-            //if(chunk.match(/[0-9]/)){
-            //  AJAX.parseChunk(chunk);
-            //}
-          }
+
           // handles parsing up to the end of position and colors
-          else*/ if((totalPointsInBytes > AJAX.startOfNextChunk) && (totalPointsInBytes < AJAX.last12Index)){
+          if((totalPointsInBytes > AJAX.startOfNextChunk) && (totalPointsInBytes < AJAX.last12Index)){
             var chunk	= textData.substring(AJAX.startOfNextChunk, totalPointsInBytes);
             AJAX.startOfNextChunk = totalPointsInBytes;
             
