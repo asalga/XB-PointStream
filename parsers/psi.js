@@ -360,7 +360,7 @@ var PSIParser = (function() {
         // that means we need to get the data from a specific point to the end.
         /*else if(textData.length - AJAX.lastNewLineIndex > 1){
           chunk = textData.substring(AJAX.lastNewLineIndex, textData.length);
-        }
+        }*/
 
         AJAX.parseChunk(chunk);
 
