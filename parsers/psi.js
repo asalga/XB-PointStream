@@ -365,7 +365,7 @@ var PSIParser = (function() {
           
           var numBytes = chunk.length;
 
-					if(numVerts > 0){
+          if(numVerts > 0 && !normalsPresent){
             var verts = new Float32Array(numVerts * 3);
             var cols = null;
             var norms = null;
@@ -376,7 +376,7 @@ var PSIParser = (function() {
           }
           
           if(normalsPresent){
-            norms = new Float32Array(numVerts * 3);
+            norms = new Float32Array(numBytes);
             var nzsign, nx11bits, ny11bits, ivalue;
             var nvec = new Float32Array(3);
             
