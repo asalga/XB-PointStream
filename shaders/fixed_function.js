@@ -1,4 +1,4 @@
-var acornFragShader = 
+var fixedFunctionFrag = 
 "#ifdef GL_ES\n" +
 "  precision highp float;\n" +
 "#endif\n" +
@@ -8,7 +8,7 @@ var acornFragShader =
 "  gl_FragColor = frontColor;" +
 "}";
 
-var acornVertShader = 
+var fixedFunctionVert = 
 "varying vec4 frontColor;" +
 
 "attribute vec3 ps_Vertex;" +
@@ -17,6 +17,8 @@ var acornVertShader =
 
 "uniform float ps_PointSize;" +
 "uniform vec3 ps_Attenuation;" +
+
+"uniform vec3 lightPos;" +
 
 "uniform mat4 ps_ModelViewMatrix;" +
 "uniform mat4 ps_ProjectionMatrix;" +

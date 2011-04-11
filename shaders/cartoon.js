@@ -1,4 +1,4 @@
-var mickeyFragShader = 
+var cartoonFrag = 
 "#ifdef GL_ES\n" +
 "  precision highp float;\n" +
 "#endif\n" +
@@ -8,7 +8,7 @@ var mickeyFragShader =
 "  gl_FragColor = frontColor;" +
 "}";
 
-var mickeyVertShader = 
+var cartoonVert = 
 "uniform bool uOutline;" +
 "varying vec4 frontColor;" +
 

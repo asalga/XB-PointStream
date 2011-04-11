@@ -139,6 +139,6 @@ function start(){
   mickey = ps.load("../../clouds/mickey.asc");
   eggenburg = ps.load("../../clouds/eggenburg.asc");
   
-  acornProgObj = ps.createProgram(acornVertShader, acornFragShader);
-  mickeyProgObj = ps.createProgram(mickeyVertShader, mickeyFragShader);  
+  acornProgObj = ps.createProgram(fixedFunctionVert, fixedFunctionFrag);
+  mickeyProgObj = ps.createProgram(cartoonVert, cartoonFrag);  
 }
