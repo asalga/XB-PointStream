@@ -1594,8 +1594,20 @@ var PointStream = (function() {
       
       lastTime = new Date();
       frames = 0;
+
+      // if the canvas does not have dimension attributes,
+      // use the default canvas dimensions.      
+      var cvsWidth = canvas.getAttribute("width");
+      var cvsHeight = canvas.getAttribute("height");
       
-      this.resize(canvas.getAttribute("width"), canvas.getAttribute("height"));
+      if(cvsWidth == null){
+        cvsWidth = 300;
+      }
+      if(cvsHeight == null){
+        cvsHeight = 150;
+      }
+
+      this.resize(cvsWidth, cvsHeight);
       
       ctx.enable(ctx.DEPTH_TEST);
 
