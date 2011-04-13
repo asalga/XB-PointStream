@@ -6,7 +6,7 @@
   @class XB PointStream is a WebGL library designed to efficiently stream and
   render point cloud data in a canvas element.
   
-  @version 0.5
+  @version 0.6
 */
 var PointStream = (function() {
 
@@ -42,9 +42,10 @@ var PointStream = (function() {
     
     var registeredParsers = {};
     registeredParsers["asc"] = ASCParser;
-    //registeredParsers["psi"] = PSIParser;
+    registeredParsers["psi"] = PSIParser;
+    registeredParsers["pts"] = PTSParser;
     
-    const VERSION  = "0.5";
+    const VERSION  = "0.6";
     
     // file status of point clouds
     const FILE_NOT_FOUND = -1;
@@ -759,6 +760,7 @@ var PointStream = (function() {
       
       The parser will call this when it is done parsing a chunk of data.
       
+      @param {} parser -
       @param {Object} attributes - contains name/value pairs of arrays
       
       For example, if using a custom parser, the attributes may be:
@@ -775,15 +777,37 @@ var PointStream = (function() {
       pointClouds[i].progress = parser.progress;
       pointClouds[i].numPoints = parsers[i].numParsedPoints;
       
-      for(var semantic in attributes){
+      // assume the first attribute is vertex data
+      var gotVertexData = false;
       
-       // if not yet created  
-       if(!pointClouds[i].attributes[semantic]){
+      for(var semantic in attributes){
+        
+        // if not yet created
+        if(!pointClouds[i].attributes[semantic]){
           pointClouds[i].attributes[semantic] = [];
         }
         
         var buffObj = createBufferObject(attributes[semantic]);
         pointClouds[i].attributes[semantic].push(buffObj);
+        
+        if(gotVertexData === false){
+          gotVertexData = true;
+          var addedVertices = [0,0,0];
+          
+          for(var j = 0; j < attributes[semantic].length; j+= 3){
+            addedVertices[0] += attributes[semantic][j];
+            addedVertices[1] += attributes[semantic][j+1];
+            addedVertices[2] += attributes[semantic][j+2];
+          }
+
+          pointClouds[i].addedVertices[0] += addedVertices[0];
+          pointClouds[i].addedVertices[1] += addedVertices[1];
+          pointClouds[i].addedVertices[2] += addedVertices[2];
+          
+          pointClouds[i].center[0] = pointClouds[i].addedVertices[0] / pointClouds[i].numPoints;
+          pointClouds[i].center[1] = pointClouds[i].addedVertices[1] / pointClouds[i].numPoints;
+          pointClouds[i].center[2] = pointClouds[i].addedVertices[2] / pointClouds[i].numPoints;
+        }
       }
     }
         
@@ -825,8 +849,6 @@ var PointStream = (function() {
         }
       }
       
-      // !! fix
-      pc.center = getAverage(verts);
       pc.status = COMPLETE;
       pc.progress = parser.progress;
     }
@@ -1252,7 +1274,19 @@ var PointStream = (function() {
       canvas.style.width = width = pWidth;
       canvas.style.height = height = pHeight;
       
-      ctx = canvas.getContext("experimental-webgl");
+      var contextNames = ["webgl","experimental-webgl", "moz-webgl","webkit-3d"];
+      
+      for(var i = 0; i < contextNames.length; i++){
+        try{
+          ctx = canvas.getContext(contextNames[i], {"antialias":false});
+          if(ctx){
+            break;
+          }
+        }catch(e){}
+      }
+      if(!ctx){
+        this.println("Your browser does not support WebGL.");
+      }
 
       // parseInt hack used for Chrome/Chromium
       ctx.viewport(0, 0, parseInt(pWidth), parseInt(pHeight));
@@ -1560,8 +1594,20 @@ var PointStream = (function() {
       
       lastTime = new Date();
       frames = 0;
+
+      // if the canvas does not have dimension attributes,
+      // use the default canvas dimensions.      
+      var cvsWidth = canvas.getAttribute("width");
+      var cvsHeight = canvas.getAttribute("height");
       
-      this.resize(canvas.getAttribute("width"), canvas.getAttribute("height"));
+      if(cvsWidth == null){
+        cvsWidth = 300;
+      }
+      if(cvsHeight == null){
+        cvsHeight = 150;
+      }
+
+      this.resize(cvsWidth, cvsHeight);
       
       ctx.enable(ctx.DEPTH_TEST);
 
@@ -1572,8 +1618,22 @@ var PointStream = (function() {
       ctx.useProgram(currProgram);
       setDefaultUniforms();
       
-      // our render loop will call the users render function
-      setInterval(renderLoop, 10, this);
+      window.PSrequestAnimationFrame = (function(){
+        return window.requestAnimationFrame ||
+               window.webkitRequestAnimationFrame ||
+               window.mozRequestAnimationFrame ||
+               window.oRequestAnimationFrame ||
+               window.msRequestAnimationFrame ||
+               function(callback, cvs){
+                 window.setTimeout(callback, 1000.0/60.0);
+               };
+      })();
+
+      // call the user's render function
+      (function animationLoop(){
+        renderLoop();
+        PSrequestAnimationFrame(animationLoop, canvas);
+      })();
 
       attach(cvs, "mouseup", mouseReleased);
       attach(cvs, "mousedown", mousePressed);
@@ -1603,6 +1663,19 @@ var PointStream = (function() {
     this.pointSize = function(size){
       uniformf(currProgram, "ps_PointSize", size);
     };
+
+    /**
+    */
+    this.stop = function(path){
+      // get the parser associated with this path
+      
+      // tell the parser to stop
+      for(var i = 0; i < parsers.length; i++){
+        if(parsers[i].cloudName === path){
+          parsers[i].stop();
+        }
+      }
+    };
     
     /**
       Begins downloading and parsing a point cloud object.
@@ -1623,10 +1696,15 @@ var PointStream = (function() {
         var parser = new parserObject({ start: startCallback,
                                         parse: parseCallback,
                                         end: loadedCallback});
+
+        // The parser needs to keep track of the file
+        // it is loading since the user may want to
+        // later cancel loading by file path.
+        parser.cloudName = path;
         
         // !! fix (private vars are visible in user script)
         var newPointCloud = {
-
+          
           VBOs: [],
           attributes: {},
           
@@ -1647,6 +1725,9 @@ var PointStream = (function() {
             return this.status;
           },
           
+          // this vector will be continuously incremented
+          // as more data is downloaded.
+          addedVertices: [0, 0, 0],
           center: [0, 0, 0],
           /**
             @private until fixed

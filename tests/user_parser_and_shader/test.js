@@ -47,7 +47,7 @@ function start(){
   ps.onRender = render;
   ps.background([1, 1, 1, 1]);
   
-  progObj = ps.createProgram(vertShader, fragShader);
+  progObj = ps.createProgram(reflectionVert, reflectionFrag);
   ps.useProgram(progObj);
   ps.pointSize(10);
 

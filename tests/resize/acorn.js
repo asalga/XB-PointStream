@@ -10,8 +10,24 @@ window.onresize = function(){
 };
 
 function resize(){
-  ps.resize(window.innerWidth, window.innerHeight);
-  ps.background([0, 0, 0, 0.5]);
+  var windowHeight = window.innerHeight;
+  var windowWidth = window.innerWidth;
+  
+  var cvs = document.getElementById('canvas');
+  
+  var cvsWidth = parseInt(cvs.style.width);
+  var cvsHeight = parseInt(cvs.style.height);
+ 
+  var smallest = windowHeight < windowWidth ? windowHeight : windowWidth;
+  
+  // make it square
+  cvs.style.height = cvs.style.width = smallest;
+
+  cvs.style.top = (windowHeight/2 - smallest/2) + "px";
+  cvs.style.left = (windowWidth/2 - cvsWidth/2) + "px";
+
+  ps.resize(smallest, smallest);
+  ps.background([0.5, 0.5, 0.5, 1]);
   ps.pointSize(5);
 }
 
@@ -55,8 +71,10 @@ function start(){
   ps = new PointStream(); 
   ps.setup(document.getElementById('canvas'));
   
+  // forse styles to be set
   resize();
-
+  resize();
+  
   ps.onRender = render;
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
