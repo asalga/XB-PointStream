@@ -284,7 +284,9 @@ var PSIParser = (function() {
           tempBuffer.set(arr.subarray(0, amtToFill), tempBufferOffset);
           
           switch(AttribID){
-            case 1: parse(AJAX.parser, {"ps_Vertex": tempBuffer});break;
+            case 1: numParsedPoints += BUFFER_SIZE/3;
+                    parse(AJAX.parser, {"ps_Vertex": tempBuffer});
+                    break;
             case 2: parse(AJAX.parser, {"ps_Color":  tempBuffer});break;
             case 3: parse(AJAX.parser, {"ps_Normal": tempBuffer});break;
           }
@@ -302,7 +304,9 @@ var PSIParser = (function() {
           buffer.set(arr.subarray(counter, counter + BUFFER_SIZE));
  
           switch(AttribID){                    
-            case 1: parse(AJAX.parser, {"ps_Vertex": buffer});break;
+            case 1: numParsedPoints += BUFFER_SIZE/3;
+                    parse(AJAX.parser, {"ps_Vertex": buffer});
+                    break;
             case 2: parse(AJAX.parser, {"ps_Color":  buffer});break;
             case 3: parse(AJAX.parser, {"ps_Normal": buffer});break;
           }
@@ -448,6 +452,7 @@ var PSIParser = (function() {
         if(tempBufferV && tempBufferOffsetV > 0){
           // Only send the data if there's actually something to send.
           var lastBufferV = tempBufferV.subarray(0, tempBufferOffsetV);
+          numParsedPoints += tempBufferOffsetV/3;
           parse(AJAX.parser, {"ps_Vertex": lastBufferV});
         }
         
@@ -479,8 +484,6 @@ var PSIParser = (function() {
         if(chunk){
         
           var numVerts = chunk.length/12;
-          numParsedPoints += numVerts;
-          
           var numBytes = chunk.length;
           
           //
