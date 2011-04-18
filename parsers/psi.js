@@ -494,7 +494,9 @@ var PSIParser = (function() {
             verts = new Float32Array(numVerts * 3);
           }
 
-          if(colorsPresent){
+          // !!! We need to fix this hack
+          if(colorsPresent && numVerts > 0){
+            numVerts = Math.floor(numVerts);
             cols = new Float32Array(numVerts * 3);
           }
           
