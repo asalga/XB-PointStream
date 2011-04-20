@@ -1,4 +1,4 @@
-var vertShader = 
+var reflectionVert = 
 "varying vec4 frontColor;" +
 
 "attribute vec3 ps_Vertex;" +
@@ -49,7 +49,7 @@ var vertShader =
 "  gl_Position = ps_ProjectionMatrix * ecPos4;" +
 "}";
 
-var fragShader = 
+var reflectionFrag = 
 "#ifdef GL_ES\n" +
 "  precision highp float;\n" +
 "#endif\n" +

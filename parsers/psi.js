@@ -2,14 +2,34 @@
   Copyright (c) 2010  Seneca College
   MIT LICENSE
 
-  Version:  0.1
+  Version:  0.6
   Author:   Mickael Medel
             asydik.wordpress.com
-  Date:     February 2011
+  Created:  February 2011
+  Updated:  April 2011
   
   Notes:
   This parser parses .PSI filetypes. These files are Arius3D Proprietary
   files which have their data stored in one of the following ways:
+  
+  <xml tags>
+  <that have relevant>
+  <information= about the file>
+  Binary Data...
+  (3 bytes for x, 3 bytes for y, 3 bytes for z and 3 bytes for rgb)
+  ...
+  ...
+  ...
+  ...
+  location and color data end for points
+  normal data start
+  (every 3 bytes is compressed normal data)
+  ...
+  ...
+  ...
+  <more tags>
+  <to close opening tags>
+  <and provide more information>
 */
 
 var PSIParser = (function() {
@@ -164,7 +184,6 @@ var PSIParser = (function() {
     var parsedNorms = [];
     
     var firstRun = true;
-    var firstParserRun = true;
     
     //
     var xMax = 0;
@@ -294,6 +313,8 @@ var PSIParser = (function() {
         to be downloaded
       */
       AJAX.onloadstart = function(evt){
+      
+        // values to be used in decompression of PSI
         sfactor = Math.pow(2.0, 24.0);
         nfactor = -0.5 + Math.pow(2.0, 10.0);
         
@@ -309,15 +330,19 @@ var PSIParser = (function() {
         var textData = AJAX.responseText;
         var chunkLength = textData.length;
         
+        // checks if this is the first run
         if(firstRun){
           AJAX.firstLoad(textData);
         }
         
-        endTag = "</Level>";
+        // checks if begin or end tags can be found using rgx
+        endTag = endLvlStr;
         tagExists = textData.indexOf(bgnTag);
         var infoEnd = textData.indexOf(endTag);
         var infoStart;
         
+        // if the bgnTag exists then set the startOfNextChunk
+        // to the end of the bgnTag + 2 for offset values
         if(tagExists !== -1){
           tagLen = bgnTag.length + 2;               // +2 for offset values
           infoStart = tagExists + tagLen;
@@ -326,9 +351,12 @@ var PSIParser = (function() {
           }
         }
         
+        // find the last multiple of 12 in the chunk
+        // this is because of the format shown at the top of this parser
         var last12 = Math.floor((chunkLength - infoStart) / 12);
         AJAX.last12Index = ((last12 * 12) + infoStart);
         
+        // if the end tag was found
         if(infoEnd !== -1){
           AJAX.last12Index = infoEnd;
         }
@@ -339,16 +367,11 @@ var PSIParser = (function() {
         }
         // otherwise the onprogress event was called at least once,
         // that means we need to get the data from a specific point to the end.
-        /*else if(textData.length - AJAX.lastNewLineIndex > 1){
-          chunk = textData.substring(AJAX.lastNewLineIndex, textData.length);
+        // only called if the end tag was found
+        else if(infoEnd !== -1){
+          var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
         }
 
-        // if the last chunk doesn't have any digits (just spaces)
-        // don't parse it.
-        /*if(chunk && chunk.match(/[0-9]/)){
-          AJAX.parseChunk(chunk);
-        }*/
-        
         AJAX.parseChunk(chunk);
 
         progress = 1;
@@ -371,7 +394,7 @@ var PSIParser = (function() {
           
           var numBytes = chunk.length;
 
-					if(numVerts > 0){
+          if(numVerts > 0 && !normalsPresent){
             var verts = new Float32Array(numVerts * 3);
             var cols = null;
             var norms = null;
@@ -381,8 +404,12 @@ var PSIParser = (function() {
             cols = new Float32Array(numVerts * 3);
           }
           
+          // parsing normal values, not sure the logic behind it (as it was never provided)
+          // we take 3 bytes and apply some bit shifting operations on it
+          // we then take the results and multiply it to some set values
+          // the normals are the resulting values
           if(normalsPresent){
-            norms = new Float32Array(numVerts * 3);
+            norms = new Float32Array(numBytes);
             var nzsign, nx11bits, ny11bits, ivalue;
             var nvec = new Float32Array(3);
             
@@ -394,10 +421,10 @@ var PSIParser = (function() {
               
               if(nx11bits >= 0 && nx11bits < 2048){
               	if(ny11bits >= 0 && ny11bits < 2048){
-                  nvec[0] = (nx11bits/nfactor) - 1;
-                  nvec[1] = (ny11bits/nfactor) - 1;
+                  nvec[0] = (nx11bits/nfactor) - 1.0;
+                  nvec[1] = (ny11bits/nfactor) - 1.0;
                   
-      		        var nxnymag = (nvec[0]*nvec[0] + nvec[1]+nvec[1]);
+      		        var nxnymag = (nvec[0]*nvec[0] + nvec[1]*nvec[1]);
           		    if (nxnymag > 1){ nxnymag = 1; }
             		  if (nxnymag < -1){ nxnymag = -1; }
 		              nxnymag = 1 - nxnymag;
@@ -414,12 +441,11 @@ var PSIParser = (function() {
         		      norms[i+2] = nvec[2]/dNorm;
 								}
               }
-              else{ alert("Nope"); }
-              if(i < 100){
-                console.log(norms[i] + " " + norms[i+1] + " " + norms[i+2] + "\n");
-              }
             }
           }
+          // parsing xyz and rgb values, not sure behind the logic either
+          // 3 bytes are used for each x, y, z values
+          // each of the last 3 bytes of the 12 correspond to an rgb value
           else{
           	for(var i = 0, j = 0; i < numBytes; i+=12, j += 3){
             	verts[j] = ((xMax - xMin) * getXYZ(chunk, i)) / sfactor + xMin;
@@ -445,12 +471,16 @@ var PSIParser = (function() {
         }
       };
       
+      /**
+        First load of file...
+        obtains valuable information like the number of points in the file.
+      */
       AJAX.firstLoad = function(textData){
         var chunkLength = textData.length;
           
         var temp;
         
-        //numPtStr
+        //numPtStr - number of points in the file
         tagExists = textData.indexOf(numPtStr);
         if(tagExists !== -1){
           endTagExists = textData.indexOf(endXMLStr, tagExists);
@@ -461,7 +491,7 @@ var PSIParser = (function() {
         
         //sptSzStr
         
-        //posMinStr
+        //posMinStr - lowest value in the file (used for decompression)
         tagExists = textData.indexOf(posMinStr);
         if(tagExists !== -1){
           endTagExists = textData.indexOf(endXMLStr, tagExists);
@@ -472,7 +502,7 @@ var PSIParser = (function() {
           zMin = posMinArr[3] * 1;
         }
         
-        //posMaxStr
+        //posMaxStr - highest value in the file (used for decompression)
         tagExists = textData.indexOf(posMaxStr);
         if(tagExists !== -1){
           endTagExists = textData.indexOf(endXMLStr, tagExists);
@@ -504,15 +534,19 @@ var PSIParser = (function() {
           var textData = AJAX.responseText;
           var chunkLength = textData.length;
 
+          // checks if this is the first run
           if(firstRun){
             AJAX.firstLoad(textData);
           }
           
-          endTag = "</Level>";
+          // checks if begin or end tags can be found using rgx
+          endTag = endLvlStr;
           tagExists = textData.indexOf(bgnTag);
           var infoEnd = textData.indexOf(endTag);
           var infoStart;
           
+          // if the bgnTag exists then set the startOfNextChunk
+          // to the end of the bgnTag + 2 for offset values
           if(tagExists !== -1){
             tagLen = bgnTag.length + 2;               // +2 for offset values
             infoStart = tagExists + tagLen;
@@ -521,33 +555,25 @@ var PSIParser = (function() {
             }
           }
           
+          // find the last multiple of 12 in the chunk
+          // this is because of the format shown at the top of this parser
           var last12 = Math.floor((chunkLength - infoStart) / 12);
           AJAX.last12Index = ((last12 * 12) + infoStart);
           
+          // if the end tag was found
           if(infoEnd !== -1){
             AJAX.last12Index = infoEnd;
           }
           
           var totalPointsInBytes = (numTotalPoints * 12) + infoStart;
-          
-          // if the status just changed and we finished downloading the
-          // file, grab everyting until the end. If there is only a bunch
-          // of whitespace, make a note of that and don't bother parsing.
-          /*if(AJAX.readyState === XHR_DONE){
-            var chunk = textData.substring(AJAX.startOfNextChunk, infoEnd);
-            AJAX.parseChunk(chunk);
-            // If the last chunk doesn't have any digits (just spaces)
-            // don't parse it.
-            //if(chunk.match(/[0-9]/)){
-            //  AJAX.parseChunk(chunk);
-            //}
-          }
+
           // handles parsing up to the end of position and colors
-          else*/ if((totalPointsInBytes > AJAX.startOfNextChunk) && (totalPointsInBytes < AJAX.last12Index)){
+          // sets the next chunk at the start of normals
+          if((totalPointsInBytes > AJAX.startOfNextChunk) && (totalPointsInBytes < AJAX.last12Index)){
             var chunk	= textData.substring(AJAX.startOfNextChunk, totalPointsInBytes);
-            AJAX.startOfNextChunk = totalPointsInBytes;
             
             if(chunk.length > 0){
+              AJAX.startOfNextChunk = totalPointsInBytes;
             	AJAX.parseChunk(chunk);
             }
           }
