@@ -467,7 +467,6 @@ var PSIParser = (function() {
           //if(norms){attributes["ps_Normal"] = norms;}
           
           parse(AJAX.parser, attributes);
-
         }
       };
       
@@ -596,6 +595,7 @@ var PSIParser = (function() {
           else if((AJAX.last12Index > totalPointsInBytes) && (AJAX.startOfNextChunk >= totalPointsInBytes)){
             var chunk	= textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
             normalsPresent = true;
+            colorsPresent = false;
             
             if(chunk.length > 0){
 							AJAX.startOfNextChunk = AJAX.last12Index;
