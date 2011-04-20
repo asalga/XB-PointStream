@@ -30,20 +30,6 @@ function handleOrientation(data){
   y = data.x;
 }
 
-function getShaderSrc(id) {
-  var shaderSrc = document.getElementById(id);
-
-  var str = "";
-  var i = shaderSrc.firstChild;
-  while (i) {
-    if (i.nodeType == 3){
-      str += i.textContent;
-    }
-    i = i.nextSibling;
-  }
-  return str;
-}
-
 function start(){
   ps = new PointStream();
   ps.setup(document.getElementById('canvas'));

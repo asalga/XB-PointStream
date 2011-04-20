@@ -42,6 +42,10 @@ var fixedFunctionVert =
    
 "  frontColor = ps_Color * vec4(col, 1.0);" +
 
+"  if(ps_Normal == vec3(0.0, 0.0, 0.0)){" + 
+"    frontColor = ps_Color; " + 
+"  }" +
+
 "  float dist = length(ecPos4);" +
 "  float attn = ps_Attenuation[0] + " +
 "              (ps_Attenuation[1] * dist) + " + 

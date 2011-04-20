@@ -20,6 +20,13 @@ var PointStream = (function() {
     
     var __empty_func = function(){};
     
+    // Chrome still does not have subarray, so we add it here.
+    if(!Float32Array.prototype.subarray){
+      Float32Array.prototype.subarray = function(s,e){
+        return !e ? this.slice(0) : this.slice(s,e);
+      };
+    }
+    
     // Mouse
     var userMouseReleased = __empty_func;
     var userMousePressed = __empty_func;
@@ -759,23 +766,35 @@ var PointStream = (function() {
       @private
       
       The parser will call this when it is done parsing a chunk of data.
+
+      It cannot be assumed that the parsers will send in vertex, color,
+      and normal data at the same time. For example, the PSI parser will
+      send in all the vertex and color data first. Once it has finished
+      with those, it will begin sending normal data. The library must
+      accomodate for these cases.
       
-      @param {} parser -
+      @param {Object} parser - The instance of the parser. There can be many
+      instances the library is using if the user has loaded multiple point
+      clouds.
+      
       @param {Object} attributes - contains name/value pairs of arrays
       
-      For example, if using a custom parser, the attributes may be:
+      For example, the PSI parser will send in data which looks something
+      like this:
       {
-        "Vertex": [.....],
-        "Color":  [.....],
-        "Normal": [.....]
+        "ps_Vertex": [.....],
+        "ps_Color":  [.....],
+        "ps_Normal": [.....]
       }
     */
     function parseCallback(parser, attributes){
 
-      var i = getParserIndex(parser);
-      pointClouds[i].status = STREAMING;
-      pointClouds[i].progress = parser.progress;
-      pointClouds[i].numPoints = parsers[i].numParsedPoints;
+      var parserIndex = getParserIndex(parser);
+      var pc = pointClouds[parserIndex];
+      
+      pc.status = STREAMING;
+      pc.progress = parser.progress;
+      pc.numPoints = parser.numParsedPoints;
       
       // assume the first attribute is vertex data
       var gotVertexData = false;
@@ -783,30 +802,30 @@ var PointStream = (function() {
       for(var semantic in attributes){
         
         // if not yet created
-        if(!pointClouds[i].attributes[semantic]){
-          pointClouds[i].attributes[semantic] = [];
+        if(!pc.attributes[semantic]){
+          pc.attributes[semantic] = [];
         }
         
         var buffObj = createBufferObject(attributes[semantic]);
-        pointClouds[i].attributes[semantic].push(buffObj);
+        pc.attributes[semantic].push(buffObj);
         
         if(gotVertexData === false){
           gotVertexData = true;
           var addedVertices = [0,0,0];
           
-          for(var j = 0; j < attributes[semantic].length; j+= 3){
+          for(var j = 0; j < attributes[semantic].length; j += 3){
             addedVertices[0] += attributes[semantic][j];
             addedVertices[1] += attributes[semantic][j+1];
             addedVertices[2] += attributes[semantic][j+2];
           }
 
-          pointClouds[i].addedVertices[0] += addedVertices[0];
-          pointClouds[i].addedVertices[1] += addedVertices[1];
-          pointClouds[i].addedVertices[2] += addedVertices[2];
+          pc.addedVertices[0] += addedVertices[0];
+          pc.addedVertices[1] += addedVertices[1];
+          pc.addedVertices[2] += addedVertices[2];
           
-          pointClouds[i].center[0] = pointClouds[i].addedVertices[0] / pointClouds[i].numPoints;
-          pointClouds[i].center[1] = pointClouds[i].addedVertices[1] / pointClouds[i].numPoints;
-          pointClouds[i].center[2] = pointClouds[i].addedVertices[2] / pointClouds[i].numPoints;
+          pc.center[0] = pc.addedVertices[0] / pc.numPoints;
+          pc.center[1] = pc.addedVertices[1] / pc.numPoints;
+          pc.center[2] = pc.addedVertices[2] / pc.numPoints;
         }
       }
     }
@@ -819,35 +838,12 @@ var PointStream = (function() {
       @param {Object} parser
     */
     function loadedCallback(parser){
-
-      var idx = getParserIndex(parser);
+    
+      // We may have several point clouds streaming.
+      var parserIndex = getParserIndex(parser);
       
-      // create a short alias
-      var pc = pointClouds[idx];
-      
-      // once the point cloud is done being parsed,
-      // we can merge the vbos to speed up rendering.
-      var numPoints = pc.numTotalPoints = parsers[idx].numTotalPoints;
-
-      // To calculate center
-      var verts = new Float32Array(numPoints * 3);
-      
-      var names = [];
-      for(var attribute in pc.attributes){
-        names.push(attribute);
-      }
-      
-      var numVBOs = pc.attributes[names[0]].length;
-      
-      // iterate over all the vbos
-      for(var currVBO = 0, c = 0; currVBO < numVBOs; currVBO++){
-      
-        // iterate over all the values in the original array and
-        // copy them into a single array which will hold the entire chunk.
-        for(var i = 0; i < pc.attributes[names[0]][currVBO].length; i++, c++){
-          verts[c] = pc.attributes[names[0]][currVBO].array[i];
-        }
-      }
+      // Create a short alias.
+      var pc = pointClouds[parserIndex];
       
       pc.status = COMPLETE;
       pc.progress = parser.progress;
@@ -1219,36 +1215,49 @@ var PointStream = (function() {
       @param {} pointCloud
     */
     this.render = function(pointCloud){
+    
+      // Don't bother doing any work if we don't have a context yet.
+      if(ctx){
+        // We need to find a way to detect normals. If normals don't exist,
+        // we don't need to figure out the normal transformation.
+        var topMatrix = this.peekMatrix();
+        normalMatrix = M4x4.inverseOrthonormal(topMatrix);
+        uniformMatrix(currProgram, "ps_NormalMatrix", false, M4x4.transpose(normalMatrix));
+        uniformMatrix(currProgram, "ps_ModelViewMatrix", false, topMatrix);
+        
+        // Get the list of semantic names.
+        var semantics = Object.keys(pointCloud.attributes);
 
-      var names = [];
+        var firstSemantic = semantics[0];
+        
+        // We need at least positional data.
+        if(pointCloud.attributes[firstSemantic]){
 
-      // send in the vertex data
-      for(attribute in pointCloud.attributes){
-        names.push(attribute);
-      }
-      var name0 = names[0];
-      
-      var topMatrix = this.peekMatrix();
-      normalMatrix = M4x4.inverseOrthonormal(topMatrix);
-      uniformMatrix(currProgram, "ps_NormalMatrix", false, M4x4.transpose(normalMatrix));
-      uniformMatrix(currProgram, "ps_ModelViewMatrix", false, topMatrix);
-  
-      // if we have a context and 
-      // if the point cloud actually has something to render
-      if(ctx && pointCloud.attributes[name0]){
-        
-        var arrayOfBufferObjs = pointCloud.attributes[name0];
-        
-        var numBufferObjects = arrayOfBufferObjs.length;
-        
-        // render all the vbos in the current point cloud
-        for(var currVBO = 0; currVBO < numBufferObjects; currVBO++){
-          
-          for(var namesI = 0; namesI < names.length; namesI++){
-            vertexAttribPointer(currProgram, names[namesI], 3, pointCloud.attributes[names[namesI]][currVBO].VBO);
+          var arrayOfBufferObjsV = pointCloud.attributes[firstSemantic];
+
+          // Iterate over all the vertex buffer objects.
+          for(var currVBO = 0; currVBO < arrayOfBufferObjsV.length; currVBO++){
+            // iterate over all the semantic names "ps_Vertex", "ps_Normal", etc.
+            for(name in semantics){
+              /*
+                There is a chance we don't have the correspoding semantic data
+                for this vertex. In that case, we skip it.
+                
+                vertex [...] [.] [.......] [..]
+                color  [...] [.] [.......] [..]
+                normal [...] [.] <-- only have 2 VBOS
+                
+                We iterate over each set of vertex vbo, enabling
+                the corresponding attributes which exist.
+              */
+              if(pointCloud.attributes[semantics[name]][currVBO]){
+                vertexAttribPointer(currProgram, semantics[name], 3, pointCloud.attributes[semantics[name]][currVBO].VBO);
+              }else{
+                disableVertexAttribPointer(currProgram, semantics[name]);
+              }
+            }
+            ctx.drawArrays(ctx.POINTS, 0, arrayOfBufferObjsV[currVBO].length/3);
           }
-              
-          ctx.drawArrays(ctx.POINTS, 0, arrayOfBufferObjs[currVBO].length/3);
         }
       }
     };
