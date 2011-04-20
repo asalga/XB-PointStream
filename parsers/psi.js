@@ -196,6 +196,8 @@ var PSIParser = (function() {
     
     var firstRun = true;
     
+    var normFlag = 0;
+    
     //
     var xMax = 0;
     var xMin = 0;
@@ -622,6 +624,7 @@ var PSIParser = (function() {
           
           // Multiply by 1 to convert to a Number type.
           numTotalPoints = numPtArr[1] * 1;
+          normFlag = numPtArr[2] * 1;
         }
         
         // sptSzStr
@@ -733,7 +736,7 @@ var PSIParser = (function() {
 						}
           }
           // parse normals
-          else if((AJAX.last12Index > totalPointsInBytes) && (AJAX.startOfNextChunk >= totalPointsInBytes)){
+          else if((AJAX.last12Index > totalPointsInBytes) && (AJAX.startOfNextChunk >= totalPointsInBytes) && (normFlag)){
             var chunk	= textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
             normalsPresent = true;
             colorsPresent = false;
