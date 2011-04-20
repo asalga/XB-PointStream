@@ -19,7 +19,7 @@ function start(){
   ps.onRender = render;
   ps.background([0,0,0,1]);
   
-  progObj = ps.createProgram(scan_vertShader, scan_fragShader);
+  progObj = ps.createProgram(scanlineVert, scanlineFrag);
   ps.useProgram(progObj);
   ps.pointSize(3);
 
