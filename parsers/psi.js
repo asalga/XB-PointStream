@@ -476,6 +476,11 @@ var PSIParser = (function() {
         // only called if the end tag was found
         else if(infoEnd !== -1){
           var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
+          // if the file has normals as indicated at the start of the file
+          if(normFlag){
+            normalsPresent = true;
+            colorsPresent = false;
+          }
         }
 
         AJAX.parseChunk(chunk);
