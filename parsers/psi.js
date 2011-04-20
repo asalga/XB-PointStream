@@ -639,7 +639,7 @@ var PSIParser = (function() {
           zMin = posMinArr[3] * 1;
         }
         
-        //posMaxStr - highest value in the file (used for decompression)
+        // posMaxStr - highest value in the file (used for decompression)
         tagExists = textData.indexOf(posMaxStr);
         if(tagExists !== -1){
           endTagExists = textData.indexOf(endXMLStr, tagExists);
@@ -717,8 +717,19 @@ var PSIParser = (function() {
             	AJAX.parseChunk(chunk);
             }
           }
+          // parse normals
+          else if((AJAX.last12Index > totalPointsInBytes) && (AJAX.startOfNextChunk >= totalPointsInBytes)){
+            var chunk	= textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
+            normalsPresent = true;
+            colorsPresent = false;
+            
+            if(chunk.length > 0){
+							AJAX.startOfNextChunk = AJAX.last12Index;
+            	AJAX.parseChunk(chunk);
+						}
+          }
           // parse position and colors
-          else if(AJAX.last12Index <= totalPointsInBytes){
+          else{
           	if(firstRun){
            	  var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
 							firstRun = false;
@@ -727,17 +738,6 @@ var PSIParser = (function() {
             	var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
             }
 
-            if(chunk.length > 0){
-							AJAX.startOfNextChunk = AJAX.last12Index;
-            	AJAX.parseChunk(chunk);
-						}
-          }
-          // parse normals
-          else if((AJAX.last12Index > totalPointsInBytes) && (AJAX.startOfNextChunk >= totalPointsInBytes)){
-            var chunk	= textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
-            normalsPresent = true;
-            colorsPresent = false;
-            
             if(chunk.length > 0){
 							AJAX.startOfNextChunk = AJAX.last12Index;
             	AJAX.parseChunk(chunk);
