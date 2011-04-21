@@ -2,7 +2,7 @@
   Copyright (c) 2010  Seneca College
   MIT LICENSE
 
-  Version:  0.6
+  Version:  0.7
   Author:   Mickael Medel
             asydik.wordpress.com
   Created:  February 2011
@@ -525,73 +525,133 @@ var PSIParser = (function() {
           //
           var verts, cols, norms;
           
-          // Fix this
-          if(numVerts > 0 && !normalsPresent){
-            verts = new Float32Array(numVerts * 3);
-          }
+          // 
+          if(onProgressCalled === true){
 
-          // !!! We need to fix this hack
-          if(colorsPresent && numVerts > 0){
-            numVerts = Math.floor(numVerts);
-            cols = new Float32Array(numVerts * 3);
-          }
-          
-          // parsing normal values, not sure the logic behind it (as it was never provided)
-          // we take 3 bytes and apply some bit shifting operations on it
-          // we then take the results and multiply it to some set values
-          // the normals are the resulting values
-          if(normalsPresent){
-            norms = new Float32Array(numBytes);
-            var nzsign, nx11bits, ny11bits, ivalue;
-            var nvec = new Float32Array(3);
+            if(numVerts > 0 && !normalsPresent){
+              verts = new Float32Array(numVerts * 3);
+            }
+
+            if(colorsPresent && numVerts > 0){
+              cols = new Float32Array(numVerts * 3);
+            }
             
-            for(var	i = 0; i < numBytes; i += 3){
-            	ivalue = getXYZ(chunk, i);
-              nzsign = ((ivalue >> 22) & 0x0001);
-              nx11bits = ((ivalue) & 0x07ff);
-              ny11bits = ((ivalue >> 11) & 0x07ff);
+            // parsing normal values, not sure the logic behind it (as it was never provided)
+            // we take 3 bytes and apply some bit shifting operations on it
+            // we then take the results and multiply it to some set values
+            // the normals are the resulting values
+            if(normalsPresent){
+              norms = new Float32Array(numBytes);
+              var nzsign, nx11bits, ny11bits, ivalue;
+              var nvec = new Float32Array(3);
               
-              if(nx11bits >= 0 && nx11bits < 2048){
-              	if(ny11bits >= 0 && ny11bits < 2048){
-                  nvec[0] = (nx11bits/nfactor) - 1.0;
-                  nvec[1] = (ny11bits/nfactor) - 1.0;
-                  
-                  var nxnymag = (nvec[0]*nvec[0] + nvec[1]*nvec[1]);
-                  if (nxnymag > 1){  nxnymag = 1; }
-                  if (nxnymag < -1){ nxnymag = -1; }
-                  nxnymag = 1 - nxnymag;
-                  
-                  if (nxnymag > 1){  nxnymag = 1; }
-                  if (nxnymag < -1){ nxnymag = -1; }
-                  nvec[2] = Math.sqrt(nxnymag);
-		              
-                  if (nzsign){ nvec[2] = -nvec[2]; }
-                  var dNorm = (nvec[0]*nvec[0] + nvec[1]*nvec[1] + nvec[2]*nvec[2]);
-                  if (dNorm > 0){ dNorm = Math.sqrt(dNorm); }
-                  else{ dNorm = 1; }
+              for(var	i = 0; i < numBytes; i += 3){
+                ivalue = getXYZ(chunk, i);
+                nzsign = ((ivalue >> 22) & 0x0001);
+                nx11bits = ((ivalue) & 0x07ff);
+                ny11bits = ((ivalue >> 11) & 0x07ff);
+                
+                if(nx11bits >= 0 && nx11bits < 2048){
+                  if(ny11bits >= 0 && ny11bits < 2048){
+                    nvec[0] = (nx11bits/nfactor) - 1.0;
+                    nvec[1] = (ny11bits/nfactor) - 1.0;
+                    
+                    var nxnymag = (nvec[0]*nvec[0] + nvec[1]*nvec[1]);
+                    if (nxnymag > 1){  nxnymag = 1; }
+                    if (nxnymag < -1){ nxnymag = -1; }
+                    nxnymag = 1 - nxnymag;
+                    
+                    if (nxnymag > 1){  nxnymag = 1; }
+                    if (nxnymag < -1){ nxnymag = -1; }
+                    nvec[2] = Math.sqrt(nxnymag);
+                    
+                    if (nzsign){ nvec[2] = -nvec[2]; }
+                    var dNorm = (nvec[0]*nvec[0] + nvec[1]*nvec[1] + nvec[2]*nvec[2]);
+                    if (dNorm > 0){ dNorm = Math.sqrt(dNorm); }
+                    else{ dNorm = 1; }
+                
+                    norms[i] =   nvec[0]/dNorm;
+                    norms[i+1] = nvec[1]/dNorm;
+                    norms[i+2] = nvec[2]/dNorm;
+                  }
+                }
+              }
+            }
+            // parsing xyz and rgb values, not sure behind the logic either
+            // 3 bytes are used for each x, y, z values
+            // each of the last 3 bytes of the 12 correspond to an rgb value
+            else{
+              for(var i = 0, j = 0; i < numBytes; i+=12, j += 3){
+                verts[j]   = ((xMax - xMin) * getXYZ(chunk, i  )) / sfactor + xMin;
+                verts[j+1] = ((yMax - yMin) * getXYZ(chunk, i+3)) / sfactor + yMin;
+                verts[j+2] = ((zMax - zMin) * getXYZ(chunk, i+6)) / sfactor + zMin;
               
-		              norms[i] =   nvec[0]/dNorm;
-    		          norms[i+1] = nvec[1]/dNorm;
-        		      norms[i+2] = nvec[2]/dNorm;
-								}
+                if(cols){
+                  cols[j]   = getRGB(chunk, i+9 ) / 255;
+                  cols[j+1] = getRGB(chunk, i+10) / 255;
+                  cols[j+2] = getRGB(chunk, i+11) / 255;
+                }
               }
             }
           }
-          // parsing xyz and rgb values, not sure behind the logic either
-          // 3 bytes are used for each x, y, z values
-          // each of the last 3 bytes of the 12 correspond to an rgb value
+          // if the file was obtained in one go
           else{
-          	for(var i = 0, j = 0; i < numBytes; i+=12, j += 3){
-            	verts[j]   = ((xMax - xMin) * getXYZ(chunk, i  )) / sfactor + xMin;
-        	    verts[j+1] = ((yMax - yMin) * getXYZ(chunk, i+3)) / sfactor + yMin;
-          	  verts[j+2] = ((zMax - zMin) * getXYZ(chunk, i+6)) / sfactor + zMin;
+
+            if(normFlag){normalsPresent = true};
+            numVerts = numTotalPoints;
             
-      	      if(cols){
-        	      cols[j]   = getRGB(chunk, i+9 ) / 255;
-          	    cols[j+1] = getRGB(chunk, i+10) / 255;
-            	  cols[j+2] = getRGB(chunk, i+11) / 255;
-            	}
-      	    }
+            verts = new Float32Array(numVerts * 3);
+            if(colorsPresent){cols = new Float32Array(numVerts * 3);}
+            
+            for(var i = 0, j = 0; i < numBytes; i+=12, j += 3){
+              verts[j]   = ((xMax - xMin) * getXYZ(chunk, i  )) / sfactor + xMin;
+              verts[j+1] = ((yMax - yMin) * getXYZ(chunk, i+3)) / sfactor + yMin;
+              verts[j+2] = ((zMax - zMin) * getXYZ(chunk, i+6)) / sfactor + zMin;
+            
+              if(cols){
+                cols[j]   = getRGB(chunk, i+9 ) / 255;
+                cols[j+1] = getRGB(chunk, i+10) / 255;
+                cols[j+2] = getRGB(chunk, i+11) / 255;
+              }
+            }
+            
+            if(normalsPresent){
+              norms = new Float32Array(numVerts * 3);
+              var nzsign, nx11bits, ny11bits, ivalue;
+              var nvec = new Float32Array(3);
+              
+              for(var	i = numVerts*3; i < numBytes; i += 3){
+                ivalue = getXYZ(chunk, i);
+                nzsign = ((ivalue >> 22) & 0x0001);
+                nx11bits = ((ivalue) & 0x07ff);
+                ny11bits = ((ivalue >> 11) & 0x07ff);
+                
+                if(nx11bits >= 0 && nx11bits < 2048){
+                  if(ny11bits >= 0 && ny11bits < 2048){
+                    nvec[0] = (nx11bits/nfactor) - 1.0;
+                    nvec[1] = (ny11bits/nfactor) - 1.0;
+                    
+                    var nxnymag = (nvec[0]*nvec[0] + nvec[1]*nvec[1]);
+                    if (nxnymag > 1){  nxnymag = 1; }
+                    if (nxnymag < -1){ nxnymag = -1; }
+                    nxnymag = 1 - nxnymag;
+                    
+                    if (nxnymag > 1){  nxnymag = 1; }
+                    if (nxnymag < -1){ nxnymag = -1; }
+                    nvec[2] = Math.sqrt(nxnymag);
+                    
+                    if (nzsign){ nvec[2] = -nvec[2]; }
+                    var dNorm = (nvec[0]*nvec[0] + nvec[1]*nvec[1] + nvec[2]*nvec[2]);
+                    if (dNorm > 0){ dNorm = Math.sqrt(dNorm); }
+                    else{ dNorm = 1; }
+                
+                    norms[i] =   nvec[0]/dNorm;
+                    norms[i+1] = nvec[1]/dNorm;
+                    norms[i+2] = nvec[2]/dNorm;
+                  }
+                }
+              }
+            }
           }
           
 
@@ -632,7 +692,7 @@ var PSIParser = (function() {
           normFlag = numPtArr[2] * 1;
         }
         
-        // sptSzStr
+        // sptSzStr - needs work
         
         // posMinStr - lowest value in the file (used for decompression)
         tagExists = textData.indexOf(posMinStr);
@@ -647,7 +707,7 @@ var PSIParser = (function() {
           zMin = posMinArr[3] * 1;
         }
         
-        //posMaxStr - highest value in the file (used for decompression)
+        // posMaxStr - highest value in the file (used for decompression)
         tagExists = textData.indexOf(posMaxStr);
         if(tagExists !== -1){
           endTagExists = textData.indexOf(endXMLStr, tagExists);
@@ -725,8 +785,19 @@ var PSIParser = (function() {
             	AJAX.parseChunk(chunk);
             }
           }
+          // parse normals
+          else if((AJAX.last12Index > totalPointsInBytes) && (AJAX.startOfNextChunk >= totalPointsInBytes)){
+            var chunk	= textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
+            normalsPresent = true;
+            colorsPresent = false;
+            
+            if(chunk.length > 0){
+							AJAX.startOfNextChunk = AJAX.last12Index;
+            	AJAX.parseChunk(chunk);
+						}
+          }
           // parse position and colors
-          else if(AJAX.last12Index <= totalPointsInBytes){
+          else{
           	if(firstRun){
            	  var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
 							firstRun = false;
@@ -735,17 +806,6 @@ var PSIParser = (function() {
             	var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
             }
 
-            if(chunk.length > 0){
-							AJAX.startOfNextChunk = AJAX.last12Index;
-            	AJAX.parseChunk(chunk);
-						}
-          }
-          // parse normals
-          else if((AJAX.last12Index > totalPointsInBytes) && (AJAX.startOfNextChunk >= totalPointsInBytes) && (normFlag)){
-            var chunk	= textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
-            normalsPresent = true;
-            colorsPresent = false;
-            
             if(chunk.length > 0){
 							AJAX.startOfNextChunk = AJAX.last12Index;
             	AJAX.parseChunk(chunk);
