@@ -2,7 +2,7 @@
   Copyright (c) 2010  Seneca College
   MIT LICENSE
 
-  Version:  0.6
+  Version:  0.7
   Author:   Mickael Medel
             asydik.wordpress.com
   Created:  February 2011
