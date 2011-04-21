@@ -65,7 +65,7 @@ function render() {
   }
   
   status.innerHTML  += "<br />" 
-                    + addCommas(new String(lion.getNumPoints()))
+                    + addCommas(lion.getNumPoints())
                     + " points @ " + fps + " FPS";
 }
 
@@ -80,7 +80,7 @@ function addCommas(value){
   var counter = valueStr.length-1;
   var i = 1;
   for(;counter >= 0; counter--, i++){
-    withCommas += value[counter];
+    withCommas += valueStr[counter];
 
     if(i % 3 === 0 && counter > 0){
       withCommas += ",";
