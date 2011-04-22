@@ -1,0 +1,41 @@
+<html>
+  <head>
+    <script src="../../xbps.js"></script>
+    <script src="demo.js"></script>
+    <script src="../../shaders/fixed_function.js"></script>
+    
+    <style>
+    body{
+      margin: 50px 0px 0px 0px;
+    }
+    
+    canvas{
+      border: dashed;
+      border-radius: 15px;
+      border-width: 5px;
+      
+      background: url("cloud.png");
+      background-position: 150 100;
+      background-repeat: no-repeat;
+    }
+    
+    .canvasDiv{
+      position: relative;
+      width: 600px;
+      height: 400px;
+      
+      border: 0px solid black;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    </style>
+  </head>
+  
+  <body onload="addListeners();">
+  
+    <div class="canvasDiv">
+      <canvas id="canvas" width="600" height="400"></canvas>
+    </div>
+
+  </body>
+</html>
