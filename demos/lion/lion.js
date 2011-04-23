@@ -24,7 +24,7 @@ function mouseReleased(){
 
 function keyDown(){
   if(ps.key == KEY_ESC){
-    ps.stop("../../clouds/lion.asc");
+    ps.stop("../../clouds/lion.psi");
   }
 }
 
@@ -107,5 +107,5 @@ function start(){
   ps.onMouseReleased = mouseReleased;
   ps.onKeyDown = keyDown;
   
-  lion = ps.load("../../clouds/lion.asc");
+  lion = ps.load("../../clouds/lion.psi");
 }
