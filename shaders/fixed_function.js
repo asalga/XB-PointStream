@@ -42,6 +42,10 @@ var fixedFunctionVert =
    
 "  frontColor = ps_Color * vec4(col, 1.0);" +
 
+"  if(ps_Color == vec4(0.0, 0.0, 0.0, 1.0)){" +
+"    frontColor = vec4(col, 1.0);" + 
+"  }" +
+
 "  if(ps_Normal == vec3(0.0, 0.0, 0.0)){" + 
 "    frontColor = ps_Color; " + 
 "  }" +
