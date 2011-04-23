@@ -1,0 +1,79 @@
+﻿<!doctype html>
+<html>
+  <head>
+    <title>Sundae</title>
+    <script type="text/javascript" src="sundae.js" ></script>
+  </head>
+  <body>
+    <h1>Sundae Ref Test Runner</h1>
+    <h3>Settings</h3>
+    <div id="setup">
+      <table><tr>
+        <td>Run Tests:</td>
+        <td>
+          <select id="type">
+            <option value="all" selected="selected">All</option>
+          </select>
+        </td>
+      </tr><tr>
+        <td>Tolerance:</td>
+        <td><input type="text" size="2" id="epsilon" value="5"/>%</td>
+      </tr><tr>
+        <td>Blur Radius:</td>
+        <td><input type="text" size="2" id="sigma" value="2"/>px</td>
+      </tr></table>
+    </div>
+    <script type="text/javascript">
+            var d = document;
+            var b = d.createElement("input");
+            b.setAttribute("type", "Button");
+            b.setAttribute("value", "Begin Tests");
+            b.setAttribute("onClick", "beginTester();");
+            d.getElementById("setup").appendChild(b);
+            getJSON("tests.json", function (data) {
+                var found = false;
+                var t = d.getElementById("type"); ;
+                for (var i = 0; data.testSuite && i < data.testSuite.length; i++) {
+                    for (var j = 0; data.testSuite[i].test && j < data.testSuite[i].test.length; j++) {
+                        if (data.testSuite[i].test[j].tag) {
+                            for (var n = 0; n < t.length; n++) {
+                                if (t[n].value == data.testSuite[i].test[j].tag)
+                                    found = true;
+                            }
+                            if (!found) {
+                                var opt = d.createElement("option");
+                                opt.text = opt.value = data.testSuite[i].test[j].tag;
+                                t.options.add(opt);
+                            }
+                            found = false;
+                        }
+                    }
+                }
+            });
+            function beginTester() {
+                //Optional Global Setters
+                sundae.setBlurRadius(d.getElementById("sigma").value);
+                sundae.setTolerance(d.getElementById("epsilon").value);
+                sundae.setTestTag(d.getElementById("type").value);
+                //Start tester
+                sundae.init();
+                b.disabled = true;
+            }
+            //Duplicate of private function within library
+            function getJSON(src, callback){
+                var r = new XMLHttpRequest();
+                r.open("GET", src, true);
+                r.overrideMimeType("application/json");
+                r.onload = function(){
+                    try{
+                        callback(JSON.parse(r.responseText));
+                    }
+                    catch(e){
+                        callback(eval("(" + r.responseText + ")"));
+                    }
+                };
+                r.send(null);
+            }
+    </script>
+  </body>
+</html>
