@@ -78,9 +78,8 @@ function dropped(event) {
   // event.dataTransfer.files does not exist if the user
   // grabs an element from the DOM and drops it
   if(event.dataTransfer.files[0]){
-    var filePath = event.dataTransfer.files[0].mozFullPath;
+    var filePath = "file:///" + event.dataTransfer.files[0].mozFullPath;
     var ext = filePath.split(".").pop().toLowerCase();
-    console.log(ext);
    
     // only accept point cloud files
     if(ext === "asc" || ext === "pts" || ext === "psi"){
