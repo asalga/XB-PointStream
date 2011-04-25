@@ -177,7 +177,7 @@ var PSIParser = (function() {
     var layoutCode = UNKNOWN;
     
     // Length of the arrays we'll be sending the library.
-    var BUFFER_SIZE = 3000;
+    var BUFFER_SIZE = 3000000;
     
     //
     var tempBufferV;
@@ -196,7 +196,7 @@ var PSIParser = (function() {
     
     var firstRun = true;
     
-    var normFlag = 0;
+    var normFlag = false;
     
     //
     var xMax = 0;
@@ -512,9 +512,8 @@ var PSIParser = (function() {
       /**
         !! fix me
       */
-      AJAX.parseChunk = function(chunkData){
-        var chunk = chunkData;
-        
+      AJAX.parseChunk = function(chunk){
+                
         // !! fix this
         // this occurs over network connections, but not locally.
         if(chunk){
@@ -525,14 +524,25 @@ var PSIParser = (function() {
           //
           var verts, cols, norms;
           
-          // 
+          // !!! COMMENT
           if(onProgressCalled === true){
 
-            if(numVerts > 0 && !normalsPresent){
+            if(numVerts > 0 && normalsPresent){
+            
+              // only for debugging, remove on prduction
+              if(numVerts !== Math.floor(numVerts)){
+                numVerts = Math.floor(numVerts);
+              }
               verts = new Float32Array(numVerts * 3);
             }
 
-            if(colorsPresent && numVerts > 0){
+            if(numVerts > 0 && colorsPresent){
+
+              // only for debugging, remove on prduction
+              if(numVerts !== Math.floor(numVerts)){
+                console.log("invalid numVerts: " + numVerts);
+              }              
+
               cols = new Float32Array(numVerts * 3);
             }
             
@@ -597,11 +607,16 @@ var PSIParser = (function() {
           // if the file was obtained in one go
           else{
 
-            if(normFlag){normalsPresent = true};
+            if(normFlag){
+              normalsPresent = true;
+            }
+            
             numVerts = numTotalPoints;
             
             verts = new Float32Array(numVerts * 3);
-            if(colorsPresent){cols = new Float32Array(numVerts * 3);}
+            if(colorsPresent){
+              cols = new Float32Array(numVerts * 3);
+            }
             
             for(var i = 0, j = 0; i < numBytes; i+=12, j += 3){
               verts[j]   = ((xMax - xMin) * getXYZ(chunk, i  )) / sfactor + xMin;
@@ -689,12 +704,18 @@ var PSIParser = (function() {
           
           // Multiply by 1 to convert to a Number type.
           numTotalPoints = numPtArr[1] * 1;
-          normFlag = numPtArr[2] * 1;
+
+          // !!! Fix this
+          if((numPtArr[2] * 1) === 2){
+            normFlag = true;
+          }
         }
         
-        // sptSzStr - needs work
+        // 
+        // sptSzStr - (spot Size) needs work
         
         // posMinStr - lowest value in the file (used for decompression)
+        //
         tagExists = textData.indexOf(posMinStr);
         if(tagExists !== -1){
           endTagExists = textData.indexOf(endXMLStr, tagExists);
