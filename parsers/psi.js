@@ -140,7 +140,8 @@ var PSIParser = (function() {
         endLvlStr   = "</Level=",
         binCloudStr = "<BinaryCloud>",
         ascCloudStr = "<AsciiCloud>",
-        fmtStr      = "<Format=";
+        fmtStr      = "<Format=",
+        formatTag   = "<Format=";
 
     var numPtStr  = "<NumPoints=",
         sptSzStr  = "<SpotSize=",
@@ -177,7 +178,7 @@ var PSIParser = (function() {
     var layoutCode = UNKNOWN;
     
     // Length of the arrays we'll be sending the library.
-    var BUFFER_SIZE = 3000000;
+    var BUFFER_SIZE = 30000;
     
     //
     var tempBufferV;
@@ -215,9 +216,9 @@ var PSIParser = (function() {
     var endTagExists
     
     // keep track if onprogress event handler was called to 
-    // handle Chrome/WebKit vs. Minefield differences.
+    // handle Chrome/WebKit vs. Firefox differences.
     //
-    // Minefield will call onprogress zero or many times
+    // Firefox will call onprogress zero or many times
     // Chrome/WebKit will call onprogress one or many times
     var onProgressCalled = false;
     var AJAX = null;
@@ -419,7 +420,6 @@ var PSIParser = (function() {
         Occurs exactly once when the resource begins to be downloaded.
       */
       AJAX.onloadstart = function(evt){
-      
         // values to be used in decompression of PSI
         sfactor = Math.pow(2.0, 24.0);
         nfactor = -0.5 + Math.pow(2.0, 10.0);
@@ -441,6 +441,161 @@ var PSIParser = (function() {
           AJAX.firstLoad(textData);
         }
         
+        // If we downloaded the file in one go
+        if(firstRun && evt.lengthComputable && evt.loaded/evt.total === 1){
+          
+          var chunk = AJAX.responseText;
+          
+          // first get the number of points in the cloud
+          // <NumPoints= 11158 2 0 11158 0 0 >\r\n<Spot
+          // <NumPoints= 11158 0 >
+          
+          // Find the start and end tags for NumPoints
+          var numPointsTagIndex = chunk.indexOf(numPtStr);
+          var numPointsTagEndIndex = chunk.indexOf(">", numPointsTagIndex+1);
+         
+          var numPointsContents = chunk.substring(numPointsTagIndex, numPointsTagEndIndex+1);
+          
+          // Set the parser's attribute
+          // Multiply by 1 to convert to a Number type
+          // ["<NumPoints=", "11158", "0", ">"]
+          numParsedPoints = numTotalPoints = numPointsContents.split(" ")[1] * 1;
+          
+          // Find out if we have normals, which seems to be stored in format
+          //
+          var formatTagIndex = chunk.indexOf(formatTag);
+          var formatTagEndIndex = chunk.indexOf(">", formatTagIndex+1);
+          
+          // <Format=1>
+          var format = chunk.substring(formatTagIndex, formatTagEndIndex);
+          var formatID = format.split("=")[1] * 1;
+
+
+          // Read the position and color data
+
+          // <Level=0>
+          // <BinaryCloud>
+          // <Format=1>
+          // <NumPoints= 11158 0 >
+          // <SpotSize= 0.134696 >
+          // <Min= -24.1075 -28.9434 -16.8786 >
+          // <Max= -12.4364 -14.8525 -18.72375 >
+          // ...\
+          // ... }- binary data (vertices & colors)
+          // .../
+          // ...\
+          // ... }- possibly more binary data (normals)
+          // .../
+          // </Level=0>
+          // </PsCloudModel>
+          
+          // Find the end of the Max tag
+          //
+          
+          // checks if begin or end tags can be found using rgx
+          var tagExists = chunk.indexOf(bgnTag);
+          var infoEnd = chunk.indexOf(endLvlStr);
+          var infoStart;
+          
+          // if the bgnTag exists then set the startOfNextChunk
+          // to the end of the bgnTag + 2 for offset values
+          if(tagExists !== -1){
+            // +2 for offset values
+            tagLen = bgnTag.length + 2;
+            infoStart = tagExists + tagLen;
+          }
+
+          // This contain our binary data
+          chunk = chunk.substring(infoStart, infoEnd);
+
+          var verts = new Float32Array(3 * numTotalPoints);
+          var cols  = new Float32Array(3 * numTotalPoints);
+          var norms;
+          
+          var numBytes = chunk.length;
+          
+          // Define these here so we don't have to keep calculating
+          // them in the loop.
+          var diffX = xMax - xMin;
+          var diffY = yMax - yMin;
+          var diffZ = zMax - zMin;
+          
+          var scaleX = sfactor + xMin;
+          var scaleY = sfactor + yMin;
+          var scaleZ = sfactor + zMin;
+          
+          var byteIdx = 0;
+          for(var point = 0; point < numTotalPoints; byteIdx += 12, point++){
+            verts[point*3 + 0] = (diffX * getXYZ(chunk, byteIdx    )) / scaleX;
+            verts[point*3 + 1] = (diffY * getXYZ(chunk, byteIdx + 3)) / scaleY;
+            verts[point*3 + 2] = (diffZ * getXYZ(chunk, byteIdx + 6)) / scaleZ;
+            
+            cols[point*3 + 0] = getRGB(chunk, byteIdx + 9 ) / 255;
+            cols[point*3 + 1] = getRGB(chunk, byteIdx + 10) / 255;
+            cols[point*3 + 2] = getRGB(chunk, byteIdx + 11) / 255;
+          }
+          
+          // Parse the normals if we have them.
+          if(formatID == 2){
+            norms = new Float32Array(3 * numTotalPoints);
+            
+            var nzsign, nx11bits, ny11bits, ivalue;
+            var nvec = new Float32Array(3);
+            
+            // Start reading the normals where we left off reading the
+            // vertex positions and colors.
+            // Each normal is 3 bytes.
+            for(point = 0; byteIdx < numBytes; byteIdx += 3, point += 3){
+
+              ivalue = getXYZ(chunk, byteIdx);
+              nzsign =   ((ivalue >> 22) & 0x0001);
+              nx11bits = ((ivalue) & 0x07ff);
+              ny11bits = ((ivalue >> 11) & 0x07ff);
+              
+              if(nx11bits >= 0 && nx11bits < 2048){
+                if(ny11bits >= 0 && ny11bits < 2048){
+
+                  nvec[0] = (nx11bits/nfactor) - 1.0;
+                  nvec[1] = (ny11bits/nfactor) - 1.0;
+                  
+                  var nxnymag = (nvec[0]*nvec[0] + nvec[1]*nvec[1]);
+                  
+                  // clamp values
+                  if (nxnymag > 1){  nxnymag = 1; }
+                  if (nxnymag < -1){ nxnymag = -1; }
+                  nxnymag = 1 - nxnymag;
+                  
+                  if (nxnymag > 1){  nxnymag = 1; }
+                  if (nxnymag < -1){ nxnymag = -1; }
+                  nvec[2] = Math.sqrt(nxnymag);
+                  
+                  if (nzsign){
+                    nvec[2] = -nvec[2];
+                  }
+                  var dNorm = (nvec[0]*nvec[0] + nvec[1]*nvec[1] + nvec[2]*nvec[2]);
+                  
+                  dNorm = (dNorm > 0) ? Math.sqrt(dNorm) : 1;
+                  
+                  norms[point]   = nvec[0]/dNorm;
+                  norms[point+1] = nvec[1]/dNorm;
+                  norms[point+2] = nvec[2]/dNorm;
+                }
+              }
+            }
+          }
+          
+          var attributes = {};
+          if(verts){attributes["ps_Vertex"] = verts;}
+          if(cols){ attributes["ps_Color"] = cols;}
+          if(norms){attributes["ps_Normal"] = norms;}
+
+          // Indicate parsing is done. Ranges from 0 to 1                    
+          progress = 1;
+          parse(AJAX.parser, attributes);
+          end(AJAX.parser);
+          return;
+        }
+        
         // checks if begin or end tags can be found using rgx
         endTag = endLvlStr;
         tagExists = textData.indexOf(bgnTag);
@@ -450,7 +605,8 @@ var PSIParser = (function() {
         // if the bgnTag exists then set the startOfNextChunk
         // to the end of the bgnTag + 2 for offset values
         if(tagExists !== -1){
-          tagLen = bgnTag.length + 2;               // +2 for offset values
+          // +2 for offset values
+          tagLen = bgnTag.length + 2;
           infoStart = tagExists + tagLen;
           if(AJAX.startOfNextChunk === 0){
             AJAX.startOfNextChunk = infoStart;
@@ -462,6 +618,8 @@ var PSIParser = (function() {
         var last12 = Math.floor((chunkLength - infoStart) / 12);
         AJAX.last12Index = ((last12 * 12) + infoStart);
         
+        var chunk;
+        
         // if the end tag was found
         if(infoEnd !== -1){
           AJAX.last12Index = infoEnd;
@@ -469,13 +627,14 @@ var PSIParser = (function() {
         // if the onprogress event didn't get called--we simply got
         // the file in one go, we can parse from start to finish.
         if(onProgressCalled === false){
-          var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
+          chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
         }
+        
         // otherwise the onprogress event was called at least once,
         // that means we need to get the data from a specific point to the end.
         // only called if the end tag was found
         else if(infoEnd !== -1){
-          var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
+          chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
           // if the file has normals as indicated at the start of the file
           if(normFlag){
             normalsPresent = true;
@@ -484,7 +643,10 @@ var PSIParser = (function() {
         }
 
         AJAX.parseChunk(chunk);
-
+        
+        // Get the last remaining bits from the temp buffers
+        // and parse those too.
+        
         if(tempBufferV && tempBufferOffsetV > 0){
           // Only send the data if there's actually something to send.
           var lastBufferV = tempBufferV.subarray(0, tempBufferOffsetV);
@@ -510,10 +672,8 @@ var PSIParser = (function() {
       }
       
       /**
-        !! fix me
       */
       AJAX.parseChunk = function(chunk){
-                
         // !! fix this
         // this occurs over network connections, but not locally.
         if(chunk){
@@ -527,13 +687,17 @@ var PSIParser = (function() {
           // !!! COMMENT
           if(onProgressCalled === true){
 
-            if(numVerts > 0 && normalsPresent){
+            if(numVerts !== Math.floor(numVerts)){
+              console.log("invalid numVerts: " + numVerts);
+              numVerts = Math.floor(numVerts);
+            }
             
-              // only for debugging, remove on prduction
-              if(numVerts !== Math.floor(numVerts)){
-                numVerts = Math.floor(numVerts);
-              }
+            if(numVerts > 0){
               verts = new Float32Array(numVerts * 3);
+            }
+            
+            if(numVerts > 0 && normalsPresent){
+              norms = new Float32Array(numVerts * 3);
             }
 
             if(numVerts > 0 && colorsPresent){
@@ -541,7 +705,7 @@ var PSIParser = (function() {
               // only for debugging, remove on prduction
               if(numVerts !== Math.floor(numVerts)){
                 console.log("invalid numVerts: " + numVerts);
-              }              
+              }
 
               cols = new Float32Array(numVerts * 3);
             }
@@ -551,6 +715,11 @@ var PSIParser = (function() {
             // we then take the results and multiply it to some set values
             // the normals are the resulting values
             if(normalsPresent){
+            
+              if(numBytes !== Math.floor(numBytes)){
+                console.log('invalid num bytes');
+              }
+            
               norms = new Float32Array(numBytes);
               var nzsign, nx11bits, ny11bits, ivalue;
               var nvec = new Float32Array(3);
@@ -691,8 +860,6 @@ var PSIParser = (function() {
       /*
       */
       AJAX.firstLoad = function(textData){
-        var chunkLength = textData.length;
-          
         var temp;
         
         // numPtStr - number of points in the file
@@ -745,11 +912,10 @@ var PSIParser = (function() {
       }
     
       /**
-        On Minefield, this will occur zero or many times
+        On Firefox, this will occur zero or many times
         On Chrome/WebKit this will occur one or many times
       */
       AJAX.onprogress = function(evt){
-      
        if(evt.lengthComputable){
           fileSize = evt.total;
           progress = evt.loaded/evt.total;
@@ -761,10 +927,9 @@ var PSIParser = (function() {
         if(AJAX.responseText){
           var textData = AJAX.responseText;
           var chunkLength = textData.length;
-
-          // checks if this is the first run
+                    
           if(firstRun){
-            AJAX.firstLoad(textData);
+            AJAX.firstLoad(textData);            
           }
           
           // checks if begin or end tags can be found using rgx
@@ -820,12 +985,9 @@ var PSIParser = (function() {
           // parse position and colors
           else{
           	if(firstRun){
-           	  var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
 							firstRun = false;
 						}
-            else{
-            	var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
-            }
+            var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
 
             if(chunk.length > 0){
 							AJAX.startOfNextChunk = AJAX.last12Index;
@@ -835,9 +997,12 @@ var PSIParser = (function() {
         }// AJAX.responseText
       };// onprogress
       
+      if(AJAX.overrideMimeType){
+        AJAX.overrideMimeType('text/plain; charset=x-user-defined');
+      }
       // open an asynchronous request to the path
       AJAX.open("GET", path, true);
-      AJAX.overrideMimeType('text/plain; charset=x-user-defined');
+
       AJAX.send(null);
     };// load
   }// ctor
