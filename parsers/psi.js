@@ -687,26 +687,16 @@ var PSIParser = (function() {
           // !!! COMMENT
           if(onProgressCalled === true){
 
-            if(numVerts !== Math.floor(numVerts)){
-              console.log("invalid numVerts: " + numVerts);
-              numVerts = Math.floor(numVerts);
-            }
-            
-            if(numVerts > 0){
-              verts = new Float32Array(numVerts * 3);
-            }
-            
-            if(numVerts > 0 && normalsPresent){
-              norms = new Float32Array(numVerts * 3);
-            }
-
+            // !!! this needs to be changed.
+            // if colors are present, we know we're still
+            // dealing with vertices.
             if(numVerts > 0 && colorsPresent){
-
-              // only for debugging, remove on prduction
+              // !!! only for debugging, remove on prduction
               if(numVerts !== Math.floor(numVerts)){
+                numVerts = Math.floor(numVerts);
                 console.log("invalid numVerts: " + numVerts);
               }
-
+              verts = new Float32Array(numVerts * 3);
               cols = new Float32Array(numVerts * 3);
             }
             
@@ -714,7 +704,7 @@ var PSIParser = (function() {
             // we take 3 bytes and apply some bit shifting operations on it
             // we then take the results and multiply it to some set values
             // the normals are the resulting values
-            if(normalsPresent){
+            if(numVerts > 0 && normalsPresent){
             
               if(numBytes !== Math.floor(numBytes)){
                 console.log('invalid num bytes');
