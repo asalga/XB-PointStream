@@ -264,7 +264,7 @@ void setup()
   podium3.setPosition(new PVector(-60, 5, -60));
   // podium3.setDirection(Math.PI/4);
   podium3.setImage(lionImg);
-  podium3.setCloud("../../clouds/lion.psi");
+  podium3.setCloud("../../clouds/lion_1048K_n.psi");
   podium3.setPointCloudRendering(pointCloudCB);
   podiums.add(podium3);
   

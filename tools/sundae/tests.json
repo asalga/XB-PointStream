@@ -41,7 +41,7 @@
             "src" : { "url" : "resources/only_verts/only_verts.png", "type" : "image" }
         },
         "secondCanvas" : {
-            "src" : { "url" : "resources/only_verts/only_verts.js", "type" : "script" },			
+            "src" : { "url" : "resources/only_verts/only_verts.js", "type" : "script" },
             "run": "start"
         }
       },
@@ -54,7 +54,7 @@
             "src" : { "url" : "resources/verts_cols/verts_cols.png", "type" : "image" }
         },
         "secondCanvas" : {
-            "src" : { "url" : "resources/verts_cols/verts_cols.js", "type" : "script" },			
+            "src" : { "url" : "resources/verts_cols/verts_cols.js", "type" : "script" },
             "run": "start"
         }
       },
@@ -67,7 +67,55 @@
             "src" : { "url" : "resources/verts_norms/verts_norms.png", "type" : "image" }
         },
         "secondCanvas" : {
-            "src" : { "url" : "resources/verts_norms/verts_norms.js", "type" : "script" },			
+            "src" : { "url" : "resources/verts_norms/verts_norms.js", "type" : "script" },
+            "run": "start"
+        }
+      },
+
+      {
+        "name": "mickey_11K_n.psi",
+        "note": "11,158 points (XYZ RGB IJK)",
+        "firstCanvas" : {
+            "src" : { "url" : "resources/mickey_11K_n/11K.png", "type" : "image" }
+        },
+        "secondCanvas" : {
+            "src" : { "url" : "resources/mickey_11K_n/psi.js", "type" : "script" },	
+            "run": "start"
+        }
+      },
+
+      {
+        "name": "mickey_42K_n.psi",
+        "note": "42,862 points (XYZ RGB IJK)",
+        "firstCanvas" : {
+            "src" : { "url" : "resources/mickey_42K_n/42K.png", "type" : "image" }
+        },
+        "secondCanvas" : {
+            "src" : { "url" : "resources/mickey_42K_n/psi.js", "type" : "script" },
+            "run": "start"
+        }
+      },
+
+      {
+        "name": "mickey_156K_n.psi",
+        "note": "156,130 points (XYZ RGB IJK)",
+        "firstCanvas" : {
+            "src" : { "url" : "resources/mickey_156K_n/156K.png", "type" : "image" }
+        },
+        "secondCanvas" : {
+            "src" : { "url" : "resources/mickey_156K_n/psi.js", "type" : "script" },
+            "run": "start"
+        }
+      },
+
+      {
+        "name": "mickey_754K_n.psi",
+        "note": "754,276 points (XYZ RGB IJK)",
+        "firstCanvas" : {
+            "src" : { "url" : "resources/mickey_754K_n/754K.png", "type" : "image" }
+        },
+        "secondCanvas" : {
+            "src" : { "url" : "resources/mickey_754K_n/psi.js", "type" : "script" },
             "run": "start"
         }
       }
