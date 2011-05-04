@@ -481,6 +481,9 @@ function pointCloudCB(cloudPath){
   if(!window.ps){
     ps = window.ps = new PointStream();
     ps.setup(document.getElementById('xbps'));
+    var progObj = ps.createProgram(fixedFunctionVert, fixedFunctionFrag);
+    ps.useProgram(progObj);
+
     ps.pointSize(5);
     ps.background([0, 0, 0, 0.5]);    
   }
