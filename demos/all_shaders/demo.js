@@ -4,7 +4,7 @@ var pointCloud;
 var ps;
 
 const POINT_CLOUD_PATH = "../../clouds/vibex.psi";
-const MAX_CANVASES = 4;
+const MAX_CANVASES = 5;
 
 function render(){
   var c = pointCloud.getCenter();
@@ -29,7 +29,13 @@ function render(){
     ps.uniformi("uOutline", false);
     ps.render(pointCloud);
   }
-
+  
+  if(canvasCounter === 5){
+    var ctx = ps.getContext();
+    ctx.enable(ctx.BLEND);
+    ctx.blendFunc(ctx.SRC_ALPHA, ctx.ONE_MINUS_SRC_ALPHA);
+  }
+  
   if(canvasCounter === 4 ){
     ps.uniformi("reflection", true);
     ps.uniformf("lightPos", [0, -50, 50]);
@@ -108,10 +114,12 @@ function start(cvs){
       ps.useProgram(progObj);
       break;
     
-   // case 5:
-    //  var progObj = ps.createProgram(reflectionVert, reflectionFrag);
-     // ps.useProgram(progObj);
-     // break;    
+    case 5:
+      pointCloud = ps.load(POINT_CLOUD_PATH);
+      var progObj = ps.createProgram(xrayVertShader, xrayFragShader);
+      ps.useProgram(progObj);
+      break;
+      
     default:break;
   }
 

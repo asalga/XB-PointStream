@@ -1471,6 +1471,12 @@ var PointStream = (function() {
     this.createProgram = function(vertShader, fragShader){
       return createProgramObject(ctx, vertShader, fragShader);
     };
+    
+    /**
+    */
+    this.getContext = function(){
+      return ctx;
+    };
 
    /**
       @name PointStream#useProgram
