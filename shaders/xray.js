@@ -1,10 +1,10 @@
 var xrayVertShader = 
-"varying vec4 frontColor;" +
 
 "attribute vec3 ps_Vertex;" +
 "attribute vec3 ps_Normal;" +
 "attribute vec3 ps_Color;" +
 
+"varying vec4 frontColor;" +
 "varying vec3 vN;" +
 "varying vec3 vV;" +
 
@@ -16,9 +16,10 @@ var xrayVertShader =
 "uniform mat4 ps_NormalMatrix;" +
 
 "void main(void) {" +
-"  vec3 transNorm = vec3(ps_NormalMatrix * vec4(ps_Normal, 0.0));" + 
-"  vN = transNorm;" +
+"  vN = vec3(ps_NormalMatrix * vec4(ps_Normal, 0.0));" + 
+
 "  vec4 ecPos4 = ps_ModelViewMatrix * vec4(ps_Vertex, 1.0);" +
+"  vV = ecPos4.xyz;" +
 
 "  float dist = length( ecPos4 );" +
 "  float attn = ps_Attenuation[0] + " +
@@ -26,7 +27,7 @@ var xrayVertShader =
 "              (ps_Attenuation[2] * dist * dist);" +
 
 "  frontColor = vec4(ps_Color,1.0);" +
-"  vV = ecPos4.xyz;" +
+
 "  gl_PointSize = ps_PointSize * sqrt(1.0/attn);" +
 "  gl_Position = ps_ProjectionMatrix * ecPos4;" +
 "}";
@@ -41,8 +42,8 @@ var xrayFragShader =
 "varying vec3 vV;" +
 
 "void main(void){" +
-"  float opacity = dot(normalize(vN), normalize(vV) );" +
-"  opacity = 1.0 - abs(opacity);"+
-"  gl_FragColor = vec4(frontColor);" +
-"  gl_FragColor.a = opacity/60.0;" +
+
+"  float opacity = 1.0 - pow(abs(dot(normalize(vN), normalize(-vV))), 1.0);" +
+"  gl_FragColor = vec4(opacity * frontColor);" +
+"  gl_FragColor.a = opacity;" +
 "}";
