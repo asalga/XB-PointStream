@@ -4,7 +4,7 @@ var pointCloud;
 var ps;
 
 var zoom = -65;
-var left = 4;
+var left = 3;
 var top = 5;
 
 const POINT_CLOUD_PATH = "../../clouds/vibex_972K_n.psi";
@@ -35,7 +35,7 @@ function render(){
   }
     
   if(canvasCounter === 4 ){
-    var ctx = ps.getContext();
+  /*  var ctx = ps.getContext();
     ctx.enable(ctx.BLEND);
     ctx.blendFunc(ctx.SRC_ALPHA, ctx.ONE_MINUS_SRC_ALPHA);
 
@@ -44,16 +44,13 @@ function render(){
     ps.uniformf("uReflection", [.15, .15, .3, .8]);
     ps.uniformf("mirrorPos", [0, 100, 0]);
     
-   // ps.uniformf("uReflection", [1, 1, 1, 1]);
-   
     ps.pushMatrix();
       ps.rotateZ(Math.PI/2);
       ps.translate(-c[0], -c[1], -c[2]);
-      ps.translate(left - 0, top, zoom);
+      ps.translate(left, top, zoom);
       ps.render(pointCloud);
     ps.popMatrix();
-    
-    /*
+
     ps.pushMatrix();
       ps.translate(-c[0], -c[1], -c[2]);
         
@@ -87,7 +84,7 @@ function render(){
     
     ps.rotateZ(Math.PI/2);
     ps.translate(-c[0], -c[1], -c[2]);
-    ps.translate(0, left, zoom);
+    ps.translate(left, top, zoom);
 
     ps.render(pointCloud);
   }
