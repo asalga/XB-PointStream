@@ -100,8 +100,8 @@ function start(cvs){
     
     case 3:
       pointCloud = ps.load(POINT_CLOUD_PATH);
-      progCartoon = ps.createProgram(cartoonVert, cartoonFrag);
-      ps.useProgram(progCartoon);
+      prog = ps.createProgram(greyVert, greyFrag);
+      ps.useProgram(prog);
       break;
       
     case 4:
