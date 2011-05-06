@@ -1,5 +1,5 @@
 // import processing.opengl.*;
-/* @pjs preload="images/floor.jpg,images/vibex.png,images/wall.jpg,images/lion.jpg,images/mask.png,images/nautilus.png"; */
+/* @pjs preload="images/floor.jpg,images/vibex.png,images/wall.jpg,images/lion.jpg,images/mickey.jpg,images/nautilus.png"; */
 
 var userMoving = false;
 var firstTime = true;
@@ -194,7 +194,7 @@ void setup()
 
   // podium images  
   acornImg = loadImage("images/vibex.png");
-  mickeyImg = loadImage("images/mask.png");
+  mickeyImg = loadImage("images/mickey.jpg");
   lionImg = loadImage("images/lion.jpg");
   nautilus = loadImage("images/nautilus.png");
   
@@ -256,7 +256,7 @@ void setup()
   podium2.setPosition(new PVector(60, 5, -60));
   // podium2.setDirection(-Math.PI/4);
   podium2.setImage(mickeyImg);
-  podium2.setCloud("../../clouds/mask_1558K_n.psi");
+  podium2.setCloud("../../clouds/mickey_754K_n.psi");
   podium2.setPointCloudRendering(pointCloudCB);
   podiums.add(podium2);
 
