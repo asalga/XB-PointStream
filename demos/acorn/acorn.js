@@ -94,6 +94,13 @@ function render(){
 }
 
 function start(){
+
+var cam = new Cam();
+//cam.pubMethod();
+//alert(cam.closestDistance);
+cam.pitch(3.141592658);
+//alert(cam.position[0]);
+console.log(cam.position);
   ps = new PointStream();
   document.getElementById('debug').innerHTML += "XB PointStream Version: " + ps.version;
   
@@ -102,7 +109,7 @@ function start(){
   ps.background([0, 0, 0, 0.5]);
   ps.pointSize(5);
 
-  ps.onRender = render;
+ // ps.onRender = render;
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
