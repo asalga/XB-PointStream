@@ -1,7 +1,7 @@
 /*
 */
 
-final int DEF_USER_TURN_SPEED = 2.0;
+final int DEF_USER_TURN_SPEED = 1.0;
 final int DEF_USER_MOVE_SPEED = 30.0;
 
 class User{

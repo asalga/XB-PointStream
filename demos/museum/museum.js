@@ -1,5 +1,5 @@
 // import processing.opengl.*;
-/* @pjs preload="images/floor.jpg,images/acorn.jpg,images/wall.jpg,images/lion.jpg,images/mickey.jpg"; */
+/* @pjs preload="images/floor.jpg,images/vibex.png,images/wall.jpg,images/lion.jpg,images/mask.png,images/nautilus.png"; */
 
 var userMoving = false;
 var firstTime = true;
@@ -193,10 +193,11 @@ void setup()
   podium.load("podium.obj");
 
   // podium images  
-  acornImg = loadImage("images/acorn.jpg");
-  mickeyImg = loadImage("images/mickey.jpg");
+  acornImg = loadImage("images/vibex.png");
+  mickeyImg = loadImage("images/mask.png");
   lionImg = loadImage("images/lion.jpg");
-
+  nautilus = loadImage("images/nautilus.png");
+  
   keyboard = new Keyboard();
   window.kb = keyboard;
   user = new User();
@@ -246,7 +247,7 @@ void setup()
   Podium podium1 = new Podium();
   podium1.setPosition(new PVector(0, 5, 0));
   podium1.setImage(acornImg);
-  podium1.setCloud("../../clouds/acorn.asc");
+  podium1.setCloud("../../clouds/vibex_972K_n.psi");
   podium1.setPointCloudRendering(pointCloudCB);
   podiums.add(podium1);
 
@@ -255,7 +256,7 @@ void setup()
   podium2.setPosition(new PVector(60, 5, -60));
   // podium2.setDirection(-Math.PI/4);
   podium2.setImage(mickeyImg);
-  podium2.setCloud("../../clouds/mickey.asc");
+  podium2.setCloud("../../clouds/mask_1558K_n.psi");
   podium2.setPointCloudRendering(pointCloudCB);
   podiums.add(podium2);
 
@@ -267,6 +268,16 @@ void setup()
   podium3.setCloud("../../clouds/lion_1048K_n.psi");
   podium3.setPointCloudRendering(pointCloudCB);
   podiums.add(podium3);
+  
+  
+  // center far podium
+  Podium podium4 = new Podium();
+  podium4.setPosition(new PVector(0, 5, -60));
+  // podium3.setDirection(Math.PI/4);
+  podium4.setImage(nautilus);
+  podium4.setCloud("../../clouds/nautilus_2714K_n.psi");
+  podium4.setPointCloudRendering(pointCloudCB);
+  podiums.add(podium4);
   
   textureMode(NORMALIZED);
 }
@@ -468,7 +479,7 @@ void draw()
 function pointCloudCB(cloudPath){
   var cloud = null;
   var firstTime = true;
-  var zoomed = -50;
+  var zoomed = -100;
   var rot = [0, 0];
   
   // Don't waste cycles rendering static point clouds
