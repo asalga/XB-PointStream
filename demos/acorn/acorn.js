@@ -1,6 +1,16 @@
 var ps, acorn;
 
-var buttonDown = false;
+// Create an orbit camera halfway between the closest and farthest point
+var cam = new OrbitCam({closest:0, farthest:100, distance: 50});
+
+// override some values.
+cam.setFarthestDistance(20);
+cam.setClosestDistance(10);
+cam.setDistance(10);
+
+var isDragging = false;
+var rotationStartCoords = [0,0];
+
 var zoomed = -50;
 var rot = [0, 0];
 var curCoords = [0, 0];
@@ -23,19 +33,24 @@ function removeAllScreenShots(){
 function zoom(amt){
   var invert = document.getElementById('invertScroll').checked ? -1: 1;
   zoomed += amt * 2 * invert;
-  if(buttonDown){
-    addPNG();
+  
+  if(amt < 0){
+    cam.goCloser(-amt);
   }
+  else{
+    cam.goFarther(amt);
+  }   
 }
 
 function mousePressed(){
-  curCoords[0] = ps.mouseX;
-  curCoords[1] = ps.mouseY;
-  buttonDown = true;
+  rotationStartCoords[0] = ps.mouseX;
+  rotationStartCoords[1] = ps.mouseY;
+  
+  isDragging = true;
 }
 
 function mouseReleased(){
-  buttonDown = false;
+  isDragging = false;
 }
 
 function keyDown(){
@@ -43,27 +58,28 @@ function keyDown(){
 }
 
 function render(){
-  var deltaX = ps.mouseX - curCoords[0];
-  var deltaY = ps.mouseY - curCoords[1];
-  
-  if(buttonDown){
-    rot[0] += deltaX / ps.width * 5;
-    rot[1] += deltaY / ps.height * 5;
-    
-    curCoords[0] = ps.mouseX;
-    curCoords[1] = ps.mouseY;
-  }
+  if(isDragging === true){
+    var x = ps.mouseX;
+    var y = ps.mouseY;
+		
+		// how much was the cursor moved compared to last time
+		// this function was called?
+    var deltaX = x - rotationStartCoords[0];
+    var deltaY = y - rotationStartCoords[1];
+		
+		// now that the camera was updated, reset where the
+		// rotation will start for the next time this function is called.
+		rotationStartCoords = [x, y];
 
-  // transform point cloud
-  ps.translate(0, 0, zoomed);
+    cam.yaw(-deltaX * 0.015);
+    cam.pitch(deltaY * 0.015);
+	}
   
-  ps.rotateY(rot[0]);
-  ps.rotateX(rot[1]);
+  ps.multMatrix(M4x4.makeLookAt(cam.position, cam.direction, cam.up));
+  ps.translate(-cam.position[0], -cam.position[1], -cam.position[2] );
   
-  // clear the canvas
   ps.clear();
   
-  // draw acorn
   var c = acorn.getCenter();
   ps.translate(-c[0], -c[1], -c[2]);
   ps.render(acorn);
@@ -94,13 +110,6 @@ function render(){
 }
 
 function start(){
-
-var cam = new Cam();
-//cam.pubMethod();
-//alert(cam.closestDistance);
-cam.pitch(3.141592658);
-//alert(cam.position[0]);
-console.log(cam.position);
   ps = new PointStream();
   document.getElementById('debug').innerHTML += "XB PointStream Version: " + ps.version;
   
@@ -109,7 +118,7 @@ console.log(cam.position);
   ps.background([0, 0, 0, 0.5]);
   ps.pointSize(5);
 
- // ps.onRender = render;
+  ps.onRender = render;
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;

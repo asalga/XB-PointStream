@@ -1456,7 +1456,13 @@ var PointStream = (function() {
     */
     this.loadMatrix = function(mat){
       matrixStack[matrixStack.length - 1] = mat;
-    }
+    };
+    
+    /**
+    */
+    this.multMatrix = function(mat){
+      this.loadMatrix(M4x4.mul(this.peekMatrix(), mat));
+    };
     
     /************************************/
     /********** Program Object **********/
