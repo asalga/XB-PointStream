@@ -54,7 +54,7 @@ function mouseReleased(){
 }
 
 function keyDown(){
-  document.getElementById('key').innerHTML = key;
+  document.getElementById('key').innerHTML = ps.key;
   cam.setPosition([0, cam.closestDistance, 0]);
 }
 
