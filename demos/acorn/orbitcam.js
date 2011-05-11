@@ -103,7 +103,7 @@ var OrbitCam = (function(){
       
       @param {Number} distance to move closer to the orbit point. Must be greater than zero.
     */
-    this.goCloser  = function(distance){
+    this.goCloser = function(distance){
       // A negative value for goCloser() could be allowed and would
       // mean moving farther using a positive value, but this could
       // create some confusion and is therefore not permitted.
@@ -187,7 +187,7 @@ var OrbitCam = (function(){
 
       @param {Number} distance Must be less than or equal to getClosestDistance().
     */
-    this.setFarthestDistance = function (distance){
+    this.setFarthestDistance = function(distance){
       if (distance >= closestDistance){
         farthestDistance = distance;
 
@@ -252,7 +252,7 @@ var OrbitCam = (function(){
       
       @param {Number} angle in radians
     */
-    this.yaw = function (angle){
+    this.yaw = function(angle){
       if(V3.equals(pos, orbitPoint)){
       
         var rotMat = M4x4.makeRotate(angle, [0,1,0]);
@@ -283,14 +283,51 @@ var OrbitCam = (function(){
       
       @param {Array} op New orbit point
     */
-    this.setOrbitPoint = function (op){
+    this.setOrbitPoint = function(op){
       orbitPoint = V3.clone(op);
       
       // get the distance the camera was from the orbit point.
       var orbitPointToCam = V3.scale(dir, -distance);
       pos = V3.add(orbitPoint, orbitPointToCam);
     };
+    
+    /**
+      Set the camera to a new position. The position must be between the closest
+      and farthest distances.
+
+      @param {Array} position The new position of the camera.
+    */
+    this.setPosition = function(p){
+      var distFromNewPosToOP = V3.length(V3.sub(orbitPoint, p));
+
+      // make sure the new position of the cam is between the min 
+      // and max allowed constraints.	
+      if(distFromNewPosToOP >= closestDistance && distFromNewPosToOP <= farthestDistance){
+        pos = V3.clone(p);
+        var camPosToOrbitPoint = V3.sub(orbitPoint, pos);
+
+        // If the position was set such that the direction vector is parallel to the global
+        // up axis, the cross product won't work. In that case, leave the left vector as it was.
+        var res = V3.cross(camPosToOrbitPoint, V3.$(0, 1, 0));
+
+        if(V3.equals(res, V3.$(0,0,0))){
+          // set the direction
+          dir = V3.normalize(camPosToOrbitPoint);
+          // the left vector will be perpendicular to the global up
+          // axis and direction.
+          up = V3.cross(dir, left);
+        }
+        else{
+          // set the direction
+          dir = V3.normalize(V3.sub(orbitPoint, p));
+          // the left vector will be perpendicular to the global up
+          // axis and direction.
+          left = V3.cross(V3.$(0, 1, 0), dir);
+          up = V3.cross(dir, left);
+        }
+      }
+    };
+    
   }
-  
   return OrbitCam;
 }());
