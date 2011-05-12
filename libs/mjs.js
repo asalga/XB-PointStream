@@ -38,6 +38,7 @@
  * 0xaabbcc.
  */
 const MJS_VERSION = 0x000000;
+const MJS_EPSILON = 0.00001;
 
 /*
  * Constant: MJS_DO_ASSERT
@@ -177,6 +178,18 @@ V3.add = function V3_add(a, b, r) {
     r[1] = a[1] + b[1];
     r[2] = a[2] + b[2];
     return r;
+};
+
+/*
+*/
+V3.equals = function V3_equals(a, b){
+  if( Math.abs(a[0] - b[0]) < MJS_EPSILON &&
+      Math.abs(a[1] - b[1]) < MJS_EPSILON &&
+      Math.abs(a[2] - b[2]) < MJS_EPSILON)
+  {
+    return true;
+  }
+  return false;
 };
 
 /*
@@ -410,6 +423,12 @@ V3.cross = function V3_cross(a, b, r) {
     r[1] = a[2]*b[0] - a[0]*b[2];
     r[2] = a[0]*b[1] - a[1]*b[0];
     return r;
+};
+
+/*
+*/
+V3.angle = function V3_angle(a, b){
+  return Math.acos(V3.dot(a, b));
 };
 
 /*
