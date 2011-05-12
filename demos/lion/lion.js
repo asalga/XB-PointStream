@@ -1,9 +1,13 @@
 var ps, lion;
 
+// mouse control
 var buttonDown = false;
 var zoomed = -50;
-var rot = [0, 0];
-var curCoords = [0, 0];
+var rotationStartCoords = [0, 0];
+var isDragging = false;
+
+// Create an orbit camera halfway between the closest and farthest point
+var cam = new OrbitCam({closest:10, farthest:50, distance: 50});
 
 const KEY_ESC = 27;
 
@@ -13,13 +17,13 @@ function zoom(amt){
 }
 
 function mousePressed(){
-  curCoords[0] = ps.mouseX;
-  curCoords[1] = ps.mouseY;
-  buttonDown = true;
+  rotationStartCoords[0] = ps.mouseX;
+  rotationStartCoords[1] = ps.mouseY;
+  isDragging = true;
 }
 
 function mouseReleased(){
-  buttonDown = false;
+  isDragging = false;
 }
 
 function keyDown(){
@@ -29,24 +33,24 @@ function keyDown(){
 }
 
 function render() {
-  var deltaX = ps.mouseX - curCoords[0];
-  var deltaY = ps.mouseY - curCoords[1];
+  if(isDragging === true){		
+		// how much was the cursor moved compared to last time
+		// this function was called?
+    var deltaX = ps.mouseX - rotationStartCoords[0];
+    var deltaY = ps.mouseY - rotationStartCoords[1];
+		
+		// now that the camera was updated, reset where the
+		// rotation will start for the next time this function is called.
+		rotationStartCoords = [ps.mouseX, ps.mouseY];
+
+    cam.yaw(-deltaX * 0.015);
+    cam.pitch(deltaY * 0.015);
+	}
   
-  if(buttonDown){
-    rot[0] += deltaX / 250;
-    rot[1] += deltaY / 250;
-    curCoords[0] = ps.mouseX;
-    curCoords[1] = ps.mouseY;
-  }
-
-  // transform point cloud
-  ps.translate(0, 0, zoomed);
-
-  ps.rotateY(rot[0]);
-  ps.rotateX(rot[1]);
- 
-  var c = lion.getCenter();
-  ps.translate(-c[0], -c[1], -c[2]);
+  var c = lion.getCenter();  
+  ps.multMatrix(M4x4.makeLookAt(cam.position, cam.direction, cam.up));
+  ps.translate(-cam.position[0]-c[0], -cam.position[1]-c[1], -cam.position[2]-c[2]);
+  
   ps.clear();
   ps.render(lion);
   

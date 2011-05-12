@@ -20,7 +20,15 @@ var OrbitCam = (function(){
     var left = V3.$(-1, 0, 0);
     var up =   V3.$( 0, 1, 0);
     var dir =  V3.$( 0, 0,-1);
-    var pos =  V3.$( 0, 0, 0);
+    var pos =  V3.$( 0, 0, config.closest);
+    
+    // only set the distance if it is valid
+    if(config.distance <= config.farthest && config.distance >= config.closest){
+      pos =  V3.$( 0, 0, config.distance);
+    }
+    
+    
+    
     
     /**
       Get the camera's transformation

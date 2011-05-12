@@ -1,12 +1,7 @@
 var ps, acorn;
 
 // Create an orbit camera halfway between the closest and farthest point
-var cam = new OrbitCam({closest:0, farthest:100, distance: 50});
-
-// override some values.
-cam.setFarthestDistance(20);
-cam.setClosestDistance(10);
-cam.setDistance(10);
+var cam = new OrbitCam({closest:10, farthest:20, distance: 200});
 
 var isDragging = false;
 var rotationStartCoords = [0,0];
@@ -59,18 +54,15 @@ function keyDown(){
 }
 
 function render(){
-  if(isDragging === true){
-    var x = ps.mouseX;
-    var y = ps.mouseY;
-		
+  if(isDragging === true){		
 		// how much was the cursor moved compared to last time
 		// this function was called?
-    var deltaX = x - rotationStartCoords[0];
-    var deltaY = y - rotationStartCoords[1];
+    var deltaX = ps.mouseX - rotationStartCoords[0];
+    var deltaY = ps.mouseY - rotationStartCoords[1];
 		
 		// now that the camera was updated, reset where the
 		// rotation will start for the next time this function is called.
-		rotationStartCoords = [x, y];
+		rotationStartCoords = [ps.mouseX, ps.mouseY];
 
     cam.yaw(-deltaX * 0.015);
     cam.pitch(deltaY * 0.015);
@@ -82,7 +74,7 @@ function render(){
   ps.clear();
   
   var c = acorn.getCenter();
-  ps.translate(-c[0], -c[1], -c[2]);
+
   ps.render(acorn);
       
   var status = document.getElementById("fileStatus");
@@ -101,7 +93,6 @@ function render(){
   
   var numPointsAndFPS = document.getElementById("numPointsAndFPS");
   
-  // 
   if(acorn.getNumPoints() > 0){
     numPointsAndFPS.innerHTML = acorn.getNumPoints() + " points @ " + fps + " FPS";
   }
