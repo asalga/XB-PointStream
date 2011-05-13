@@ -1,14 +1,9 @@
 var ps, acorn;
 
 // Create an orbit camera halfway between the closest and farthest point
-var cam = new OrbitCam({closest:10, farthest:20, distance: 200});
-
+var cam = new OrbitCam({closest:10, farthest:20, distance: 20});
 var isDragging = false;
-var rotationStartCoords = [0,0];
-
-var zoomed = -50;
-var rot = [0, 0];
-var curCoords = [0, 0];
+var rotationStartCoords = [0, 0];
 
 function addPNG(){
   var img = document.createElement('img');
@@ -27,7 +22,6 @@ function removeAllScreenShots(){
 
 function zoom(amt){
   var invert = document.getElementById('invertScroll').checked ? -1: 1;
-  zoomed += amt * 2 * invert;
   
   if(amt < 0){
     cam.goCloser(-amt);
@@ -67,14 +61,12 @@ function render(){
     cam.yaw(-deltaX * 0.015);
     cam.pitch(deltaY * 0.015);
 	}
-  
+
+  var c = acorn.getCenter();  
   ps.multMatrix(M4x4.makeLookAt(cam.position, cam.direction, cam.up));
-  ps.translate(-cam.position[0], -cam.position[1], -cam.position[2] );
+  ps.translate(-cam.position[0]-c[0], -cam.position[1]-c[1], -cam.position[2]-c[2] );
   
   ps.clear();
-  
-  var c = acorn.getCenter();
-
   ps.render(acorn);
       
   var status = document.getElementById("fileStatus");

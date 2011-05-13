@@ -1,13 +1,18 @@
 var currentCloudPath;
 var ps, pointCloud;
 
-var buttonDown = false;
-var zoomed = -50;
-var rot = [0, 0];
-var curCoords = [0, 0];
+// Create an orbit camera halfway between the closest and farthest point
+var cam = new OrbitCam({closest:10, farthest:40, distance: 40});
+var isDragging = false;
+var rotationStartCoords = [0, 0];
 
 function zoom(amt){
-  zoomed += amt * 2;
+  if(amt < 0){
+    cam.goCloser(-amt);
+  }
+  else{
+    cam.goFarther(amt);
+  }  
 }
 
 function resetBackgroundColor(){
@@ -22,39 +27,37 @@ function resetBackgroundColor(){
 }
 
 function mousePressed(){
-  curCoords[0] = ps.mouseX;
-  curCoords[1] = ps.mouseY;
-  buttonDown = true;
+  rotationStartCoords[0] = ps.mouseX;
+  rotationStartCoords[1] = ps.mouseY;
+  isDragging = true;
 }
 
 function mouseReleased(){
-  buttonDown = false;
+  isDragging = false;
 }
 
 /*
   RENDER
 */
 function render(){
-  var deltaX = ps.mouseX - curCoords[0];
-  var deltaY = ps.mouseY - curCoords[1];
-  
-  if(buttonDown){
-    rot[0] += deltaX / 250;
-    rot[1] += deltaY / 250;
-    curCoords[0] = ps.mouseX;
-    curCoords[1] = ps.mouseY;
-  }
+  if(isDragging === true){		
+		// how much was the cursor moved compared to last time
+		// this function was called?
+    var deltaX = ps.mouseX - rotationStartCoords[0];
+    var deltaY = ps.mouseY - rotationStartCoords[1];
+		
+		// now that the camera was updated, reset where the
+		// rotation will start for the next time this function is called.
+		rotationStartCoords = [ps.mouseX, ps.mouseY];
 
-  // transform point cloud
-  ps.translate(0, 0, zoomed);
-
-  ps.rotateY(rot[0]);
-  ps.rotateX(rot[1]);
+    cam.yaw(-deltaX * 0.02);
+    cam.pitch(deltaY * 0.02);
+	}
 
   var c = pointCloud.getCenter();
+  ps.multMatrix(M4x4.makeLookAt(cam.position, cam.direction, cam.up));
+  ps.translate(-cam.position[0]-c[0], -cam.position[1]-c[1], -cam.position[2]-c[2] );
   
-  ps.translate(-c[0], -c[1], -c[2]);
-
   ps.clear();
   ps.render(pointCloud);
 }
@@ -109,11 +112,7 @@ function dropped(event) {
       resetBackgroundColor();
       ps.pointSize(5);
       ps.onRender = render;
-      
-      zoomed = -50;
-      rot = [0, 0];
-      curCoords = [0, 0];
-      
+            
       ps.onMouseScroll = zoom;
       ps.onMousePressed = mousePressed;
       ps.onMouseReleased = mouseReleased;

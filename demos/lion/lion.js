@@ -1,19 +1,21 @@
 var ps, lion;
 
-// mouse control
-var buttonDown = false;
-var zoomed = -50;
-var rotationStartCoords = [0, 0];
-var isDragging = false;
-
 // Create an orbit camera halfway between the closest and farthest point
 var cam = new OrbitCam({closest:10, farthest:50, distance: 50});
+var rotationStartCoords = [0, 0];
+var isDragging = false;
 
 const KEY_ESC = 27;
 
 function zoom(amt){
   var invert = document.getElementById('invertScroll').checked ? -1: 1;
-  zoomed += amt * 2 * invert;
+  
+  if(amt < 0){
+    cam.goCloser(-amt);
+  }
+  else{
+    cam.goFarther(amt);
+  }  
 }
 
 function mousePressed(){
@@ -47,7 +49,7 @@ function render() {
     cam.pitch(deltaY * 0.015);
 	}
   
-  var c = lion.getCenter();  
+  var c = lion.getCenter();
   ps.multMatrix(M4x4.makeLookAt(cam.position, cam.direction, cam.up));
   ps.translate(-cam.position[0]-c[0], -cam.position[1]-c[1], -cam.position[2]-c[2]);
   
