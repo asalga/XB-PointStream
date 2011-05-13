@@ -49,7 +49,7 @@ function render() {
     cam.pitch(deltaY * 0.015);
 	}
   
-  var c = lion.getCenter();  
+  var c = lion.getCenter();
   ps.multMatrix(M4x4.makeLookAt(cam.position, cam.direction, cam.up));
   ps.translate(-cam.position[0]-c[0], -cam.position[1]-c[1], -cam.position[2]-c[2]);
   
