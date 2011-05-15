@@ -22,6 +22,9 @@ var PointStream = (function() {
     
     // Chrome still does not have subarray, so we add it here.
     if(!Float32Array.prototype.subarray){
+      /**
+        @private
+      */
       Float32Array.prototype.subarray = function(s,e){
         return !e ? this.slice(0) : this.slice(s,e);
       };
@@ -1639,6 +1642,9 @@ var PointStream = (function() {
       ctx.useProgram(currProgram);
       setDefaultUniforms();
       
+      /**
+        @private
+      */
       window.PSrequestAnimationFrame = (function(){
         return window.requestAnimationFrame ||
                window.webkitRequestAnimationFrame ||
