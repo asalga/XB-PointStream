@@ -1255,11 +1255,17 @@ var PointStream = (function() {
               */
               if(pointCloud.attributes[semantics[name]][currVBO]){
                 vertexAttribPointer(currProgram, semantics[name], 3, pointCloud.attributes[semantics[name]][currVBO].VBO);
-              }else{
-                disableVertexAttribPointer(currProgram, semantics[name]);
               }
             }
             ctx.drawArrays(ctx.POINTS, 0, arrayOfBufferObjsV[currVBO].length/3);
+            
+            // If we render a point cloud with vertices and colors, then 
+            // another one with only vertices, this may cause issues if we
+            // don't disabled all the current attributes after each draw.
+            for(var name in semantics){
+              disableVertexAttribPointer(currProgram, semantics[name]);
+            }
+            
           }
         }
       }
