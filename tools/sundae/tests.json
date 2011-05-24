@@ -2,7 +2,7 @@
   "testSuite": 
   [{
     "dependancyURL": [
-                    "../../mjs.js",
+                    "../../libs/mjs.js",
                     "../../psapi.js",
                     "../../parsers/asc.js",
                     "../../parsers/psi.js",
@@ -11,8 +11,9 @@
                     ],
     "test": [
       {
-        "name": "Acorn test (ASC)",
+        "name": "Acorn test",
         "note": "",
+        "tag": "ASC",
         "firstCanvas" : {
             "src" : { "url" : "resources/acorn_unlit/acorn_unlit.png", "type" : "image" }
         },
@@ -23,8 +24,9 @@
       },
 
       {
-        "name": "Mickey Mouse (PSI)",
+        "name": "Mickey Mouse",
         "note": "",
+        "tag": "PSI",
         "firstCanvas" : {
             "src" : { "url" : "resources/psi/psi.png", "type" : "image" }
         },
@@ -35,8 +37,9 @@
       },
 
       {
-        "name": "Only Vertices (ASC)",
+        "name": "Only Vertices",
         "note": "Some ASC files only contain vertex data",
+        "tag": "ASC",
         "firstCanvas" : {
             "src" : { "url" : "resources/only_verts/only_verts.png", "type" : "image" }
         },
