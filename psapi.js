@@ -22,6 +22,9 @@ var PointStream = (function() {
     
     // Chrome still does not have subarray, so we add it here.
     if(!Float32Array.prototype.subarray){
+      /**
+        @private
+      */
       Float32Array.prototype.subarray = function(s,e){
         return !e ? this.slice(0) : this.slice(s,e);
       };
@@ -1252,11 +1255,17 @@ var PointStream = (function() {
               */
               if(pointCloud.attributes[semantics[name]][currVBO]){
                 vertexAttribPointer(currProgram, semantics[name], 3, pointCloud.attributes[semantics[name]][currVBO].VBO);
-              }else{
-                disableVertexAttribPointer(currProgram, semantics[name]);
               }
             }
             ctx.drawArrays(ctx.POINTS, 0, arrayOfBufferObjsV[currVBO].length/3);
+            
+            // If we render a point cloud with vertices and colors, then 
+            // another one with only vertices, this may cause issues if we
+            // don't disabled all the current attributes after each draw.
+            for(var name in semantics){
+              disableVertexAttribPointer(currProgram, semantics[name]);
+            }
+            
           }
         }
       }
@@ -1639,6 +1648,9 @@ var PointStream = (function() {
       ctx.useProgram(currProgram);
       setDefaultUniforms();
       
+      /**
+        @private
+      */
       window.PSrequestAnimationFrame = (function(){
         return window.requestAnimationFrame ||
                window.webkitRequestAnimationFrame ||
