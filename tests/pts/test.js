@@ -33,5 +33,5 @@ function start(){
   ps.onRender = render;
   ps.onKeyDown = keyDown;
   
-  pointCloud = ps.load("../../clouds/lobby.pts");
+  pointCloud = ps.load("../../clouds/lobby_389K.pts");
 }
