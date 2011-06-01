@@ -1,17 +1,12 @@
 /*
   Copyright (c) 2010  Seneca College
   MIT LICENSE
-
-  Version:  0.7
-  Author:   Mickael Medel
-            asydik.wordpress.com
-  Created:  February 2011
-  Updated:  April 2011
-  
-  Notes:
-  This parser parses .PSI filetypes. These files are Arius3D Proprietary
-  files which have their data stored in one of the following ways:
-  
+*/
+/**
+  @class This parser parses .PSI filetypes. These files are Arius3D
+  proprietary files which have their data stored in one of the following 
+  ways:
+<pre>
   <xml tags>
   <that have relevant>
   <information= about the file>
@@ -30,11 +25,18 @@
   <more tags>
   <to close opening tags>
   <and provide more information>
+</pre>
+
+  @version:  0.7
+  @author:   Mickael Medel
+            asydik.wordpress.com
+  Created:  February 2011
+  Updated:  April 2011  
 */
 var PSIParser = (function() {
 
   /**
-    Constructor
+    @private
   */
   function PSIParser(config) {
   
@@ -307,8 +309,7 @@ var PSIParser = (function() {
           
           switch(AttribID){
             case 1: numParsedPoints += BUFFER_SIZE/3;
-                    parse(AJAX.parser, {"ps_Vertex": tempBuffer});
-                    break;
+                    parse(AJAX.parser, {"ps_Vertex": tempBuffer});break;
             case 2: parse(AJAX.parser, {"ps_Color":  tempBuffer});break;
             case 3: parse(AJAX.parser, {"ps_Normal": tempBuffer});break;
           }
@@ -327,8 +328,7 @@ var PSIParser = (function() {
  
           switch(AttribID){                    
             case 1: numParsedPoints += BUFFER_SIZE/3;
-                    parse(AJAX.parser, {"ps_Vertex": buffer});
-                    break;
+                    parse(AJAX.parser, {"ps_Vertex": buffer});break;
             case 2: parse(AJAX.parser, {"ps_Color":  buffer});break;
             case 3: parse(AJAX.parser, {"ps_Normal": buffer});break;
           }
@@ -351,7 +351,7 @@ var PSIParser = (function() {
     
     /**
       Returns the version of this parser
-      
+      @name PSIParser#version
       @returns {String} parser version
     */
     this.__defineGetter__("version", function(){
@@ -360,7 +360,7 @@ var PSIParser = (function() {
     
     /**
       Get the number of parsed points so far
-      
+      @name PSIParser#numParsedPoints
       @returns {Number} number of points parsed.
     */
     this.__defineGetter__("numParsedPoints", function(){
@@ -369,7 +369,7 @@ var PSIParser = (function() {
     
     /**
       Get the total number of points in the point cloud.
-      
+      @name PSIParser#numTotalPoints
       @returns {Number}
     */
     this.__defineGetter__("numTotalPoints", function(){
@@ -378,7 +378,7 @@ var PSIParser = (function() {
     
     /**
       Returns the progress of downloading the point cloud
-      
+      @name PSIParser#progress
       @returns {Number} value from zero to one or -1 if unknown.
     */
     this.__defineGetter__("progress", function(){
@@ -386,6 +386,9 @@ var PSIParser = (function() {
     });
     
     /**
+      Returns the file size of the resource in bytes.
+      @name PSIParser#fileSize
+      @returns {Number} size of resource in bytes.
     */
     this.__defineGetter__("fileSize", function(){
       return fileSize;
@@ -417,6 +420,7 @@ var PSIParser = (function() {
       AJAX.parser = this;
 
       /**
+        @private
         Occurs exactly once when the resource begins to be downloaded.
       */
       AJAX.onloadstart = function(evt){
@@ -672,6 +676,7 @@ var PSIParser = (function() {
       }
       
       /**
+        @private
       */
       AJAX.parseChunk = function(chunk){
         // !! fix this
@@ -847,7 +852,8 @@ var PSIParser = (function() {
         }
       };
       
-      /*
+      /**
+        @private
       */
       AJAX.firstLoad = function(textData){
         var temp;
@@ -902,6 +908,8 @@ var PSIParser = (function() {
       }
     
       /**
+        @private
+        
         On Firefox, this will occur zero or many times
         On Chrome/WebKit this will occur one or many times
       */
@@ -966,27 +974,28 @@ var PSIParser = (function() {
             var chunk	= textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
             normalsPresent = true;
             colorsPresent = false;
-            
+                
             if(chunk.length > 0){
-							AJAX.startOfNextChunk = AJAX.last12Index;
-            	AJAX.parseChunk(chunk);
-						}
+              AJAX.startOfNextChunk = AJAX.last12Index;
+              AJAX.parseChunk(chunk);
+            }
           }
           // parse position and colors
           else{
           	if(firstRun){
-							firstRun = false;
-						}
+              firstRun = false;
+            }
             var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
 
             if(chunk.length > 0){
-							AJAX.startOfNextChunk = AJAX.last12Index;
-            	AJAX.parseChunk(chunk);
-						}
+              AJAX.startOfNextChunk = AJAX.last12Index;
+              AJAX.parseChunk(chunk);
+            }
           }
         }// AJAX.responseText
       };// onprogress
       
+      // This line is required since we are parsing binary data.
       if(AJAX.overrideMimeType){
         AJAX.overrideMimeType('text/plain; charset=x-user-defined');
       }

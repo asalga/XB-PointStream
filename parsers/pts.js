@@ -4,7 +4,7 @@
 */
 /**
   @class This parser parses .PTS filetypes. These files are ASCII
-  files 
+  files used in 3D Studio Max.
   
   @version:  0.1
   @author:   Andor Salga asalga.wordpress.com
@@ -266,6 +266,7 @@ var PTSParser = (function() {
       
       // open an asynchronous request to the path
       if(AJAX.overrideMimeType){
+        // Firefox generates a misleading error if we don't have this line
         AJAX.overrideMimeType("application/json");
       }
       AJAX.open("GET", path, true);

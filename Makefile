@@ -56,7 +56,7 @@ create-user-docs: create-release-dir
 # Copy over the documents into the release directory
 create-release-docs: create-release-dir
 	cp AUTHORS ./xbps-min
-	cp README ./xbps-min
+	cp README.md ./xbps-min
 	cp LICENSE ./xbps-min
 
 #

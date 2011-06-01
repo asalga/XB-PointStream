@@ -1185,12 +1185,10 @@ var PointStream = (function() {
       return VERSION;
     });
     
-    /**
-      @name PointStream#frameRate
-      
+    /**      
       Get the last calculated frames per second. This is updated
       every second.
-      
+      @name PointStream#frameRate
       @returns {Number}
     */
     this.__defineGetter__("frameRate", function(){
