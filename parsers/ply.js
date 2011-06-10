@@ -64,8 +64,10 @@ var PLYParser = (function() {
     var numTotalPoints = 0;
     var progress = 0;
 
-    normalsPresent = false;
-    colorsPresent = false;
+    var normalsPresent = false;
+    var colorsPresent = false;
+    
+    var gotHeader = false;
         
     // This will hold labels and indices
     // such as:
@@ -203,89 +205,93 @@ var PLYParser = (function() {
         // this occurs over network connections, but not locally.
         if(chunk !== ""){
         
-          // Only do this once!!!
-          // var header = "" + chunk.match(/.*\n+end_header/);
-          if(!map["x"]){
+          if(!gotHeader){
             var header = "" + chunk.match(/(\s|\S)+?end_header/);
             var properties = header.match(/property.*/g);
-                      
-           // var map = {};
-            for(var i = 0; i < properties.length; i++){
-              var t = properties[i].replace(/property.*\s+/, '');
-              map[t] = i;
-            }
+            
+            if(properties){
+              for(var i = 0; i < properties.length; i++){
+                var t = properties[i].replace(/property.*\s+/, '');
+                map[t] = i;
+              }
 
-            if(map["nx"] && map["ny"] && map["nz"]){
-              normalsPresent = true;
+              if(map["nx"] && map["ny"] && map["nz"]){
+                normalsPresent = true;
+              }
+              
+              if(map["red"] && map["green"] && map["blue"]){
+                colorsPresent = true;
+              }
+
+              chunk = chunk.replace(/(\s|\S)+?end_header/, '');
+            }
+            gotHeader = true;
+          }
+          
+          // Don't bother trying to parse if we don't know the format
+          // of the data.
+          if(gotHeader){
+            // Trim trailing spaces.
+            chunk = chunk.replace(/\s*$/,"");
+            
+            // Trim leading spaces.
+            chunk = chunk.replace(/^\s+/,"");
+            
+            // Find out how many numbers there are on one line
+            if(!numValuesPerLine){
+              var sampleLine = "" + chunk.match(/^.*/);
+              sampleLine = sampleLine.replace(/\s*$/,'');
+            
+              numValuesPerLine = sampleLine.split(/\s+/).length;
             }
             
-            if(map["red"] && map["green"] && map["blue"]){
-              colorsPresent = true;
-            }
-
-            chunk = chunk.replace(/(\s|\S)+?end_header/, '');
-          }
-          
-          // Trim trailing spaces.
-          chunk = chunk.replace(/\s*$/,"");
-          
-          // Trim leading spaces.
-          chunk = chunk.replace(/^\s+/,"");
-          
-          // Find out how many numbers there are on one line
-          if(!numValuesPerLine){
-            var sampleLine = "" + chunk.match(/^.*/);
-            sampleLine = sampleLine.replace(/\s*$/,'');
-          
-            numValuesPerLine = sampleLine.split(/\s+/).length;
-          }
-          
-          // Split on white space.
-          chunk = chunk.split(/\s+/);
-          
-          var numVerts = chunk.length/numValuesPerLine;
-          numParsedPoints += numVerts;
-          
-          var verts = new Float32Array(numVerts * 3);
-          var cols;
-          var norms;
-          
-          if(colorsPresent){
-            cols =  new Float32Array(numVerts * 3);
-          }
-          
-          if(normalsPresent){
-            norms = new Float32Array(numVerts * 3);
-          }
-
-          //
-          for(var i = 0, j = 0; i < chunk.length; i += numValuesPerLine, j += 3){
-
-            verts[j]   = parseFloat(chunk[ i + map["x"] ]);
-            verts[j+1] = parseFloat(chunk[ i + map["y"] ]);
-            verts[j+2] = parseFloat(chunk[ i + map["z"] ]);
+            // Split on white space.
+            chunk = chunk.split(/\s+/);
             
-            if(norms){
-              norms[j] =   parseFloat(chunk[ i + map["nx"] ]);
-              norms[j+1] = parseFloat(chunk[ i + map["ny"] ]);
-              norms[j+2] = parseFloat(chunk[ i + map["nz"] ]);
+            var numVerts = chunk.length/numValuesPerLine;
+            numParsedPoints += numVerts;
+            
+            var verts = new Float32Array(numVerts * 3);
+            var cols;
+            var norms;
+            
+            if(colorsPresent){
+              cols =  new Float32Array(numVerts * 3);
             }
             
-           if(cols){
-              cols[j]   = parseInt(chunk[ i + map["red"] ])/255;
-              cols[j+1] = parseInt(chunk[ i + map["green"] ])/255;
-              cols[j+2] = parseInt(chunk[ i + map["blue"] ])/255;
-            }                        
+            if(normalsPresent){
+              norms = new Float32Array(numVerts * 3);
+            }
+
+            //
+            for(var i = 0, j = 0; i < chunk.length; i += numValuesPerLine, j += 3){
+
+              verts[j]   = parseFloat(chunk[ i + map["x"] ]);
+              verts[j+1] = parseFloat(chunk[ i + map["y"] ]);
+              verts[j+2] = parseFloat(chunk[ i + map["z"] ]);
+              
+              if(norms){
+                norms[j] =   parseFloat(chunk[ i + map["nx"] ]);
+                norms[j+1] = parseFloat(chunk[ i + map["ny"] ]);
+                norms[j+2] = parseFloat(chunk[ i + map["nz"] ]);
+              }
+              
+             if(cols){
+                cols[j]   = parseInt(chunk[ i + map["red"] ])/255;
+                cols[j+1] = parseInt(chunk[ i + map["green"] ])/255;
+                cols[j+2] = parseInt(chunk[ i + map["blue"] ])/255;
+              }
+            }
+            
+            // XB PointStream expects an object with named/value pairs
+            // which contain the attribute arrays. These must match attribute
+            // names found in the shader
+            var attributes = {};
+            if(verts){attributes["ps_Vertex"] = verts;}
+            if(cols){attributes["ps_Color"] = cols;}
+            if(norms){attributes["ps_Normal"] = norms;}
+            parse(AJAX.parser, attributes);
           }
-                    
-          // XB PointStream expects an object with named/value pairs
-          // which contain the attribute arrays. These must match attribute
-          // names found in the shader
-          var attributes = {};
-          if(verts){attributes["ps_Vertex"] = verts;}
-          if(cols){attributes["ps_Color"] = cols;}
-          if(norms){attributes["ps_Normal"] = norms;}
-          parse(AJAX.parser, attributes);
         }
       };
     
