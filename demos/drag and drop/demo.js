@@ -2,7 +2,7 @@ var currentCloudPath;
 var ps, pointCloud;
 
 // Create an orbit camera halfway between the closest and farthest point
-var cam = new OrbitCam({closest:10, farthest:40, distance: 40});
+var cam = new OrbitCam({closest:10, farthest:400, distance: 100});
 var isDragging = false;
 var rotationStartCoords = [0, 0];
 
@@ -85,7 +85,7 @@ function dropped(event) {
     var ext = filePath.split(".").pop().toLowerCase();
    
     // only accept point cloud files
-    if(ext === "asc" || ext === "pts" || ext === "psi"){
+    if(ext === "asc" || ext === "pts" || ext === "psi" || ext === "ply"){
 
       // Make the canvas appear to be 'used'
       var cvsTag = getTag("canvas");

@@ -54,6 +54,7 @@ var PointStream = (function() {
     registeredParsers["asc"] = ASCParser;
     registeredParsers["psi"] = PSIParser;
     registeredParsers["pts"] = PTSParser;
+    registeredParsers["ply"] = PLYParser;
     
     const VERSION  = "0.7";
     
