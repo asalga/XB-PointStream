@@ -30,24 +30,23 @@ function mouseReleased(){
 }
 
 function render(){
-  if(isDragging === true){		
-		// how much was the cursor moved compared to last time
-		// this function was called?
+  if(isDragging === true){
+    // how much was the cursor moved compared to last time
+    // this function was called?
     var deltaX = ps.mouseX - rotationStartCoords[0];
     var deltaY = ps.mouseY - rotationStartCoords[1];
-		
-		// now that the camera was updated, reset where the
-		// rotation will start for the next time this function is called.
-		rotationStartCoords = [ps.mouseX, ps.mouseY];
 
+    // now that the camera was updated, reset where the
+    // rotation will start for the next time this function is called.
+    rotationStartCoords = [ps.mouseX, ps.mouseY];
     cam.yaw(-deltaX * 0.015);
     cam.pitch(deltaY * 0.015);
-	}
+  }
 
   var c = cloud.getCenter();  
   ps.multMatrix(M4x4.makeLookAt(cam.position, cam.direction, cam.up));
   ps.translate(-cam.position[0]-c[0], -cam.position[1]-c[1], -cam.position[2]-c[2] );
-  
+
   ps.clear();
   ps.render(cloud);
 }
