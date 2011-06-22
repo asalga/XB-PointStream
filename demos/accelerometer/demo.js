@@ -35,13 +35,19 @@ function start(){
   ps.setup(document.getElementById('canvas'));
   ps.background([0.3, 0.5, 0.6, 0.6]);
 
-  ps.onRender = render;
-  addEventListener("MozOrientation", handleOrientation, true);
 
-  var progObj = ps.createProgram(fixedFunctionVert, fixedFunctionFrag);
+  var vert = ps.getShaderStr("../../shaders/fixed_function.vs");
+  var frag = ps.getShaderStr("../../shaders/fixed_function.fs");
+  var progObj = ps.createProgram(vert, frag);
   ps.useProgram(progObj);
   ps.pointSize(10);
   
-  //ps.uniformf("lightPos", [-900, 50, 100]);
+  ps.uniformi("lights0.isOn", true);
+  ps.uniformf("lights0.position", [-90, 50, 100]);
+  ps.uniformf("lights0.diffuse", [1,1,1]);
+
+  addEventListener("MozOrientation", handleOrientation, true);
+  ps.onRender = render;
+  
   mickey = ps.load("../../clouds/mickey.asc");
 }

@@ -102,11 +102,7 @@ function dropped(event) {
       currentCloudPath = filePath;
        
       ps = new PointStream();
-
       ps.setup(getTag('canvas'));
-
-      var progObj = ps.createProgram(fixedFunctionVert, fixedFunctionFrag);
-      ps.useProgram(progObj);
       ps.pointSize(5);
   
       resetBackgroundColor();

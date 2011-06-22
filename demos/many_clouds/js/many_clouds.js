@@ -97,6 +97,11 @@ function render() {
 
     // acorn
     ps.useProgram(acornProgObj);
+    
+    ps.uniformi("lights0.isOn", true);
+    ps.uniformf("lights0.position", [0,0,40]);
+    ps.uniformf("lights0.diffuse", [1,1,1]);
+    
     ps.pointSize(5);
     // place the acron in Mickey's hand
     ps.translate(15, 28, -8);
@@ -129,7 +134,15 @@ function start(){
   ps = new PointStream();
   ps.setup(document.getElementById('canvas'));
   ps.background([1,1,1,1]);
- 
+
+  var fragShader = ps.getShaderStr("../../shaders/cartoon.fs");
+  var vertShader = ps.getShaderStr("../../shaders/cartoon.vs");
+  mickeyProgObj = ps.createProgram(vertShader, fragShader);
+
+  var fragShaderFixed = ps.getShaderStr("../../shaders/fixed_function.fs");
+  var vertShaderFixed = ps.getShaderStr("../../shaders/fixed_function.vs");
+  acornProgObj = ps.createProgram(vertShaderFixed, fragShaderFixed);
+   
   ps.onRender = render
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
@@ -138,7 +151,4 @@ function start(){
   acorn = ps.load("../../clouds/acorn.asc");
   mickey = ps.load("../../clouds/mickey.asc");
   eggenburg = ps.load("../../clouds/eggenburg.asc");
-  
-  acornProgObj = ps.createProgram(fixedFunctionVert, fixedFunctionFrag);
-  mickeyProgObj = ps.createProgram(cartoonVert, cartoonFrag);  
 }

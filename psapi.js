@@ -1477,6 +1477,33 @@ var PointStream = (function() {
     /************************************/
 
     /**
+      Reads the file at path and returns the contents as a string
+      
+      This function is synchronous
+    */
+    this.getShaderStr = function(path){
+      var shaderSrc  = "";
+      
+      var XHR = new XMLHttpRequest();
+      XHR.open("GET", path, false);
+      
+      if(XHR.overrideMimeType){
+        XHR.overrideMimeType("text/plain");
+      }
+      
+      XHR.send(null);
+
+      // failed request?
+      if (XHR.status !== 200 && XHR.status !== 0) {
+        throw ("XHR failed: " + XHR.status);
+      }
+      else{
+        shaderSrc = XHR.responseText;
+      }
+      return shaderSrc;
+    };
+
+    /**
       Create a program object from a vertex and fragment shader.
       
       @param {String} vertShader

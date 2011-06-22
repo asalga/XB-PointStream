@@ -18,7 +18,10 @@ function render(){
   var c = pointCloud.getCenter();
   ps.clear();
     
-  if(canvasCounter <= 2 ){
+  if(canvasCounter <= 2){
+    ps.uniformf("lights0.isOn", true);
+    ps.uniformf("lights0.position", [0,0,50]);
+    ps.uniformf("lights0.diffuse", [1,1,1]);
     ps.rotateZ(Math.PI/2);
     ps.translate(-c[0], -c[1], -c[2]);
     ps.translate(left, top, zoom);
@@ -38,7 +41,6 @@ function render(){
   }
     
   if(canvasCounter === 4 ){
-
    /* ps.useProgram(progCartoon);
     ps.rotateZ(Math.PI/2);
     ps.translate(-c[0], -c[1], -c[2]);
@@ -63,6 +65,7 @@ function render(){
   if(canvasCounter === 5){
     ps.clear();
     
+    ps.background([0,0,0,1]);
     var ctx = ps.getContext();
     ctx.enable(ctx.BLEND);
     ctx.blendFunc(ctx.SRC_ALPHA, ctx.ONE_MINUS_SRC_ALPHA);
@@ -80,6 +83,7 @@ function render(){
   }
 };
 
+
 function start(cvs){
   canvasCounter = parseInt(cvs);
 
@@ -94,21 +98,31 @@ function start(cvs){
     
     case 2:
       pointCloud = ps.load(POINT_CLOUD_PATH);
-      var progObj = ps.createProgram(fixedFunctionVert, fixedFunctionFrag);
+      var vert = ps.getShaderStr("../../shaders/fixed_function.vs");
+      var frag = ps.getShaderStr("../../shaders/fixed_function.fs");
+      var progObj = ps.createProgram(vert, frag);
       ps.useProgram(progObj);
       break;
     
     case 3:
       pointCloud = ps.load(POINT_CLOUD_PATH);
-      prog = ps.createProgram(greyVert, greyFrag);
+      var vert = ps.getShaderStr("../../shaders/greyscale.vs");
+      var frag = ps.getShaderStr("../../shaders/greyscale.fs");
+      prog = ps.createProgram(vert, frag);
       ps.useProgram(prog);
       break;
       
     case 4:
       pointCloud = ps.load(POINT_CLOUD_PATH);
 
-      progCartoon = ps.createProgram(cartoonVert, cartoonFrag);
-      progGooch = ps.createProgram(gooch_vs, gooch_fs);
+      var vert = ps.getShaderStr("../../shaders/gooch.vs");
+      var frag = ps.getShaderStr("../../shaders/gooch.fs");
+      progGooch = ps.createProgram(vert, frag);
+
+      var cartoonV = ps.getShaderStr("../../shaders/cartoon.vs");
+      var cartoonF = ps.getShaderStr("../../shaders/cartoon.fs");
+      progCartoon = ps.createProgram(cartoonV, cartoonF);
+
       ps.useProgram(progGooch);
       
       ps.uniformf("warmColor", [0.5, 0.5, 0.0]);
@@ -118,7 +132,9 @@ function start(cvs){
     
     case 5:
       pointCloud = ps.load(POINT_CLOUD_PATH);
-      var progObj = ps.createProgram(xrayVertShader, xrayFragShader);
+      var vert = ps.getShaderStr("../../shaders/xray.vs");
+      var frag = ps.getShaderStr("../../shaders/xray.fs");
+      var progObj = ps.createProgram(vert, frag);
       ps.useProgram(progObj);
       break;
       
