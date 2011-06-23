@@ -60,6 +60,21 @@ uniform vec3 matDiffuse;
 uniform vec3 matSpecular; 
 uniform float matShininess;
 
+
+/*
+*/
+void DirectionalLight(inout vec3 ambient, inout vec3 diffuse, inout vec3 spec, in vec3 normal, in vec3 ecPos, in Light light){
+  float powerfactor = 0.0;
+  float nDotVP = max(0.0, dot( normal, normalize(-light.position) ));
+  float nDotVH = max(0.0, dot( normal, normalize(-light.position-normalize(ecPos) )));
+  if( nDotVP != 0.0 ){
+    powerfactor = pow( nDotVH, matShininess );
+  }
+  ambient += light.ambient;
+  diffuse += light.diffuse * nDotVP;
+  spec += matSpecular * powerfactor;
+}
+
 /*
 */
 void PointLight(inout vec3 ambient, inout vec3 diffuse, inout vec3 specular, in vec3 vertNormal, 
@@ -103,31 +118,41 @@ void main(void) {
   vec3 ecPos = (vec3(ecPos4))/ecPos4.w;
 
   // calculate color
-  vec3 finalAmbient = vec3(0.0, 0.0, 0.0);
-  vec3 finalDiffuse = vec3(0.0, 0.0, 0.0);
-  vec3 finalSpecular = vec3(0.0, 0.0, 0.0);
+  vec3 finalAmbient = vec3(0.0);
+  vec3 finalDiffuse = vec3(0.0);
+  vec3 finalSpecular = vec3(0.0);
 
   if(ps_Normal == vec3(0.0, 0.0, 0.0)){
     frontColor = vec4(ps_Color, 1.0); 
   }
   else{
-    if(lights0.isOn){
-      PointLight(finalAmbient, finalDiffuse, finalSpecular, transNorm, ecPos, lights0);
+    for(int i = 0; i < 8; i++){
+      Light light = getLight(i);
+      
+      if(light.isOn){
+        if(light.type == 1){
+          DirectionalLight(finalAmbient, finalDiffuse, finalSpecular, transNorm, ecPos, light);
+        }
+        else if(light.type == 2){
+          PointLight(finalAmbient, finalDiffuse, finalSpecular, transNorm, ecPos, light);
+        }
+        else if(light.type == 3){
+          
+        }
+      }
     }
   }
 
-
-if(matOn){
-  frontColor = vec4(  (ps_Color * matAmbient *  finalAmbient) + 
-                      (ps_Color * matDiffuse *  finalDiffuse) +  
-                      (ps_Color * matSpecular *  finalSpecular), 1.0); 
-} 
-else{
-  frontColor = vec4(	(ps_Color * finalAmbient) + 
+  if(matOn){
+    frontColor = vec4(  (ps_Color * matAmbient *  finalAmbient), 1.0);
+                        //(ps_Color * matDiffuse *  finalDiffuse) , 1.0);
+                       // (ps_Color * matSpecular *  finalSpecular), 1.0); 
+  }
+  else{
+    frontColor = vec4(	(ps_Color * finalAmbient) + 
 						(ps_Color * finalDiffuse)  + 
                      	(ps_Color * finalSpecular),  1.0);
-}
-
+  }
 
   float dist = length(ecPos4);
   float attn = ps_Attenuation[0] + 
