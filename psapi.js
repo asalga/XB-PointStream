@@ -1430,6 +1430,13 @@ var PointStream = (function() {
       this.loadMatrix(M4x4.mul(this.peekMatrix(), rotMat));
     };
     
+    /**
+    */
+    this.rotate = function(radians, a){
+      var rotMat = M4x4.rotate(radians, a, M4x4.I);
+      this.loadMatrix(M4x4.mul(this.peekMatrix(), rotMat));
+    };
+    
     /*********************************************/
     /********** Matrix Stack Operations **********/
     /*********************************************/
@@ -1497,6 +1504,7 @@ var PointStream = (function() {
       if (XHR.status !== 200 && XHR.status !== 0) {
         throw ("XHR failed: " + XHR.status);
       }
+      
       else{
         shaderSrc = XHR.responseText;
       }

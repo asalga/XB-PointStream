@@ -106,6 +106,15 @@ var OrbitCam = (function(){
     });
 
     /**
+      Get the camera's left vector.
+      
+      @return {Array} Array of three values.
+    */
+    this.__defineGetter__("left", function(){    
+      return left;
+    });
+    
+    /**
       Move the camera close to the orbit point. If it can't move 'distance'
       closer, it will move as close to the orbit point as it can.
       
