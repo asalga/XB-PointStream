@@ -5,6 +5,20 @@ var ps, mickey;
 var x = 0;
 var y = 0;
 
+
+function pointLight(light){
+  var lightName = "lights" + light.id;
+  ps.uniformi( lightName + ".isOn", true);
+  ps.uniformf( lightName + ".position", light.position);
+  ps.uniformi( lightName + ".type", 2);
+  ps.uniformf( lightName + ".attenuation", light.attenuation);
+  
+  if(light.ambient){ps.uniformf( lightName + ".ambient", light.ambient);}
+  if(light.diffuse){ps.uniformf( lightName + ".diffuse", light.diffuse);}
+  if(light.specular){ps.uniformf( lightName + ".specular", light.specular);}
+}
+
+
 function render() {
   ps.translate(0, 0, -50);
 
@@ -35,16 +49,13 @@ function start(){
   ps.setup(document.getElementById('canvas'));
   ps.background([0.3, 0.5, 0.6, 0.6]);
 
-
   var vert = ps.getShaderStr("../../shaders/fixed_function.vs");
   var frag = ps.getShaderStr("../../shaders/fixed_function.fs");
   var progObj = ps.createProgram(vert, frag);
   ps.useProgram(progObj);
   ps.pointSize(10);
   
-  ps.uniformi("lights0.isOn", true);
-  ps.uniformf("lights0.position", [-90, 50, 100]);
-  ps.uniformf("lights0.diffuse", [1,1,1]);
+ pointLight({id:0, ambient:[.2,.2,.2], diffuse:[.7,.7,.7], attenuation:[1,0,0], position: [0,0,1]});
 
   addEventListener("MozOrientation", handleOrientation, true);
   ps.onRender = render;
