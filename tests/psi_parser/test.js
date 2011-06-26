@@ -1,41 +1,52 @@
-var ps, mickey;
+var ps, pointCloud;
 var yRot = 0.0;
-var zoomed = -50;
-const KEY_ESC = 27;
+var zoomed = -60;
 
 function zoom(amt){
   zoomed += amt * 2 * 1;
 }
 
-function keyDown(){
-  if(ps.key == KEY_ESC){
-    ps.println("Streaming aborted by user");
-  }
+function pointLight(light){
+  var lightName = "lights" + light.id;
+  ps.uniformi( lightName + ".isOn", true);
+  ps.uniformf( lightName + ".position", light.position);
+  ps.uniformi( lightName + ".type", 2);
+  ps.uniformf( lightName + ".attenuation", light.attenuation);
+  
+  if(light.ambient){ps.uniformf( lightName + ".ambient", light.ambient);}
+  if(light.diffuse){ps.uniformf( lightName + ".diffuse", light.diffuse);}
+  if(light.specular){ps.uniformf( lightName + ".specular", light.specular);}
 }
+
 
 function render() {
   ps.translate(0, 0, zoomed);
   ps.rotateY(yRot += 0.001);
   
-  var c = mickey.getCenter();
+  var c = pointCloud.getCenter();
   ps.translate(-c[0], -c[1], -c[2]);
   
   ps.clear();
-  ps.render(mickey);
+  ps.render(pointCloud);
 }
   
 function start(){
   ps = new PointStream();
   ps.setup(document.getElementById('canvas'));
-	ps.background([0.25, 0.25, 0.25, 1]);
+	ps.background([1, 1, 0.7, 1]);
+
+  var vertShader = ps.getShaderStr("../../shaders/fixed_function.vs");
+  var fragShader = ps.getShaderStr("../../shaders/fixed_function.fs");
+  
+  var prog = ps.createProgram(vertShader, fragShader);
+  ps.useProgram(prog);
+  
+  pointLight({id:0, ambient:[.2,.2,.2], diffuse:[.7,.7,.7], attenuation:[1,0,0], position: [0,0,1]});
 
   ps.onRender = render;
   ps.onMouseScroll = zoom;
-  ps.onKeyDown = keyDown;
 
-  var progObj = ps.createProgram(fixedFunctionVert, fixedFunctionFrag);
-  ps.useProgram(progObj);
-  ps.pointSize(5);
+  ps.pointSize(8);
   
-  mickey = ps.load("../../clouds/Mickey_Mouse.psi");
+  pointCloud = ps.load("../../clouds/mickey_156K_n.psi");
 }

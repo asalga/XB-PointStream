@@ -31,7 +31,9 @@
   @author:   Mickael Medel
             asydik.wordpress.com
   Created:  February 2011
-  Updated:  April 2011  
+  Updated:  April 2011
+  
+  Maintained by: Andor Salga
 */
 var PSIParser = (function() {
 
@@ -429,6 +431,29 @@ var PSIParser = (function() {
         nfactor = -0.5 + Math.pow(2.0, 10.0);
         start(AJAX.parser);
       };
+      
+      /*
+       
+      */
+      AJAX.parseVertsCols = function(chunk, numBytes, byteIdx, verts, cols){
+        var diffX = xMax - xMin;
+        var diffY = yMax - yMin;
+        var diffZ = zMax - zMin;
+        
+        var scaleX = sfactor + xMin;
+        var scaleY = sfactor + yMin;
+        var scaleZ = sfactor + zMin;
+
+        for(var point = 0; point < numTotalPoints; byteIdx += 12, point++){
+          verts[point*3 + 0] = (diffX * getXYZ(chunk, byteIdx    )) / scaleX;
+          verts[point*3 + 1] = (diffY * getXYZ(chunk, byteIdx + 3)) / scaleY;
+          verts[point*3 + 2] = (diffZ * getXYZ(chunk, byteIdx + 6)) / scaleZ;
+          
+          cols[point*3 + 0] = getRGB(chunk, byteIdx + 9 ) / 255;
+          cols[point*3 + 1] = getRGB(chunk, byteIdx + 10) / 255;
+          cols[point*3 + 2] = getRGB(chunk, byteIdx + 11) / 255;
+        }
+      };
             
       /*
         Occurs exactly once, when the file is done being downloaded.
@@ -445,6 +470,7 @@ var PSIParser = (function() {
           AJAX.firstLoad(textData);
         }
         
+        // !!! need to fix this
         // If we downloaded the file in one go
         if(firstRun && evt.lengthComputable && evt.loaded/evt.total === 1){
           
@@ -517,27 +543,10 @@ var PSIParser = (function() {
           var norms;
           
           var numBytes = chunk.length;
-          
-          // Define these here so we don't have to keep calculating
-          // them in the loop.
-          var diffX = xMax - xMin;
-          var diffY = yMax - yMin;
-          var diffZ = zMax - zMin;
-          
-          var scaleX = sfactor + xMin;
-          var scaleY = sfactor + yMin;
-          var scaleZ = sfactor + zMin;
-          
+                    
           var byteIdx = 0;
-          for(var point = 0; point < numTotalPoints; byteIdx += 12, point++){
-            verts[point*3 + 0] = (diffX * getXYZ(chunk, byteIdx    )) / scaleX;
-            verts[point*3 + 1] = (diffY * getXYZ(chunk, byteIdx + 3)) / scaleY;
-            verts[point*3 + 2] = (diffZ * getXYZ(chunk, byteIdx + 6)) / scaleZ;
-            
-            cols[point*3 + 0] = getRGB(chunk, byteIdx + 9 ) / 255;
-            cols[point*3 + 1] = getRGB(chunk, byteIdx + 10) / 255;
-            cols[point*3 + 2] = getRGB(chunk, byteIdx + 11) / 255;
-          }
+          AJAX.parseVertsCols(chunk, numBytes, byteIdx, verts, cols);
+          
           
           // Parse the normals if we have them.
           if(formatID == 2){
@@ -755,17 +764,8 @@ var PSIParser = (function() {
             // 3 bytes are used for each x, y, z values
             // each of the last 3 bytes of the 12 correspond to an rgb value
             else{
-              for(var i = 0, j = 0; i < numBytes; i+=12, j += 3){
-                verts[j]   = ((xMax - xMin) * getXYZ(chunk, i  )) / sfactor + xMin;
-                verts[j+1] = ((yMax - yMin) * getXYZ(chunk, i+3)) / sfactor + yMin;
-                verts[j+2] = ((zMax - zMin) * getXYZ(chunk, i+6)) / sfactor + zMin;
-              
-                if(cols){
-                  cols[j]   = getRGB(chunk, i+9 ) / 255;
-                  cols[j+1] = getRGB(chunk, i+10) / 255;
-                  cols[j+2] = getRGB(chunk, i+11) / 255;
-                }
-              }
+              var byteIdx = 0;
+              AJAX.parseVertsCols(chunk, numBytes, byteIdx, verts, cols);
             }
           }
           // if the file was obtained in one go
@@ -857,6 +857,8 @@ var PSIParser = (function() {
       */
       AJAX.firstLoad = function(textData){
         var temp;
+
+        firstRun = false;
         
         // numPtStr - number of points in the file
         tagExists = textData.indexOf(numPtStr);
@@ -874,12 +876,11 @@ var PSIParser = (function() {
           }
         }
         
-        // 
-        // sptSzStr - (spot Size) needs work
+        // sptSzStr - (spot Size)
         
         // posMinStr - lowest value in the file (used for decompression)
-        //
         tagExists = textData.indexOf(posMinStr);
+        
         if(tagExists !== -1){
           endTagExists = textData.indexOf(endXMLStr, tagExists);
           temp = textData.substring((tagExists + posMinStr.length), endTagExists);
@@ -893,6 +894,7 @@ var PSIParser = (function() {
         
         // posMaxStr - highest value in the file (used for decompression)
         tagExists = textData.indexOf(posMaxStr);
+
         if(tagExists !== -1){
           endTagExists = textData.indexOf(endXMLStr, tagExists);
           temp = textData.substring((tagExists + posMaxStr.length), endTagExists);
@@ -904,6 +906,11 @@ var PSIParser = (function() {
           zMax = posMaxArr[3] * 1;
           
           bgnTag = textData.substring(tagExists, (endTagExists + 1));
+        }
+        
+        ///!!!
+        else{
+          firstRun = true;
         }
       }
     
@@ -928,6 +935,10 @@ var PSIParser = (function() {
                     
           if(firstRun){
             AJAX.firstLoad(textData);            
+          }
+          
+          if(firstRun){
+            return;
           }
           
           // checks if begin or end tags can be found using rgx
@@ -982,8 +993,8 @@ var PSIParser = (function() {
           }
           // parse position and colors
           else{
-          	if(firstRun){
-              firstRun = false;
+            if(firstRun){
+              //firstRun = false;
             }
             var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
 
