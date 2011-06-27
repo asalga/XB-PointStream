@@ -441,6 +441,8 @@ var PSIParser = (function() {
         }
       };
       
+      /*
+      */
       AJAX.parseNorms = function(chunk, numBytes, byteIdx, norms){
         var nzsign, nx11bits, ny11bits, ivalue;
         var nvec = new Float32Array(3);
@@ -505,7 +507,6 @@ var PSIParser = (function() {
         // !!! need to fix this
         // If we downloaded the file in one go
         if(firstRun && evt.lengthComputable && evt.loaded/evt.total === 1){
-          
           var chunk = AJAX.responseText;
           
           // first get the number of points in the cloud
@@ -578,9 +579,9 @@ var PSIParser = (function() {
                     
           var byteIdx = 0;
           AJAX.parseVertsCols(chunk, numBytes, byteIdx, verts, cols);
-          
+
           // Parse the normals if we have them.
-          if(formatID == 2){
+          if(formatID !== 0){
             norms = new Float32Array(3 * numTotalPoints);
             AJAX.parseNormals(norms, numBytes, byteIdx, norms);
           }
@@ -711,7 +712,6 @@ var PSIParser = (function() {
               if(numBytes !== Math.floor(numBytes)){
                 console.log('invalid num bytes');
               }
-              
               norms = new Float32Array(numBytes);
               AJAX.parseNorms(chunk, numBytes, 0, norms);
             }
@@ -725,7 +725,6 @@ var PSIParser = (function() {
           }
           // if the file was obtained in one go
           else{
-
             if(normFlag){
               normalsPresent = true;
             }
@@ -737,17 +736,17 @@ var PSIParser = (function() {
               cols = new Float32Array(numVerts * 3);
             }
             
-            var i = 0;
-            AJAX.parseVertsCols(chunk, numVerts*12, i, verts, cols);
+            AJAX.parseVertsCols(chunk, numVerts*12, 0, verts, cols);
             
             if(normalsPresent){
               norms = new Float32Array(numVerts * 3);
               
               var nzsign, nx11bits, ny11bits, ivalue;
               var nvec = new Float32Array(3);
+              var byteIdx = numVerts*12;
               
-              for(var	i = numVerts*3; i < numBytes; i += 3){
-                ivalue = getXYZ(chunk, i);
+              for(var	i = 0; i < numVerts*3; i += 3, byteIdx += 3){
+                ivalue = getXYZ(chunk, byteIdx);
                 nzsign = ((ivalue >> 22) & 0x0001);
                 nx11bits = ((ivalue) & 0x07ff);
                 ny11bits = ((ivalue >> 11) & 0x07ff);
