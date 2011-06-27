@@ -664,8 +664,8 @@ var PSIParser = (function() {
         
         if(tempBufferN && tempBufferOffsetN > 0){
           // Only send the data if there's actually something to send.
-         var lastBufferN = tempBufferN.subarray(0, tempBufferOffsetN);
-         parse(AJAX.parser, {"ps_Normal": lastBufferN});
+          var lastBufferN = tempBufferN.subarray(0, tempBufferOffsetN);
+          parse(AJAX.parser, {"ps_Normal": lastBufferN});
         }
 
         progress = 1;
@@ -785,14 +785,15 @@ var PSIParser = (function() {
           // Multiply by 1 to convert to a Number type.
           numTotalPoints = numPtArr[1] * 1;
           
-          // !! comment
+          // We can find out if there are normals by inspecting <NumPoints>
+          // <NumPoints= 6 1 >
+          // <NumPoints= 6 2 >
+          // If the second value is 0, the file does not contain normals.
           if((numPtArr[2] * 1) !== 0){
             normFlag = true;
           }
         }
-        
-        // sptSzStr - (spot Size)
-        
+                
         // posMinStr - lowest value in the file (used for decompression)
         tagExists = textData.indexOf(posMinStr);
         
