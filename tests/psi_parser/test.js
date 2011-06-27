@@ -31,20 +31,21 @@ function render() {
   ps.render(pointCloud);
   
   if(!prog && pointCloud.status === 3){
-    var vertShader = ps.getShaderStr("../../shaders/fixed_function.vs");
-    var fragShader = ps.getShaderStr("../../shaders/fixed_function.fs");
-  
-    var prog = ps.createProgram(vertShader, fragShader);
-    ps.useProgram(prog);
-  
-    pointLight({id:0, ambient:[.2,.2,.2], diffuse:[.7,.7,.7], attenuation:[1,0,0], position: [0,0,1]});
-  }
+     }
 }
   
 function start(){
   ps = new PointStream();
   ps.setup(document.getElementById('canvas'));
-	ps.background([1, 1, 0.7, 1]);
+  ps.background([1, 1, 0.7, 1]);
+
+  var vertShader = ps.getShaderStr("../../shaders/fixed_function.vs");
+  var fragShader = ps.getShaderStr("../../shaders/fixed_function.fs");
+  
+  var prog = ps.createProgram(vertShader, fragShader);
+  ps.useProgram(prog);
+  
+  pointLight({id:0, ambient:[.2,.2,.2], diffuse:[.7,.7,.7], attenuation:[1,0,0], position: [0,0,1]});
 
   ps.onRender = render;
   ps.onMouseScroll = zoom;

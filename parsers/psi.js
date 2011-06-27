@@ -203,15 +203,12 @@ var PSIParser = (function() {
     
     var normFlag = false;
     
-    //
-    var xMax = 0;
-    var xMin = 0;
-    var yMax = 0;
-    var yMin = 0;
-    var zMax = 0;
-    var zMin = 0;
-    var sfactor = 0;
-    var	nfactor = 0;
+    
+    // values to be used in decompression of PSI
+    var diffX, diffY, diffZ;
+    var scaleX, scaleY, scaleZ;
+    const SFACTOR = Math.pow(2, 24);
+    const NFACTOR = -0.5 + Math.pow(2, 10);
     
     //
     var bgnTag = "";
@@ -235,7 +232,7 @@ var PSIParser = (function() {
       @returns normalized value of byte
     */
     var getByteAt = function(str, iOffset){
-      return (str.charCodeAt(iOffset) & 0xFF);
+      return str.charCodeAt(iOffset) & 0xFF;
     };
       
     /**
@@ -426,9 +423,6 @@ var PSIParser = (function() {
         Occurs exactly once when the resource begins to be downloaded.
       */
       AJAX.onloadstart = function(evt){
-        // values to be used in decompression of PSI
-        sfactor = Math.pow(2.0, 24.0);
-        nfactor = -0.5 + Math.pow(2.0, 10.0);
         start(AJAX.parser);
       };
       
@@ -436,15 +430,7 @@ var PSIParser = (function() {
        
       */
       AJAX.parseVertsCols = function(chunk, numBytes, byteIdx, verts, cols){
-        var diffX = xMax - xMin;
-        var diffY = yMax - yMin;
-        var diffZ = zMax - zMin;
-        
-        var scaleX = sfactor + xMin;
-        var scaleY = sfactor + yMin;
-        var scaleZ = sfactor + zMin;
-
-        for(var point = 0; point < numTotalPoints; byteIdx += 12, point++){
+        for(var point = 0; point < numBytes/12; byteIdx += 12, point++){
           verts[point*3 + 0] = (diffX * getXYZ(chunk, byteIdx    )) / scaleX;
           verts[point*3 + 1] = (diffY * getXYZ(chunk, byteIdx + 3)) / scaleY;
           verts[point*3 + 2] = (diffZ * getXYZ(chunk, byteIdx + 6)) / scaleZ;
@@ -454,7 +440,53 @@ var PSIParser = (function() {
           cols[point*3 + 2] = getRGB(chunk, byteIdx + 11) / 255;
         }
       };
-            
+      
+      AJAX.parseNorms = function(chunk, numBytes, byteIdx, norms){
+        var nzsign, nx11bits, ny11bits, ivalue;
+        var nvec = new Float32Array(3);
+        
+        // Start reading the normals where we left off reading the
+        // vertex positions and colors.
+        // Each normal is 3 bytes.
+        for(var point = 0; byteIdx < numBytes; byteIdx += 3, point += 3){
+
+          ivalue = getXYZ(chunk, byteIdx);
+          nzsign =   ((ivalue >> 22) & 0x0001);
+          nx11bits = ((ivalue) & 0x07ff);
+          ny11bits = ((ivalue >> 11) & 0x07ff);
+          
+          if(nx11bits >= 0 && nx11bits < 2048){
+            if(ny11bits >= 0 && ny11bits < 2048){
+
+              nvec[0] = (nx11bits/NFACTOR) - 1.0;
+              nvec[1] = (ny11bits/NFACTOR) - 1.0;
+              
+              var nxnymag = (nvec[0]*nvec[0] + nvec[1]*nvec[1]);
+              
+              // clamp values
+              if (nxnymag > 1){  nxnymag = 1; }
+              if (nxnymag < -1){ nxnymag = -1; }
+              nxnymag = 1 - nxnymag;
+              
+              if (nxnymag > 1){  nxnymag = 1; }
+              if (nxnymag < -1){ nxnymag = -1; }
+              nvec[2] = Math.sqrt(nxnymag);
+              
+              if (nzsign){
+                nvec[2] = -nvec[2];
+              }
+              var dNorm = (nvec[0]*nvec[0] + nvec[1]*nvec[1] + nvec[2]*nvec[2]);
+              
+              dNorm = (dNorm > 0) ? Math.sqrt(dNorm) : 1;
+              
+              norms[point]   = nvec[0]/dNorm;
+              norms[point+1] = nvec[1]/dNorm;
+              norms[point+2] = nvec[2]/dNorm;
+            }
+          }
+        }
+      };
+      
       /*
         Occurs exactly once, when the file is done being downloaded.
         
@@ -547,54 +579,10 @@ var PSIParser = (function() {
           var byteIdx = 0;
           AJAX.parseVertsCols(chunk, numBytes, byteIdx, verts, cols);
           
-          
           // Parse the normals if we have them.
           if(formatID == 2){
             norms = new Float32Array(3 * numTotalPoints);
-            
-            var nzsign, nx11bits, ny11bits, ivalue;
-            var nvec = new Float32Array(3);
-            
-            // Start reading the normals where we left off reading the
-            // vertex positions and colors.
-            // Each normal is 3 bytes.
-            for(point = 0; byteIdx < numBytes; byteIdx += 3, point += 3){
-
-              ivalue = getXYZ(chunk, byteIdx);
-              nzsign =   ((ivalue >> 22) & 0x0001);
-              nx11bits = ((ivalue) & 0x07ff);
-              ny11bits = ((ivalue >> 11) & 0x07ff);
-              
-              if(nx11bits >= 0 && nx11bits < 2048){
-                if(ny11bits >= 0 && ny11bits < 2048){
-
-                  nvec[0] = (nx11bits/nfactor) - 1.0;
-                  nvec[1] = (ny11bits/nfactor) - 1.0;
-                  
-                  var nxnymag = (nvec[0]*nvec[0] + nvec[1]*nvec[1]);
-                  
-                  // clamp values
-                  if (nxnymag > 1){  nxnymag = 1; }
-                  if (nxnymag < -1){ nxnymag = -1; }
-                  nxnymag = 1 - nxnymag;
-                  
-                  if (nxnymag > 1){  nxnymag = 1; }
-                  if (nxnymag < -1){ nxnymag = -1; }
-                  nvec[2] = Math.sqrt(nxnymag);
-                  
-                  if (nzsign){
-                    nvec[2] = -nvec[2];
-                  }
-                  var dNorm = (nvec[0]*nvec[0] + nvec[1]*nvec[1] + nvec[2]*nvec[2]);
-                  
-                  dNorm = (dNorm > 0) ? Math.sqrt(dNorm) : 1;
-                  
-                  norms[point]   = nvec[0]/dNorm;
-                  norms[point+1] = nvec[1]/dNorm;
-                  norms[point+2] = nvec[2]/dNorm;
-                }
-              }
-            }
+            AJAX.parseNormals(norms, numBytes, byteIdx, norms);
           }
           
           var attributes = {};
@@ -723,42 +711,9 @@ var PSIParser = (function() {
               if(numBytes !== Math.floor(numBytes)){
                 console.log('invalid num bytes');
               }
-            
-              norms = new Float32Array(numBytes);
-              var nzsign, nx11bits, ny11bits, ivalue;
-              var nvec = new Float32Array(3);
               
-              for(var	i = 0; i < numBytes; i += 3){
-                ivalue = getXYZ(chunk, i);
-                nzsign = ((ivalue >> 22) & 0x0001);
-                nx11bits = ((ivalue) & 0x07ff);
-                ny11bits = ((ivalue >> 11) & 0x07ff);
-                
-                if(nx11bits >= 0 && nx11bits < 2048){
-                  if(ny11bits >= 0 && ny11bits < 2048){
-                    nvec[0] = (nx11bits/nfactor) - 1.0;
-                    nvec[1] = (ny11bits/nfactor) - 1.0;
-                    
-                    var nxnymag = (nvec[0]*nvec[0] + nvec[1]*nvec[1]);
-                    if (nxnymag > 1){  nxnymag = 1; }
-                    if (nxnymag < -1){ nxnymag = -1; }
-                    nxnymag = 1 - nxnymag;
-                    
-                    if (nxnymag > 1){  nxnymag = 1; }
-                    if (nxnymag < -1){ nxnymag = -1; }
-                    nvec[2] = Math.sqrt(nxnymag);
-                    
-                    if (nzsign){ nvec[2] = -nvec[2]; }
-                    var dNorm = (nvec[0]*nvec[0] + nvec[1]*nvec[1] + nvec[2]*nvec[2]);
-                    if (dNorm > 0){ dNorm = Math.sqrt(dNorm); }
-                    else{ dNorm = 1; }
-                
-                    norms[i] =   nvec[0]/dNorm;
-                    norms[i+1] = nvec[1]/dNorm;
-                    norms[i+2] = nvec[2]/dNorm;
-                  }
-                }
-              }
+              norms = new Float32Array(numBytes);
+              AJAX.parseNorms(chunk, numBytes, 0, norms);
             }
             // parsing xyz and rgb values, not sure behind the logic either
             // 3 bytes are used for each x, y, z values
@@ -782,20 +737,12 @@ var PSIParser = (function() {
               cols = new Float32Array(numVerts * 3);
             }
             
-            for(var i = 0, j = 0; i < numBytes; i+=12, j += 3){
-              verts[j]   = ((xMax - xMin) * getXYZ(chunk, i  )) / sfactor + xMin;
-              verts[j+1] = ((yMax - yMin) * getXYZ(chunk, i+3)) / sfactor + yMin;
-              verts[j+2] = ((zMax - zMin) * getXYZ(chunk, i+6)) / sfactor + zMin;
-            
-              if(cols){
-                cols[j]   = getRGB(chunk, i+9 ) / 255;
-                cols[j+1] = getRGB(chunk, i+10) / 255;
-                cols[j+2] = getRGB(chunk, i+11) / 255;
-              }
-            }
+            var i = 0;
+            AJAX.parseVertsCols(chunk, numVerts*12, i, verts, cols);
             
             if(normalsPresent){
               norms = new Float32Array(numVerts * 3);
+              
               var nzsign, nx11bits, ny11bits, ivalue;
               var nvec = new Float32Array(3);
               
@@ -807,8 +754,8 @@ var PSIParser = (function() {
                 
                 if(nx11bits >= 0 && nx11bits < 2048){
                   if(ny11bits >= 0 && ny11bits < 2048){
-                    nvec[0] = (nx11bits/nfactor) - 1.0;
-                    nvec[1] = (ny11bits/nfactor) - 1.0;
+                    nvec[0] = (nx11bits/NFACTOR) - 1.0;
+                    nvec[1] = (ny11bits/NFACTOR) - 1.0;
                     
                     var nxnymag = (nvec[0]*nvec[0] + nvec[1]*nvec[1]);
                     if (nxnymag > 1){  nxnymag = 1; }
@@ -859,6 +806,9 @@ var PSIParser = (function() {
         var temp;
 
         firstRun = false;
+
+        var xMax, xMin, yMax;
+        var yMin, zMax, zMin;
         
         // numPtStr - number of points in the file
         tagExists = textData.indexOf(numPtStr);
@@ -869,9 +819,9 @@ var PSIParser = (function() {
           
           // Multiply by 1 to convert to a Number type.
           numTotalPoints = numPtArr[1] * 1;
-
-          // !!! Fix this
-          if((numPtArr[2] * 1) === 2){
+          
+          // !! comment
+          if((numPtArr[2] * 1) !== 0){
             normFlag = true;
           }
         }
@@ -906,6 +856,14 @@ var PSIParser = (function() {
           zMax = posMaxArr[3] * 1;
           
           bgnTag = textData.substring(tagExists, (endTagExists + 1));
+          
+          diffX = xMax - xMin;
+          diffY = yMax - yMin;
+          diffZ = zMax - zMin;
+
+          scaleX = SFACTOR + xMin;
+          scaleY = SFACTOR + yMin;
+          scaleZ = SFACTOR + zMin;
         }
         
         ///!!!

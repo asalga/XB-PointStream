@@ -1489,7 +1489,6 @@ var PointStream = (function() {
       This function is synchronous
     */
     this.getShaderStr = function(path){
-      var shaderSrc  = "";
       
       var XHR = new XMLHttpRequest();
       XHR.open("GET", path, false);
@@ -1498,17 +1497,12 @@ var PointStream = (function() {
         XHR.overrideMimeType("text/plain");
       }
       
-      XHR.send(null);
+      try{
+        XHR.send(null);
+      }catch(e){
+      }
 
-      // failed request?
-      if (XHR.status !== 200 && XHR.status !== 0) {
-        throw ("XHR failed: " + XHR.status);
-      }
-      
-      else{
-        shaderSrc = XHR.responseText;
-      }
-      return shaderSrc;
+      return XHR.responseText;
     };
 
     /**
