@@ -1,6 +1,7 @@
 var ps, pointCloud;
 var yRot = 0.0;
 var zoomed = -60;
+var prog;
 
 function zoom(amt){
   zoomed += amt * 2 * 1;
@@ -28,6 +29,16 @@ function render() {
   
   ps.clear();
   ps.render(pointCloud);
+  
+  if(!prog && pointCloud.status === 3){
+    var vertShader = ps.getShaderStr("../../shaders/fixed_function.vs");
+    var fragShader = ps.getShaderStr("../../shaders/fixed_function.fs");
+  
+    var prog = ps.createProgram(vertShader, fragShader);
+    ps.useProgram(prog);
+  
+    pointLight({id:0, ambient:[.2,.2,.2], diffuse:[.7,.7,.7], attenuation:[1,0,0], position: [0,0,1]});
+  }
 }
   
 function start(){
@@ -35,18 +46,10 @@ function start(){
   ps.setup(document.getElementById('canvas'));
 	ps.background([1, 1, 0.7, 1]);
 
-  var vertShader = ps.getShaderStr("../../shaders/fixed_function.vs");
-  var fragShader = ps.getShaderStr("../../shaders/fixed_function.fs");
-  
-  var prog = ps.createProgram(vertShader, fragShader);
-  ps.useProgram(prog);
-  
-  pointLight({id:0, ambient:[.2,.2,.2], diffuse:[.7,.7,.7], attenuation:[1,0,0], position: [0,0,1]});
-
   ps.onRender = render;
   ps.onMouseScroll = zoom;
 
   ps.pointSize(8);
   
-  pointCloud = ps.load("../../clouds/mickey_156K_n.psi");
+  pointCloud = ps.load("../../clouds/mickey_754K_n.psi");
 }
