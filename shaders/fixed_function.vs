@@ -183,17 +183,16 @@ void main(void) {
         }
       }
     }
-  }
-
-  if(matOn){
-    frontColor = vec4(  (ps_Color * matAmbient *  finalAmbient) + 
-                        (ps_Color * matDiffuse *  finalDiffuse)  + 
-                        (ps_Color * matSpecular *  finalSpecular), 1.0); 
-  }
-  else{
-    frontColor = vec4((ps_Color * finalAmbient) + 
-                      (ps_Color * finalDiffuse) + 
-                      (ps_Color * finalSpecular), 1.0);
+    if(matOn){
+      frontColor = vec4(  (ps_Color * matAmbient *  finalAmbient) + 
+                          (ps_Color * matDiffuse *  finalDiffuse)  + 
+                          (ps_Color * matSpecular *  finalSpecular), 1.0); 
+    }
+    else{
+      frontColor = vec4((ps_Color * finalAmbient) + 
+                        (ps_Color * finalDiffuse) + 
+                        (ps_Color * finalSpecular), 1.0);
+    }
   }
 
   float dist = length(ecPos4);

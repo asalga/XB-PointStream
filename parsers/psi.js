@@ -568,7 +568,7 @@ var PSIParser = (function() {
             infoStart = tagExists + tagLen;
           }
 
-          // This contain our binary data
+          // This contains our binary data
           chunk = chunk.substring(infoStart, infoEnd);
 
           var verts = new Float32Array(3 * numTotalPoints);
@@ -583,7 +583,7 @@ var PSIParser = (function() {
           // Parse the normals if we have them.
           if(formatID !== 0){
             norms = new Float32Array(3 * numTotalPoints);
-            AJAX.parseNormals(norms, numBytes, byteIdx, norms);
+            AJAX.parseNorms(norms, numBytes, byteIdx, norms);
           }
           
           var attributes = {};
@@ -740,42 +740,8 @@ var PSIParser = (function() {
             
             if(normalsPresent){
               norms = new Float32Array(numVerts * 3);
-              
-              var nzsign, nx11bits, ny11bits, ivalue;
-              var nvec = new Float32Array(3);
               var byteIdx = numVerts*12;
-              
-              for(var	i = 0; i < numVerts*3; i += 3, byteIdx += 3){
-                ivalue = getXYZ(chunk, byteIdx);
-                nzsign = ((ivalue >> 22) & 0x0001);
-                nx11bits = ((ivalue) & 0x07ff);
-                ny11bits = ((ivalue >> 11) & 0x07ff);
-                
-                if(nx11bits >= 0 && nx11bits < 2048){
-                  if(ny11bits >= 0 && ny11bits < 2048){
-                    nvec[0] = (nx11bits/NFACTOR) - 1.0;
-                    nvec[1] = (ny11bits/NFACTOR) - 1.0;
-                    
-                    var nxnymag = (nvec[0]*nvec[0] + nvec[1]*nvec[1]);
-                    if (nxnymag > 1){  nxnymag = 1; }
-                    if (nxnymag < -1){ nxnymag = -1; }
-                    nxnymag = 1 - nxnymag;
-                    
-                    if (nxnymag > 1){  nxnymag = 1; }
-                    if (nxnymag < -1){ nxnymag = -1; }
-                    nvec[2] = Math.sqrt(nxnymag);
-                    
-                    if (nzsign){ nvec[2] = -nvec[2]; }
-                    var dNorm = (nvec[0]*nvec[0] + nvec[1]*nvec[1] + nvec[2]*nvec[2]);
-                    if (dNorm > 0){ dNorm = Math.sqrt(dNorm); }
-                    else{ dNorm = 1; }
-                
-                    norms[i] =   nvec[0]/dNorm;
-                    norms[i+1] = nvec[1]/dNorm;
-                    norms[i+2] = nvec[2]/dNorm;
-                  }
-                }
-              }
+              AJAX.parseNorms(chunk, numBytes, byteIdx, norms);
             }
           }
           
