@@ -1282,7 +1282,7 @@ var PointStream = (function() {
       @param {Number} pWidth
       @param {Number} pHeight
     */
-    this.resize = function(pWidth, pHeight){
+    this.resize = function(pWidth, pHeight, ctxAttribs){
       // override the canvas attributes
       canvas.setAttribute("width", pWidth);
       canvas.setAttribute("height", pHeight);
@@ -1295,7 +1295,7 @@ var PointStream = (function() {
       
       for(var i = 0; i < contextNames.length; i++){
         try{
-          ctx = canvas.getContext(contextNames[i], {"antialias":false});
+          ctx = canvas.getContext(contextNames[i], ctxAttribs);
           if(ctx){
             break;
           }
@@ -1646,7 +1646,7 @@ var PointStream = (function() {
   
       @param {canvas} cvs
     */
-    this.setup = function(cvs){
+    this.setup = function(cvs, ctxAttribs){
       canvas = cvs;
       //browser = getUserAgent(navigator.userAgent);
       
@@ -1665,7 +1665,8 @@ var PointStream = (function() {
         cvsHeight = 150;
       }
 
-      this.resize(cvsWidth, cvsHeight);
+      // This will create our graphics context.
+      this.resize(cvsWidth, cvsHeight, ctxAttribs);
       
       ctx.enable(ctx.DEPTH_TEST);
 

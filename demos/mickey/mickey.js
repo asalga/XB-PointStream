@@ -64,7 +64,7 @@ function render() {
 
 function start(){
   ps = new PointStream();
-  ps.setup(document.getElementById('canvas'));
+  ps.setup(document.getElementById('canvas'), {"antialias":false});
   
   ps.pointSize(8);
   ps.background([0.3, 0.5, 0.6, 0.6]);

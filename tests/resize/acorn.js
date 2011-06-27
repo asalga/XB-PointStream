@@ -69,7 +69,7 @@ function render(){
 
 function start(){
   ps = new PointStream(); 
-  ps.setup(document.getElementById('canvas'));
+  ps.setup(document.getElementById('canvas'), {"antialias":true});
   
   // forse styles to be set
   resize();
