@@ -1500,8 +1500,9 @@ var PointStream = (function() {
       try{
         XHR.send(null);
       }catch(e){
+        console.log('XHR error');
       }
-
+      
       return XHR.responseText;
     };
 

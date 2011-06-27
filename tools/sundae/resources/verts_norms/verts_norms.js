@@ -2,8 +2,11 @@ function start(cvs, cb){
   var ps = new PointStream();
   ps.setup(cvs);
   
-  var progObj = ps.createProgram(fixedFunctionVert, fixedFunctionFrag);
+  var frag = ps.getShaderStr("../../../shaders/fixed_function.fs");
+  var vert = ps.getShaderStr("../../../../shaders/fixed_function.vs");
+  var progObj = ps.createProgram(vert, frag);
   ps.useProgram(progObj);
+
   ps.pointSize(1);
     
   ps.onRender = function(){
