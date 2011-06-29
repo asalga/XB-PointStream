@@ -2,9 +2,26 @@ var currentCloudPath;
 var ps, pointCloud;
 
 // Create an orbit camera halfway between the closest and farthest point
-var cam = new OrbitCam({closest:10, farthest:400, distance: 100});
+var cam = new OrbitCam({closest:0, farthest:140, distance: 5});
 var isDragging = false;
 var rotationStartCoords = [0, 0];
+
+function baseLight(light){
+  var lightName = "lights" + light.id;
+  ps.uniformi( lightName + ".isOn", true);
+
+  ps.uniformf( lightName + ".position", light.position);
+  
+  if(light.ambient){ps.uniformf( lightName + ".ambient", light.ambient);}
+  if(light.diffuse){ps.uniformf( lightName + ".diffuse", light.diffuse);}
+  if(light.specular){ps.uniformf( lightName + ".specular", light.specular);}
+}
+
+function dirLight(light){
+  baseLight(light);
+  ps.uniformi( "lights" + light.id + ".type", 1);
+}
+
 
 function zoom(amt){
   if(amt < 0){
@@ -103,6 +120,14 @@ function dropped(event) {
        
       ps = new PointStream();
       ps.setup(getTag('canvas'));
+      
+      var vert = ps.getShaderStr("../../shaders/fixed_function.vs");
+      var frag = ps.getShaderStr("../../shaders/fixed_function.fs");
+      
+      var fixedFunctionProg = ps.createProgram(vert, frag);
+      ps.useProgram(fixedFunctionProg);
+      dirLight({id:1, ambient:[0.1, 0.1, 0.1], diffuse:[0.7,0.7,0.7], position:[0,0,1]});
+
       ps.pointSize(5);
   
       resetBackgroundColor();

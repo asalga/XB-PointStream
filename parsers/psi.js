@@ -4,8 +4,27 @@
 */
 /**
   @class This parser parses .PSI filetypes. These files are Arius3D
-  proprietary files which have their data stored in one of the following 
-  ways:
+  proprietary files which have their data stored as a mixture of
+  ASCII and binary data.
+  
+  If the hps0 files have normals, there will be
+  
+  - 3 bytes for X
+  - 3 bytes for Y
+  - 3 bytes for Z
+  
+  - 1 byte for Red
+  - 1 byte for Green
+  - 1 byte for Blue
+  
+  If the hps0 files do NOT have normals, there will be
+  
+  - 2 bytes for X
+  - 2 bytes for Y
+  - 2 bytes for Z
+  
+  - 2 bytes for Red, Green and Blue
+  
 <pre>
   <xml tags>
   <that have relevant>
@@ -30,10 +49,11 @@
   @version:  0.7
   @author:   Mickael Medel
             asydik.wordpress.com
+            Andor Salga
+            asalga.wordpress.com
+            
   Created:  February 2011
-  Updated:  April 2011
-  
-  Maintained by: Andor Salga
+  Updated:  June 2011
 */
 var PSIParser = (function() {
 
@@ -201,8 +221,24 @@ var PSIParser = (function() {
     
     var firstRun = true;
     
-    var normFlag = false;
+    // If the PSI file has normals, this will be true.
+    var hasNormals = false;
+
+    // If the PSI file has normals, we'll have 9 bytes for XYZ
+    // and 3 for RGB.
+    // If the PSI does NOT have normals, we'll have 6 bytes for XYZ
+    // and 2 for RGB.
+    // So when we're streaming in the bytes, we'll need to know what
+    // parts are the vertices and which parts are the colors.
+    //
+    // Therefore this will either be 12 or 8.
+    var byteIncrement;
     
+    // These will be 0, 3 and 6 respectively if we have normals.
+    // These will be 0, 2 and 4 respectively if we do NOT have normals.
+    var xOffset;
+    var yOffset;
+    var zOffset;
     
     // values to be used in decompression of PSI
     var diffX, diffY, diffZ;
@@ -238,27 +274,15 @@ var PSIParser = (function() {
     /**
       @private
       
-      @param {} str
-      @param {} iOffset
+      @param {String} str
+      @param {Number} iOffset - Must be an int.
       
       @returns
     */
     var getXYZ = function(str, iOffset){
       return (((getByteAt(str, iOffset + 2) << 8) + getByteAt(str, iOffset + 1)) << 8) + getByteAt(str, iOffset);
     };
-    
-    /**
-      @private
-      
-      @param {} str
-      @param {} iOffset
-      
-      @returns
-    */
-    var getRGB = function(str, iOffset){
-      return getByteAt(str, iOffset);
-    };
-    
+        
     /**
       @private
       
@@ -430,18 +454,57 @@ var PSIParser = (function() {
        
       */
       AJAX.parseVertsCols = function(chunk, numBytes, byteIdx, verts, cols){
-        for(var point = 0; point < numBytes/12; byteIdx += 12, point++){
+        for(var point = 0; point < numBytes/byteIncrement; byteIdx += byteIncrement, point++){
           verts[point*3 + 0] = (diffX * getXYZ(chunk, byteIdx    )) / scaleX;
-          verts[point*3 + 1] = (diffY * getXYZ(chunk, byteIdx + 3)) / scaleY;
-          verts[point*3 + 2] = (diffZ * getXYZ(chunk, byteIdx + 6)) / scaleZ;
+          verts[point*3 + 1] = (diffY * getXYZ(chunk, byteIdx + yOffset)) / scaleY;
+          verts[point*3 + 2] = (diffZ * getXYZ(chunk, byteIdx + zOffset)) / scaleZ;
           
-          cols[point*3 + 0] = getRGB(chunk, byteIdx + 9 ) / 255;
-          cols[point*3 + 1] = getRGB(chunk, byteIdx + 10) / 255;
-          cols[point*3 + 2] = getRGB(chunk, byteIdx + 11) / 255;
+          // If the PSI file has normals, there are 1 byte for each component.
+          if(hasNormals){
+            cols[point*3 + 0] = getByteAt(chunk, byteIdx +  9) / 255;
+            cols[point*3 + 1] = getByteAt(chunk, byteIdx + 10) / 255;
+            cols[point*3 + 2] = getByteAt(chunk, byteIdx + 11) / 255;
+          }
+          else{
+            var byte1 = getByteAt(chunk, byteIdx + 6);
+            var byte2 = getByteAt(chunk, byteIdx + 7);
+            
+            var b1 = (byte1<<3) & 0x08; // 2 bits
+            var b2 = (byte2>>5) & 0x01; // 3 bits
+            var byte3 = b2;
+            
+            cols[point*3 +0] = (((byte1>>2) & 0x1F) << 3)/255;
+            cols[point*3 +1] = (((byte3) & 0x1F) << 1)/255;                        
+            cols[point*3 +2] = (((byte2) & 0x1F) << 3)/255;
+                      
+          /*
+            var byte1 = getByteAt(chunk, byteIdx + 6);
+            var byte2 = getByteAt(chunk, byteIdx + 7);
+            
+            // cols[point*3 + 1] = ((b & 0x1F) << 3) /255;
+            // cols[point*3 + 0] = (((byte1>>2) & 0x1F) << 3) /255;
+            
+            var b1 = (byte1<<3) & 0x18;
+            var b2 = (byte2>>>5) & 0x07;
+            
+            var byte3 = b1 + b2;
+            
+            //  cols[point*3 + 0] = (((byte1>>2) & 0x00001F) << 3) /255;
+            cols[point*3 + 0] = 0.5;
+            cols[point*3 + 1] = (byte3 & 0x1f) /255;
+            cols[point*3 + 2] = ((byte2 & 0x1F) << 3) /255;
+            
+           // cols[point*3 + 0] = (((byte1>>2) & 0x1F) << 3) /255;
+           // cols[point*3 + 2] = ((byte2 & 0x1F) << 3) /255;      */      
+          }
         }
       };
       
       /*
+        @param {String} chunk
+        @param {Number} numBytes
+        @param {Number} byteIdx
+        @param {ArrayBuffer} norms
       */
       AJAX.parseNorms = function(chunk, numBytes, byteIdx, norms){
         var nzsign, nx11bits, ny11bits, ivalue;
@@ -453,38 +516,34 @@ var PSIParser = (function() {
         for(var point = 0; byteIdx < numBytes; byteIdx += 3, point += 3){
 
           ivalue = getXYZ(chunk, byteIdx);
-          nzsign =   ((ivalue >> 22) & 0x0001);
-          nx11bits = ((ivalue) & 0x07ff);
-          ny11bits = ((ivalue >> 11) & 0x07ff);
+          nzsign =   (ivalue >> 22) & 0x0001;
+          nx11bits = (ivalue) & 0x07ff;
+          ny11bits = (ivalue >> 11) & 0x07ff;
           
-          if(nx11bits >= 0 && nx11bits < 2048){
-            if(ny11bits >= 0 && ny11bits < 2048){
+          if(nx11bits >= 0 && nx11bits < 2048 && ny11bits >= 0 && ny11bits < 2048){
 
-              nvec[0] = (nx11bits/NFACTOR) - 1.0;
-              nvec[1] = (ny11bits/NFACTOR) - 1.0;
-              
-              var nxnymag = (nvec[0]*nvec[0] + nvec[1]*nvec[1]);
-              
-              // clamp values
-              if (nxnymag > 1){  nxnymag = 1; }
-              if (nxnymag < -1){ nxnymag = -1; }
-              nxnymag = 1 - nxnymag;
-              
-              if (nxnymag > 1){  nxnymag = 1; }
-              if (nxnymag < -1){ nxnymag = -1; }
-              nvec[2] = Math.sqrt(nxnymag);
-              
-              if (nzsign){
-                nvec[2] = -nvec[2];
-              }
-              var dNorm = (nvec[0]*nvec[0] + nvec[1]*nvec[1] + nvec[2]*nvec[2]);
-              
-              dNorm = (dNorm > 0) ? Math.sqrt(dNorm) : 1;
-              
-              norms[point]   = nvec[0]/dNorm;
-              norms[point+1] = nvec[1]/dNorm;
-              norms[point+2] = nvec[2]/dNorm;
+            nvec[0] = (nx11bits/NFACTOR) - 1.0;
+            nvec[1] = (ny11bits/NFACTOR) - 1.0;
+            
+            var nxnymag = nvec[0]*nvec[0] + nvec[1]*nvec[1];
+            
+            // Clamp values.
+            nxnymag = Math.min(nxnymag, 1);
+            nxnymag = Math.max(nxnymag,-1);
+            nxnymag = 1 - nxnymag;
+            
+            nvec[2] = Math.sqrt(nxnymag);
+            
+            if (nzsign){
+              nvec[2] = -nvec[2];
             }
+            var dNorm = nvec[0]*nvec[0] + nvec[1]*nvec[1] + nvec[2]*nvec[2];
+            
+            dNorm = (dNorm > 0) ? Math.sqrt(dNorm) : 1;
+            
+            norms[point]   = nvec[0]/dNorm;
+            norms[point+1] = nvec[1]/dNorm;
+            norms[point+2] = nvec[2]/dNorm;
           }
         }
       };
@@ -523,7 +582,7 @@ var PSIParser = (function() {
           // ["<NumPoints=", "11158", "0", ">"]
           numParsedPoints = numTotalPoints = numPointsContents.split(" ")[1] * 1;
           
-          var hasNormals = numPointsContents.split(" ")[2] * 1 == 0 ? false : true;
+          hasNormals = numPointsContents.split(" ")[2] * 1 == 0 ? false : true;
 
           // Read the position and color data
 
@@ -557,9 +616,17 @@ var PSIParser = (function() {
           }
 
           // This contains our raw binary data.
-          binData = textData.substring(infoStart, infoEnd);
-          var numBytes = binData.length;
+          var binData;
           
+          if(hasNormals){
+            binData = textData.substring(infoStart, infoEnd);
+          }
+          else{
+            binData = textData.substring(infoStart-1, infoEnd-1);
+          }
+          
+          var numBytes = binData.length;
+
           var verts = new Float32Array(numTotalPoints * 3);
           var cols  = new Float32Array(numTotalPoints * 3);
           AJAX.parseVertsCols(binData, numBytes, 0, verts, cols);
@@ -568,7 +635,7 @@ var PSIParser = (function() {
           var norms;
           if(hasNormals){
             norms = new Float32Array(numTotalPoints * 3);
-            AJAX.parseNorms(binData, numBytes, numTotalPoints * 12, norms);
+            AJAX.parseNorms(binData, numBytes, numTotalPoints * byteIncrement, norms);
           }
           
           var attributes = {};
@@ -586,13 +653,19 @@ var PSIParser = (function() {
         
         // If we didn't get the entire file in one request, continue on...
         var infoEnd = textData.indexOf(endLvlStr);
-        var chunk = textData.substring(AJAX.startOfNextChunk, infoEnd);
+
+        var chunk;
 
         // If the file has normals as indicated at the start of the file.
-        if(normFlag){
+        if(hasNormals){
           normalsPresent = true;
           colorsPresent = false;
+          chunk = textData.substring(AJAX.startOfNextChunk, infoEnd);
         }
+        else{
+          chunk = textData.substring(AJAX.startOfNextChunk-1, infoEnd-1);
+        }
+        
         AJAX.parseChunk(chunk);
       
         // Get the last remaining bits from the temp buffers
@@ -630,7 +703,7 @@ var PSIParser = (function() {
         // This occurs over network connections, but not locally.
         if(chunk){
         
-          var numVerts = chunk.length/12;
+          var numVerts = chunk.length/byteIncrement;
           var numBytes = chunk.length;
           
           //
@@ -645,8 +718,8 @@ var PSIParser = (function() {
             if(numVerts > 0 && colorsPresent){
               // !!! only for debugging, remove on prduction
               if(numVerts !== Math.floor(numVerts)){
-                numVerts = Math.floor(numVerts);
                 console.log("invalid numVerts: " + numVerts);
+                numVerts = Math.floor(numVerts);
               }
               verts = new Float32Array(numVerts * 3);
               cols = new Float32Array(numVerts * 3);
@@ -656,7 +729,7 @@ var PSIParser = (function() {
             // we take 3 bytes and apply some bit shifting operations on it
             // we then take the results and multiply it to some set values
             // the normals are the resulting values
-            if(numVerts > 0 && normalsPresent){
+            if(numBytes > 0 && normalsPresent){
             
               if(numBytes !== Math.floor(numBytes)){
                 console.log('invalid num bytes');
@@ -699,7 +772,7 @@ var PSIParser = (function() {
 
         var xMax, xMin, yMax;
         var yMin, zMax, zMin;
-        
+
         // numPtStr - number of points in the file
         tagExists = textData.indexOf(numPtStr);
         if(tagExists !== -1){
@@ -715,7 +788,7 @@ var PSIParser = (function() {
           // <NumPoints= 6 2 >
           // If the second value is 0, the file does not contain normals.
           if((numPtArr[2] * 1) !== 0){
-            normFlag = true;
+            hasNormals = true;
           }
         }
                 
@@ -755,6 +828,23 @@ var PSIParser = (function() {
           scaleX = SFACTOR + xMin;
           scaleY = SFACTOR + yMin;
           scaleZ = SFACTOR + zMin;
+          
+          // 9 for XYZ
+          // 3 for RGB
+          if(hasNormals){
+            byteIncrement = 12;
+            xOffset = 0;
+            yOffset = 3;
+            zOffset = 6;
+          }
+          else{
+            // 6 for XYZ
+            // 2 for RGB
+            byteIncrement = 8;
+            xOffset = 0;
+            yOffset = 2;
+            zOffset = 4;            
+          }      
           
           // If we got this far, we can start parsing values and we don't
           // have to try running this function again.
@@ -822,15 +912,19 @@ var PSIParser = (function() {
           
           // Find the last multiple of 12 in the chunk
           // this is because of the format shown at the top of this parser.
-          var last12 = Math.floor((chunkLength - infoStart) / 12);
-          AJAX.last12Index = (last12 * 12) + infoStart;
+          var last12 = Math.floor((chunkLength - infoStart) / byteIncrement);
+          AJAX.last12Index = (last12 * byteIncrement) + infoStart;
           
           // If the end tag was found.
           if(infoEnd !== -1){
+          
+            if(!hasNormals){
+              AJAX.last12Index = infoEnd-1;
+            }
             AJAX.last12Index = infoEnd;
           }
           
-          var totalPointsInBytes = (numTotalPoints * 12) + infoStart;
+          var totalPointsInBytes = (numTotalPoints * byteIncrement) + infoStart;
 
           // Handles parsing up to the end of position and colors.
           // Sets the next chunk at the start of normals.
@@ -857,12 +951,24 @@ var PSIParser = (function() {
 
           // Parse position and colors.
           else{
-            var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
+            var chunk;
 
+            if(hasNormals){
+              chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
+            }
+            else{
+              chunk = textData.substring(AJAX.startOfNextChunk-1, AJAX.last12Index-1);              
+            }
+            
+            // !! debug this
             if(chunk.length > 0){
-              AJAX.startOfNextChunk = AJAX.last12Index;
+              AJAX.startOfNextChunk = AJAX.last12Index;              
+              if(hasNormals === false){
+              //  AJAX.startOfNextChunk = AJAX.last12Index-1;
+              }
               AJAX.parseChunk(chunk);
             }
+            
           }
         }// AJAX.responseText
       };// onprogress
