@@ -50,6 +50,8 @@
         }
       },
 
+
+
       /** Sundae has issues with rendering this one, perhaps because the shaders are XHR'ed?
       {
         "name": "Vertices & Normals",
@@ -63,6 +65,20 @@
             "run": "start"
         }
       },*/
+
+  {
+        "name": "mickey_11K.psi",
+	"tag": "PSI",
+        "note": "11,158 points (XYZ RGB)",
+        "firstCanvas" : {
+            "src" : { "url" : "resources/mickey_11K/11K.png", "type" : "image" }
+        },
+        "secondCanvas" : {
+            "src" : { "url" : "resources/mickey_11K/psi.js", "type" : "script" },	
+            "run": "start"
+        }
+      },
+
 
       {
         "name": "mickey_11K_n.psi",
@@ -78,8 +94,37 @@
       },
 
       {
-        "name": "mickey_42K_n.psi",
+        "name": "mickey_11K_baked.psi",
 	"tag": "PSI",
+        "note": "11,158 points (XYZ RGB)",
+        "firstCanvas" : {
+            "src" : { "url" : "resources/mickey_11K_baked/11K_baked.png", "type" : "image" }
+        },
+        "secondCanvas" : {
+            "src" : { "url" : "resources/mickey_11K_baked/psi.js", "type" : "script" },	
+            "run": "start"
+        }
+      },
+
+
+      {
+        "name": "mickey_42K.psi",
+        "tag": "PSI",
+        "note": "42,862 points (XYZ RGB)",
+        "firstCanvas" : {
+            "src" : { "url" : "resources/mickey_42K/42K.png", "type" : "image" }
+        },
+        "secondCanvas" : {
+            "src" : { "url" : "resources/mickey_42K/psi.js", "type" : "script" },
+            "run": "start"
+        }
+      },
+
+
+
+      {
+        "name": "mickey_42K_n.psi",
+        "tag": "PSI",
         "note": "42,862 points (XYZ RGB IJK)",
         "firstCanvas" : {
             "src" : { "url" : "resources/mickey_42K_n/42K.png", "type" : "image" }
@@ -90,15 +135,46 @@
         }
       },
 
+
+
+
+      {
+        "name": "mickey_42K_baked.psi",
+        "tag": "PSI",
+        "note": "42,862 points (XYZ RGB)",
+        "firstCanvas" : {
+            "src" : { "url" : "resources/mickey_42K_baked/42K_baked.png", "type" : "image" }
+        },
+        "secondCanvas" : {
+            "src" : { "url" : "resources/mickey_42K_baked/psi.js", "type" : "script" },
+            "run": "start"
+        }
+      },
+
+
+
       {
         "name": "mickey_156K_n.psi",
-	"tag": "PSI",
+        "tag": "PSI",
         "note": "156,130 points (XYZ RGB IJK)",
         "firstCanvas" : {
             "src" : { "url" : "resources/mickey_156K_n/156K.png", "type" : "image" }
         },
         "secondCanvas" : {
             "src" : { "url" : "resources/mickey_156K_n/psi.js", "type" : "script" },
+            "run": "start"
+        }
+      },
+
+      {
+        "name": "mickey_156K_baked.psi",
+        "tag": "PSI",
+        "note": "156,130 points (XYZ RGB)",
+        "firstCanvas" : {
+            "src" : { "url" : "resources/mickey_156K_baked/156K_baked.png", "type" : "image" }
+        },
+        "secondCanvas" : {
+            "src" : { "url" : "resources/mickey_156K_baked/psi.js", "type" : "script" },
             "run": "start"
         }
       },

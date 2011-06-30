@@ -4,7 +4,7 @@ function start(cvs, cb){
   ps.pointSize(5);
   ps.onRender = function(){
     if(pointCloud.status === 3){
-      ps.background([0.6, 0.9, 0.3, 1]);
+      ps.background([0.3, 0.6, 0.9, 1]);
       ps.clear();
       
       var c = pointCloud.getCenter();
