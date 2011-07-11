@@ -14,10 +14,10 @@
   Where XYZ refers to vertices, RGB refers to colors and IJK refers to normal
   vectors. Vertices are always present and color components range from 0 to 255.
   
-  @version:  0.1
-  @author:   Andor Salga asalga.wordpress.com
+  @version:   0.2
+  @author:    Andor Salga asalga.wordpress.com
   
-  Date:     November 16, 2010
+  Date:       November 16, 2010
 */
 var ASCParser = (function() {
 
@@ -26,16 +26,19 @@ var ASCParser = (function() {
   */
   function ASCParser(config) {
     
+    // Intentionally left undefined.
     var undef;
     
-    // defined once to reduce number of empty functions
+    var theParser;
+    
+    // Defined once to reduce number of empty functions.
     var __empty_func = function(){};
   
     var start = config.start || __empty_func;
     var parse = config.parse || __empty_func;
     var end = config.end || __empty_func;
     
-    const VERSION = "0.1";
+    const VERSION = "0.2";
     const XHR_DONE = 4;
     
     // The .ASC file can contain different types of data
@@ -65,7 +68,11 @@ var ASCParser = (function() {
     // Minefield will call onprogress zero or many times
     // Chrome/WebKit will call onprogress one or many times
     var onProgressCalled = false;
-    var AJAX = null;
+    var XHR;
+    
+    // 
+    var startOfNextChunk;
+    var lastNewLineIndex;
     
     /**
       @private
@@ -161,6 +168,106 @@ var ASCParser = (function() {
       // if all the values we sampled were unit length, assume we have normals.
       return VERTS_NORMS;
     };
+    
+    /**
+      @private
+      
+      The first time this function is called it will determine the contents
+      of the .ASC file by calling getDataLayout. Before calling this, make sure
+      the data set is large enough to determine this.
+      
+      This check can't be done in getDataLayout since that function has no knowledge
+      of the size of the data set.
+    */
+    var parseChunk = function(chunk){
+      
+      // This occurs over network connections, but not locally.
+      if(chunk !== ""){
+        
+        if(layoutCode === UNKNOWN){
+          layoutCode = getDataLayout(chunk);
+          
+          switch(layoutCode){
+            case VERTS:
+                        numValuesPerLine = 3;
+                        break;
+            case VERTS_COLS:
+                        numValuesPerLine = 6;
+                        colorsPresent = true;
+                        break;
+            case VERTS_NORMS:
+                        numValuesPerLine = 6;
+                        normalsPresent = true;
+                        break;
+            case VERTS_COLS_NORMS:
+                        numValuesPerLine = 9;
+                        normalsPresent = true;
+                        colorsPresent = true;
+                        break;
+          }
+        }
+        
+        // Trim trailing spaces.
+        chunk = chunk.replace(/\s+$/,"");
+        
+        // Trim leading spaces.
+        chunk = chunk.replace(/^\s+/,"");
+        
+        // Split on white space.
+        chunk = chunk.split(/\s+/);
+        
+        var numVerts = chunk.length/numValuesPerLine;
+        numParsedPoints += numVerts;
+        
+        var verts = new Float32Array(numVerts * 3);
+        var cols = colorsPresent ? new Float32Array(numVerts * 3) : null;
+        var norms = normalsPresent ? new Float32Array(numVerts * 3) : null;
+
+        // depending if there are colors, 
+        // we'll need to read different indices.
+        // if there aren't:
+        // x  y  z  r  g  b  i  j  k
+        // 0  1  2  3  4  5  6  7  8 <- normals start at index 6
+        //
+        // if there are:
+        // x  y  z  i  j  k
+        // 0  1  2  3  4  5 <- normals start at index 3
+        var valueOffset = 0;
+        if(colorsPresent){
+          valueOffset = 3;
+        }
+
+        // xyz  rgb  ijk
+        for(var i = 0, j = 0, len = chunk.length; i < len; i += numValuesPerLine, j += 3){
+          verts[j]   = parseFloat(chunk[i]);
+          verts[j+1] = parseFloat(chunk[i+1]);
+          verts[j+2] = parseFloat(chunk[i+2]);
+
+          // XBPS spec for parsers requires colors to be normalized.
+          if(cols){
+            cols[j]   = parseInt(chunk[i+3])/255;
+            cols[j+1] = parseInt(chunk[i+4])/255;
+            cols[j+2] = parseInt(chunk[i+5])/255;
+          }
+        
+          if(norms){
+            norms[j]   = parseFloat(chunk[i + 3 + valueOffset]);
+            norms[j+1] = parseFloat(chunk[i + 4 + valueOffset]);
+            norms[j+2] = parseFloat(chunk[i + 5 + valueOffset]);
+          }
+        }
+        
+        // XB PointStream expects an object with named/value pairs
+        // which contain the attribute arrays. These must match attribute
+        // names found in the shader
+        var attributes = {};
+        if(verts){attributes["ps_Vertex"] = verts;}
+        if(cols){attributes["ps_Color"] = cols;}
+        if(norms){attributes["ps_Normal"] = norms;}
+        
+        parse(theParser, attributes);
+      }
+    };
 
     /**
       Returns the version of this parser.
@@ -212,8 +319,8 @@ var ASCParser = (function() {
       Stop downloading and parsing the associated point cloud.
     */
     this.stop = function(){
-      if(AJAX){
-        AJAX.abort();
+      if(XHR){
+        XHR.abort();
       }
     };
     
@@ -223,47 +330,46 @@ var ASCParser = (function() {
     this.load = function(path){
       pathToFile = path;
 
-      AJAX = new XMLHttpRequest();
+      XHR = new XMLHttpRequest();
       
-      // put a reference to the parser in the AJAX object
-      // so we can give the library a reference to the
-      // parser within the AJAX event handler scope.
-      AJAX.parser = this;
+      // When we call the parse functions in the XHR callbacks,
+      // we need to give it a reference to the parser
+      theParser = this;
 
       /**
         @private
         
-        occurs exactly once when the resource begins
-        to be downloaded
+        Occurs exactly once when the resource begins
+        to be downloaded.
       */
-      AJAX.onloadstart = function(evt){
-        start(AJAX.parser);
+      XHR.onloadstart = function(evt){
+        start(theParser);
       };
             
       /**
         @private
         
-        occurs exactly once, when the file is done being downloaded
+        Occurs exactly once, when the file is done being downloaded.
       */
-      AJAX.onload = function(evt){
-        var ascData = AJAX.responseText;
+      XHR.onload = function(evt){
+        var ascData = XHR.responseText;
         var chunk = null;
 
-        // if the onprogress event didn't get called--we simply got
+        // If the onprogress event didn't get called--we simply got
         // the file in one go, we can parse from start to finish.
         if(onProgressCalled === false){
           chunk = ascData;
         }
-        // otherwise the onprogress event was called at least once,
+        // Otherwise the onprogress event was called at least once,
         // that means we need to get the data from a specific point to the end.
-        else if(ascData.length - AJAX.lastNewLineIndex > 1){
-          chunk = ascData.substring(AJAX.lastNewLineIndex, ascData.length);
+        else if(ascData.length - lastNewLineIndex > 1){
+          chunk = ascData.substring(lastNewLineIndex, ascData.length);
         }
 
-        // if the last chunk doesn't have any digits (just spaces)
+        // If the last chunk doesn't have any digits (just spaces)
         // don't parse it.
         if(chunk && chunk.match(/[0-9]/)){
-          AJAX.parseChunk(chunk);
+          parseChunk(chunk);
         }
 
         numTotalPoints = numParsedPoints;
@@ -271,108 +377,8 @@ var ASCParser = (function() {
         // Indicate parsing is done. Ranges from 0 to 1
         progress = 1;
         
-        end(AJAX.parser);
+        end(theParser);
       }
-      
-      /**
-        @private
-        
-        The first time this function is called it will determine the contents
-        of the .ASC file by calling getDataLayout. Before calling this, make sure
-        the data set is large enough to determine this.
-        
-        This check can't be done in getDataLayout since that function has no knowledge
-        of the size of the data set.
-      */
-      AJAX.parseChunk = function(chunk){
-        
-        // this occurs over network connections, but not locally.
-        if(chunk !== ""){
-          
-          if(layoutCode === UNKNOWN){
-            layoutCode = getDataLayout(chunk);
-            
-            switch(layoutCode){
-              case VERTS:
-                          numValuesPerLine = 3;
-                          break;
-              case VERTS_COLS:
-                          numValuesPerLine = 6;
-                          colorsPresent = true;
-                          break;
-              case VERTS_NORMS:
-                          numValuesPerLine = 6;
-                          normalsPresent = true;
-                          break;
-              case VERTS_COLS_NORMS:
-                          numValuesPerLine = 9;
-                          normalsPresent = true;
-                          colorsPresent = true;
-                          break;
-            }
-          }
-          
-          // trim trailing spaces
-          chunk = chunk.replace(/\s+$/,"");
-          
-          // trim leading spaces
-          chunk = chunk.replace(/^\s+/,"");
-          
-          // split on white space
-          chunk = chunk.split(/\s+/);
-          
-          var numVerts = chunk.length/numValuesPerLine;
-          numParsedPoints += numVerts;
-          
-          var verts = new Float32Array(numVerts * 3);
-          var cols = colorsPresent ? new Float32Array(numVerts * 3) : null;
-          var norms = normalsPresent ? new Float32Array(numVerts * 3) : null;
-
-          // depending if there are colors, 
-          // we'll need to read different indices.
-          // if there aren't:
-          // x  y  z  r  g  b  i  j  k
-          // 0  1  2  3  4  5  6  7  8 <- normals start at index 6
-          //
-          // if there are:
-          // x  y  z  i  j  k
-          // 0  1  2  3  4  5 <- normals start at index 3
-          var valueOffset = 0;
-          if(colorsPresent){
-            valueOffset = 3;
-          }
-
-          // xyz  rgb  ijk
-          for(var i = 0, j = 0, len = chunk.length; i < len; i += numValuesPerLine, j += 3){
-            verts[j]   = parseFloat(chunk[i]);
-            verts[j+1] = parseFloat(chunk[i+1]);
-            verts[j+2] = parseFloat(chunk[i+2]);
-
-            // XBPS spec for parsers requires colors to be normalized
-            if(cols){
-              cols[j]   = parseInt(chunk[i+3])/255;
-              cols[j+1] = parseInt(chunk[i+4])/255;
-              cols[j+2] = parseInt(chunk[i+5])/255;
-            }
-          
-            if(norms){
-              norms[j]   = parseFloat(chunk[i + 3 + valueOffset]);
-              norms[j+1] = parseFloat(chunk[i + 4 + valueOffset]);
-              norms[j+2] = parseFloat(chunk[i + 5 + valueOffset]);
-            }
-          }
-                    
-          // XB PointStream expects an object with named/value pairs
-          // which contain the attribute arrays. These must match attribute
-          // names found in the shader
-          var attributes = {};
-          if(verts){attributes["ps_Vertex"] = verts;}
-          if(cols){attributes["ps_Color"] = cols;}
-          if(norms){attributes["ps_Normal"] = norms;}
-                    
-          parse(AJAX.parser, attributes);
-        }
-      };
     
       /**
         @private
@@ -383,7 +389,7 @@ var ASCParser = (function() {
         
         On Chrome/WebKit this will occur one or many times
       */
-      AJAX.onprogress = function(evt){
+      XHR.onprogress = function(evt){
       
        if(evt.lengthComputable){
           fileSizeInBytes = evt.total;
@@ -392,15 +398,15 @@ var ASCParser = (function() {
 
         onProgressCalled = true;
 
-        // if we have something to actually parse..
+        // If we have something to actually parse..
         //
         // Before calling parseChunk, we need to make sure
         // we have enough data to determine the contents of the .ASC file.
         // A line in a .ASC file is ~50-70 bytes, so we can grab the first
         // 10 lines which should be enough for getDataLayout to determine
         // the contents.
-        if(AJAX.responseText && AJAX.responseText.length > 500){
-          var ascData = AJAX.responseText;
+        if(XHR.responseText && XHR.responseText.length > 500){
+          var ascData = XHR.responseText;
 
           // we likely stopped getting data somewhere in the middle of 
           // a line in the ASC file
@@ -411,38 +417,37 @@ var ASCParser = (function() {
           
           // So find the last known newline. Everything from the last
           // request to this last newline can be placed in a buffer.
-          var lastNewLineIndex = ascData.lastIndexOf("\n");
-          AJAX.lastNewLineIndex = lastNewLineIndex;
+          lastNewLineIndex = ascData.lastIndexOf("\n");
           
           // if the status just changed and we finished downloading the
           // file, grab everyting until the end. If there is only a bunch
           // of whitespace, make a note of that and don't bother parsing.
-          if(AJAX.readyState === XHR_DONE){
-            var chunk = ascData.substring(AJAX.startOfNextChunk, ascData.length);
+          if(XHR.readyState === XHR_DONE){
+            var chunk = ascData.substring(startOfNextChunk, ascData.length);
             // If the last chunk doesn't have any digits (just spaces)
             // don't parse it.
             if(chunk.match(/[0-9]/)){
-              AJAX.parseChunk(chunk);
+              parseChunk(chunk);
             }
           }
           // if we still have more data to go
           else{
             // Start of the next chunk starts after the newline.
-            var chunk = ascData.substring(AJAX.startOfNextChunk, lastNewLineIndex + 1);
-            AJAX.startOfNextChunk = lastNewLineIndex + 1;
-            AJAX.parseChunk(chunk);
+            var chunk = ascData.substring(startOfNextChunk, lastNewLineIndex + 1);
+            startOfNextChunk = lastNewLineIndex + 1;
+            parseChunk(chunk);
           }
         }
       };// onprogress
       
-      // Prevent Minefield from reporting a syntax error on the console
-      if(AJAX.overrideMimeType){
-        AJAX.overrideMimeType("application/json");
+      // Prevent Minefield from reporting a syntax error on the console.
+      if(XHR.overrideMimeType){
+        XHR.overrideMimeType("application/json");
       }
       
-      // open an asynchronous request to the path
-      AJAX.open("GET", path, true);
-      AJAX.send(null);
+      // Open an asynchronous request to the path.
+      XHR.open("GET", path, true);
+      XHR.send(null);
     };// load
   }// ctor
   return ASCParser;
