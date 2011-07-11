@@ -8,6 +8,8 @@
                     "../../parsers/psi.js",
                     "../../parsers/pts.js",
                     "../../parsers/ply.js",
+                    "../../parsers/hps0.js",
+                    "../../parsers/psi2.js",
                     ],
     "test": [
       {
@@ -190,7 +192,53 @@
             "src" : { "url" : "resources/mickey_754K_n/psi.js", "type" : "script" },
             "run": "start"
         }
+      },
+
+
+      {
+        "name": "mask_70K_n.psi",
+	"tag": "PSI2",
+        "note": "69,298 points (XYZ RGB IJK)",
+        "firstCanvas" : {
+            "src" : { "url" : "resources/mask_70K_n/70K_n.png", "type" : "image" }
+        },
+        "secondCanvas" : {
+            "src" : { "url" : "resources/mask_70K_n/psi.js", "type" : "script" },
+            "run": "start"
+        }
+      },
+
+      {
+        "name": "mask_1558K_n.psi",
+	"tag": "PSI2",
+        "note": "1,558,432 points (XYZ RGB IJK)",
+        "firstCanvas" : {
+            "src" : { "url" : "resources/mask_1558K_n/1558K_n.png", "type" : "image" }
+        },
+        "secondCanvas" : {
+            "src" : { "url" : "resources/mask_1558K_n/psi.js", "type" : "script" },
+            "run": "start"
+        }
+      },
+
+      {
+        "name": "ariusman_842K_n.psi",
+	"tag": "PSI2",
+        "note": "842,666 points (XYZ RGB IJK)",
+        "firstCanvas" : {
+            "src" : { "url" : "resources/ariusman_842K_n/ariusman_842K_n.png", "type" : "image" }
+        },
+        "secondCanvas" : {
+            "src" : { "url" : "resources/ariusman_842K_n/psi.js", "type" : "script" },
+            "run": "start"
+        }
       }
+
+
+
+
+
+
 
       /*{
         "name": "User shader",

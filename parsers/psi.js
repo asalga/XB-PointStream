@@ -7,53 +7,14 @@
   proprietary files which have their data stored as a mixture of
   ASCII and binary data.
   
-  If the hps0 files have normals, there will be
-  
-  - 3 bytes for X
-  - 3 bytes for Y
-  - 3 bytes for Z
-  
-  - 1 byte for Red
-  - 1 byte for Green
-  - 1 byte for Blue
-  
-  If the hps0 files do NOT have normals, there will be
-  
-  - 2 bytes for X
-  - 2 bytes for Y
-  - 2 bytes for Z
-  
-  - 2 bytes for Red, Green and Blue
-  
-<pre>
-  <xml tags>
-  <that have relevant>
-  <information= about the file>
-  Binary Data...
-  (3 bytes for x, 3 bytes for y, 3 bytes for z and 3 bytes for rgb)
-  ...
-  ...
-  ...
-  ...
-  location and color data end for points
-  normal data start
-  (every 3 bytes is compressed normal data)
-  ...
-  ...
-  ...
-  <more tags>
-  <to close opening tags>
-  <and provide more information>
-</pre>
-
-  @version:  0.7
-  @author:   Mickael Medel
-            asydik.wordpress.com
-            Andor Salga
+  @version: 0.7
+  @author:  Andor Salga
             asalga.wordpress.com
-            
+            Mickael Medel
+            asydik.wordpress.com
+                        
   Created:  February 2011
-  Updated:  June 2011
+  Updated:  July 2011
 */
 var PSIParser = (function() {
 
@@ -61,119 +22,9 @@ var PSIParser = (function() {
     @private
   */
   function PSIParser(config) {
-  
-    // Declare tags
-    var bgnDocument   = "<PsDocument>",
-        endDocument   = "</PsDocument>",
-        bgnComposite  = "<PsComposite>",
-        endComposite  = "</PsComposite>",
-        bgnSubject    = "<PsSubject",
-        endSubject    = "</PsSubject>",
-        bgnInstance   = "<PsInstance>",
-        endInstance   = "</PsInstance>",
-        bgnEnv        = "<PsEnvironment>",
-        endEnv        = "</PsEnvironment>",
-        bgnName       = "<Name>",
-        endName       = "</Name>",
-        intMatIdStr   = "<Identity>",       // Internal Matrix Identity
-        extMatIdStr   = "<ExtIdentity>";    // External Matrix Identity
 
-    var bgnCompList       = "<PsList>",
-        endCompList       = "</PsList>",
-        compositeModelStr = "CompositeModel:",
-        instanceModelStr  = "InstanceModel:",
-        nurbSurfaceStr    = "NurbSurface",
-        nurbCurveStr      = "NurbCurve",
-        lineModelStr      = "LineModel",
-        quadMeshStr       = "QuadMeshModel",
-        triMeshStr        = "TriMeshModel",
-        cloudModelStr     = "CloudModel",
-        imgCloudModelStr  = "ImageCloudModel",
-        txtObjStr         = "TextObject",
-        imgObjStr         = "ImageObject",
-        soundObjStr       = "SoundObject",
-        octTreeModelStr   = "OctTreeModel",
-        openBracket       = "<",
-        closeBracket      = ">",
-        slashEndMark      = "/",
-        psPrefix          = "Ps";
-
-    // Shuffle Config Variable Strings
-    var bgnShuffle      = "<Shuffle>",
-        endShuffle      = "<\\Shuffle>",
-        bgnTempLight    = "<PsTempLight>",
-        endTempLight    = "<\\PsTempLight>",
-        bgnTempLightVec = "<PsTempLightVec>",
-        endTempLightVec = "<\\PsTempLightVec>",
-        bgnGlblAmbLight = "<PsGlobalAmbientLight>",
-        endGlblAmbLight = "<\\PsGlobalAmbientLight>",
-        bgnLightType    = "<PsLightType>",
-        endLightType    = "<\\PsLightType>";
-
-    // Environment Variable Strings - <PsEnvironment>
-    var posDataStr  = "XYZData=",
-        colDataStr  = "RGBData=",
-        normDataStr = "IJKData=",
-        fileTypeStr = "FileType=",
-        compStr     = "Compression=",
-        encStr      = "Encryption=",
-        wtrMrkStr   = "WaterMark=",
-        lenUnitStr  = "LengthUnit=";
-
-    // View Variable Strings
-    var bgnViewDef  = "<PointStream_View_Definition>",
-        endViewDef  = "</PointStream_View_Definition>",
-        quartStr    = "<Q",       // Quarternion Matrix
-        pivotStr    = "<P",       // Pivot
-        transStr    = "<T",       // Translation
-        angStr      = "<A",       // FOV Angle
-        scrnSizeStr = "<S",       // Screen Size
-        bgColStr    = "<B",       // Background Color
-        cv1Str      = "<Cv1";
-
-    // Material Variable Strings
-    var bgnTemp1Mat = "<PsTemp1Material>",
-        endTemp1Mat = "<\\PsTemp1Material>";
-
-    // Parent Variable Strings
-    var bgnParentTag = "<PsParent= '";
-        endParentTag = "'>";
-
-    // PsSubject Variables Strings
-    var selStr  = "Sel=",
-        visStr  = "Vis=",
-        lockStr = "Lok=",
-        actStr  = "Act=";
-
-    // Token Model Variable Strings
-    var bgnLineModel    = "<PsLineModel>",
-        bgnCloudModel   = "<PsCloudModel>",
-        bgnImgCldModel  = "<PsImageCloudModel>",
-        bgnTriMeshModel = "<PsTriMeshModel>",
-        bgnNurbCurve    = "<PsNurbCurve>",
-        bgnNurbSurface  = "<PsNurbSurface>",
-        bgnTextObject   = "<PsTextObject>",
-        bgnImageObject  = "<PsImageObject>",
-        bgnSoundObject  = "<PsSoundObject>",
-        bgnOctTreeModel = "<PsOctTreeModel>";
-
-    // Level of Detail Variable Strings
-    var numLvlStr   = "<NumLevels=",
-        scnMatStr   = "<ScanMatrix:",
-        bgnLvlStr   = "<Level=",
-        endLvlStr   = "</Level=",
-        binCloudStr = "<BinaryCloud>",
-        ascCloudStr = "<AsciiCloud>",
-        fmtStr      = "<Format=",
-        formatTag   = "<Format=";
-
-    var numPtStr  = "<NumPoints=",
-        sptSzStr  = "<SpotSize=",
-        posMinStr = "<Min=",
-        posMaxStr = "<Max=",
-        endXMLStr = ">";
-    
-    var undef;
+    //
+    var subParser;
     
     var __empty_func = function(){};
   
@@ -186,20 +37,24 @@ var PSIParser = (function() {
     const UNKNOWN = -1;
     const XHR_DONE = 4;
     const STARTED = 1;
+    
+    const PSI2 = "psi2";
+    const HPS0 = "hps0";
 
     var pathToFile = null;
     var fileSize = 0;
     
-    //
-    var numParsedPoints = 0;
-    var numTotalPoints = 0;
-    var progress = 0;
+    // Filetype can be hps0 or psi2.
+    var fileType;
     
-    //
-    var numValuesPerLine = -1;
-    var normalsPresent = false;
-    var colorsPresent = true;
-    var layoutCode = UNKNOWN;
+    // The number of point we parsed so far.
+    var numParsedPoints = 0;
+    
+    // The total number of points in the point cloud.
+    var numTotalPoints = 0;
+    
+    // Progress ranges from 0 to 1.
+    var progress = 0;
     
     // Length of the arrays we'll be sending the library.
     var BUFFER_SIZE = 30000;
@@ -213,73 +68,36 @@ var PSIParser = (function() {
 
     var tempBufferN;
     var tempBufferOffsetN = 0;
-
-    //
-    var parsedVerts = [];
-    var parsedCols = [];
-    var parsedNorms = [];
     
-    var firstRun = true;
-    
-    // If the PSI file has normals, this will be true.
-    var hasNormals = false;
-
-    // If the PSI file has normals, we'll have 9 bytes for XYZ
-    // and 3 for RGB.
-    // If the PSI does NOT have normals, we'll have 6 bytes for XYZ
-    // and 2 for RGB.
-    // So when we're streaming in the bytes, we'll need to know what
-    // parts are the vertices and which parts are the colors.
-    //
-    // Therefore this will either be 12 or 8.
-    var byteIncrement;
-    
-    // values to be used in decompression of PSI
-    var diffX, diffY, diffZ;
-    var scaleX, scaleY, scaleZ;
-    const SFACTOR = Math.pow(2, 24);
-    const NFACTOR = -0.5 + Math.pow(2, 10);
-    
-    //
-    var bgnTag = "";
-    var endTag = "";
-    var tagExists;
-    var endTagExists;
-    
-    // keep track if onprogress event handler was called to 
-    // handle Chrome/WebKit vs. Firefox differences.
-    //
-    // Firefox will call onprogress zero or many times
-    // Chrome/WebKit will call onprogress one or many times
-    var onProgressCalled = false;
     var AJAX = null;
     
-
     /**
+      @private
+      Get the type of PSI this file is. Can be HPS0, PSI2, etc.
     */
-    var getByte = function(str, iOffset){
-      return str.charCodeAt(iOffset) & 0xFF;
+    var getFileType = function(textData){
+
+      // If we don't have enough bytes to find out what type of file it is, 
+      // we'll have to wait until the next xhr request.
+      if(textData.length < 6){
+        return;
+      }
+
+      var type = textData.substring(0, 4);
+      if(type === "psi2"){
+        fileType = PSI2;
+        subParser = new PSI2Parser();
+      }
+      else{
+        var type = textData.substring(0, 6);
+        if(type === "<hps0>"){
+          fileType = HPS0;
+          subParser = new HPS0Parser();
+        }
+      }
     }
-    
-    /**
-      @private
-    */
-    var getBytes2 = function(str, iOffset){
-      return ((getByte(str, iOffset + 1) << 8) + getByte(str, iOffset)) << 8;
-    };
 
-    /**
-      @private
-      
-      @param {String} str
-      @param {Number} iOffset - Must be an int.
-      
-      @returns
-    */
-    var getBytes3 = function(str, iOffset){
-      return (((getByte(str, iOffset + 2) << 8) + getByte(str, iOffset + 1)) << 8) + getByte(str, iOffset);
-    };
-        
+
     /**
       @private
       
@@ -393,7 +211,9 @@ var PSIParser = (function() {
       @returns {Number}
     */
     this.__defineGetter__("numTotalPoints", function(){
-      return numTotalPoints;
+      if(subParser){
+        subParser.numTotalPoints;
+      }
     });
     
     /**
@@ -425,13 +245,13 @@ var PSIParser = (function() {
     
     /**
       @param {String} pathToFile
+      
+      The library is responsible for calling this method.
     */
     this.load = function(path){
       pathToFile = path;
 
       AJAX = new XMLHttpRequest();
-      AJAX.startOfNextChunk = 0;
-      AJAX.last12Index = 0;
       
       // put a reference to the parser in the AJAX object
       // so we can give the library a reference to the
@@ -446,94 +266,7 @@ var PSIParser = (function() {
       AJAX.onloadstart = function(evt){
         start(AJAX.parser);
       };
-      
-      /*
-       
-      */
-      AJAX.parseVertsCols = function(chunk, numBytes, byteIdx, verts, cols){
-        var byte1;
-        var byte2;
-        var short;
-        
-        for(var point = 0; point < numBytes/byteIncrement; byteIdx += byteIncrement, point++){
-          // If the PSI file has normals, there are 3 bytes for each component.
-          if(hasNormals){
-            verts[point*3 + 0] = (diffX * getBytes3(chunk, byteIdx    )) / scaleX;
-            verts[point*3 + 1] = (diffY * getBytes3(chunk, byteIdx + 3)) / scaleY;
-            verts[point*3 + 2] = (diffZ * getBytes3(chunk, byteIdx + 6)) / scaleZ;
-
-            cols[point*3 + 0] = getByte(chunk, byteIdx +  9) / 255;
-            cols[point*3 + 1] = getByte(chunk, byteIdx + 10) / 255;
-            cols[point*3 + 2] = getByte(chunk, byteIdx + 11) / 255;
-          }
-          else{
-            verts[point*3 + 0] = (diffX * getBytes2(chunk, byteIdx    )) / scaleX;
-            verts[point*3 + 1] = (diffY * getBytes2(chunk, byteIdx + 2)) / scaleY;
-            verts[point*3 + 2] = (diffZ * getBytes2(chunk, byteIdx + 4)) / scaleZ;
-
-            byte1 = getByte(chunk, byteIdx + 6);
-            byte2 = getByte(chunk, byteIdx + 7);
-           
-            short = (byte2 << 8) + byte1;
-            
-            cols[point*3 +0] = (((short>>10) & 0x1F) << 3)/255;
-            cols[point*3 +1] = (((short>>5) & 0x1F) << 3)/255;
-            cols[point*3 +2] = ((short & 0x1F) << 3)/255;
-          }
-        }
-      };
-      
-      /*
-        @param {String} chunk
-        @param {Number} numBytes
-        @param {Number} byteIdx
-        @param {ArrayBuffer} norms
-      */
-      AJAX.parseNorms = function(chunk, numBytes, byteIdx, norms){
-        var nzsign, nx11bits, ny11bits, ivalue;
-        var nvec = new Float32Array(3);
-        
-        // Start reading the normals where we left off reading the
-        // vertex positions and colors.
-        // Each normal is 3 bytes.
-        for(var point = 0; byteIdx < numBytes; byteIdx += 3, point += 3){
-
-          ivalue = getBytes3(chunk, byteIdx);
-          nzsign =   (ivalue >> 22) & 0x0001;
-          nx11bits = (ivalue) & 0x07ff;
-          ny11bits = (ivalue >> 11) & 0x07ff;
           
-          if(nx11bits >= 0 && nx11bits < 2048 && ny11bits >= 0 && ny11bits < 2048){
-
-            nvec[0] = (nx11bits/NFACTOR) - 1.0;
-            nvec[1] = (ny11bits/NFACTOR) - 1.0;
-            
-            var nxnymag = nvec[0]*nvec[0] + nvec[1]*nvec[1];
-            
-            // Clamp values.
-            nxnymag = Math.min(nxnymag, 1);
-            nxnymag = Math.max(nxnymag,-1);
-            nxnymag = 1 - nxnymag;
-
-            nxnymag = Math.min(nxnymag, 1);
-            nxnymag = Math.max(nxnymag,-1);
-            
-            nvec[2] = Math.sqrt(nxnymag);
-            
-            if (nzsign){
-              nvec[2] = -nvec[2];
-            }
-            var dNorm = nvec[0]*nvec[0] + nvec[1]*nvec[1] + nvec[2]*nvec[2];
-            
-            dNorm = (dNorm > 0) ? Math.sqrt(dNorm) : 1;
-            
-            norms[point]   = nvec[0]/dNorm;
-            norms[point+1] = nvec[1]/dNorm;
-            norms[point+2] = nvec[2]/dNorm;
-          }
-        }
-      };
-      
       /*
         Occurs exactly once, when the file is done being downloaded.
         
@@ -543,108 +276,47 @@ var PSIParser = (function() {
         @param {} evt
       */
       AJAX.onload = function(evt){
-      
         var textData = AJAX.responseText;
-        var chunkLength = textData.length;
         
         // If we downloaded the file in one request.
-        if(firstRun){
+        if(!fileType){
         
-          // First, read in the important bounding box data.
-          AJAX.firstLoad(textData);
-          
-          // first get the number of points in the cloud
-          // <NumPoints= 11158 2 0 11158 0 0 >\r\n<Spot
-          // <NumPoints= 11158 0 >
-          
-          // Find the start and end tags for NumPoints
-          var numPointsTagIndex = textData.indexOf(numPtStr);
-          var numPointsTagEndIndex = textData.indexOf(">", numPointsTagIndex+1);
-         
-          var numPointsContents = textData.substring(numPointsTagIndex, numPointsTagEndIndex+1);
-          
-          // Set the parser's attribute
-          // Multiply by 1 to convert to a Number type
-          // ["<NumPoints=", "11158", "0", ">"]
-          numParsedPoints = numTotalPoints = numPointsContents.split(" ")[1] * 1;
-          
-          hasNormals = numPointsContents.split(" ")[2] * 1 == 0 ? false : true;
-          // Read the position and color data
+          // Depending on the filetype, we'll have to instantiate different sub parsers.
+          getFileType(textData);
 
-          // <Level=0>
-          // <BinaryCloud>
-          // <Format=1>
-          // <NumPoints= 11158 0 >
-          // <SpotSize= 0.134696 >
-          // <Min= -24.1075 -28.9434 -16.8786 >
-          // <Max= -12.4364 -14.8525 -18.72375 >
-          // ...\
-          // ... }- binary data (vertices & colors)
-          // .../
-          // ...\
-          // ... }- possibly more binary data (normals)
-          // .../
-          // </Level=0>
-          // </PsCloudModel>
+          var attributes = subParser.onload(textData);
           
-          // Checks if begin or end tags can be found using regex.
-          var tagExists = textData.indexOf(bgnTag);
-          var infoEnd = textData.indexOf(endLvlStr);
-          var infoStart;
+          numParsedPoints = numTotalPoints = subParser.numTotalPoints;
+          parse(AJAX.parser, attributes);
           
-          // If the bgnTag exists then set the startOfNextChunk
-          // to the end of the bgnTag + 2 for offset values.
-          if(tagExists !== -1){
-            // +2 bytes for offset values  0D0A
-            tagLen = bgnTag.length + 2;
-            infoStart = tagExists + tagLen;
-          }
-
-          // This contains our raw binary data.
-          var binData = textData.substring(infoStart, infoEnd);
-          
-          var numBytes = binData.length;
-
-          var verts = new Float32Array(numTotalPoints * 3);
-          var cols  = new Float32Array(numTotalPoints * 3);
-          AJAX.parseVertsCols(binData, numBytes, 0, verts, cols);
-
-          // Parse the normals if we have them.
-          var norms;
-          if(hasNormals){
-            norms = new Float32Array(numTotalPoints * 3);
-            AJAX.parseNorms(binData, numBytes, numTotalPoints * byteIncrement, norms);
-          }
-          
-          var attributes = {};
-          if(verts){attributes["ps_Vertex"] = verts;}
-          if(cols){ attributes["ps_Color"] = cols;}
-          if(norms){attributes["ps_Normal"] = norms;}
-
           // Indicate parsing is done. Ranges from 0 to 1.
           progress = 1;
-          parse(AJAX.parser, attributes);
           end(AJAX.parser);
-          
           return;
         }
-        
-        // If we didn't get the entire file in one request, continue on...
-        var infoEnd = textData.indexOf(endLvlStr);
 
-        var chunk = textData.substring(AJAX.startOfNextChunk, infoEnd);
+        // If we didn't get the entire file in one request, continue on...
+        var attr = subParser.onload(textData);
         
-        // If the file has normals as indicated at the start of the file.
-        if(hasNormals){
-          normalsPresent = true;
-          colorsPresent = false;
-       
+        numParsedPoints = numTotalPoints = subParser.numTotalPoints;
+
+        if(attr.ps_Vertex){
+          var o = partitionArray(attr.ps_Vertex, tempBufferV, tempBufferOffsetV, 1);
+          tempBufferV = o.buffer;
+          tempBufferOffsetV = o.offset;
         }
-       // else{
-         // chunk = textData.substring(AJAX.startOfNextChunk-1, infoEnd-1);
-       // }
         
-        AJAX.parseChunk(chunk);
+        if(attr.ps_Color){
+          var o = partitionArray(attr.ps_Color, tempBufferC, tempBufferOffsetC, 2);
+          tempBufferC = o.buffer;
+          tempBufferOffsetC = o.offset;
+        }
+        
+        if(attr.ps_Normal){
+          var o = partitionArray(attr.ps_Normal, tempBufferN, tempBufferOffsetN, 3);
+          tempBufferN = o.buffer;
+          tempBufferOffsetN = o.offset;
+        }
       
         // Get the last remaining bits from the temp buffers
         // and parse those too.
@@ -668,168 +340,9 @@ var PSIParser = (function() {
         }
 
         progress = 1;
-        
         end(AJAX.parser);
       }
       
-      /**
-        @private
-      */
-      AJAX.parseChunk = function(chunk){
-      
-        // !! Fix this.
-        // This occurs over network connections, but not locally.
-        if(chunk){
-        
-          var numVerts = chunk.length/byteIncrement;
-          var numBytes = chunk.length;
-          
-          //
-          var verts, cols, norms;
-          
-          // !!! COMMENT
-          if(onProgressCalled === true){
-
-            // !!! this needs to be changed.
-            // if colors are present, we know we're still
-            // dealing with vertices.
-            if(numVerts > 0 && colorsPresent){
-              // !!! only for debugging, remove on prduction
-              if(numVerts !== Math.floor(numVerts)){
-                console.log("invalid numVerts: " + numVerts);
-                numVerts = Math.floor(numVerts);
-              }
-              verts = new Float32Array(numVerts * 3);
-              cols = new Float32Array(numVerts * 3);
-            }
-            
-            // parsing normal values, not sure the logic behind it (as it was never provided)
-            // we take 3 bytes and apply some bit shifting operations on it
-            // we then take the results and multiply it to some set values
-            // the normals are the resulting values
-            if(numBytes > 0 && normalsPresent){
-            
-              if(numBytes !== Math.floor(numBytes)){
-                console.log('invalid num bytes');
-              }
-              norms = new Float32Array(numBytes);
-              AJAX.parseNorms(chunk, numBytes, 0, norms);
-            }
-            // parsing xyz and rgb values, not sure behind the logic either
-            // 3 bytes are used for each x, y, z values
-            // each of the last 3 bytes of the 12 correspond to an rgb value
-            else{
-              var byteIdx = 0;
-              AJAX.parseVertsCols(chunk, numBytes, byteIdx, verts, cols);
-            }
-          }
-
-          if(verts){
-            var o = partitionArray(verts, tempBufferV, tempBufferOffsetV, 1);
-            tempBufferV = o.buffer;
-            tempBufferOffsetV = o.offset;
-          }
-          if(cols){
-            var o = partitionArray(cols, tempBufferC, tempBufferOffsetC, 2);
-            tempBufferC = o.buffer;
-            tempBufferOffsetC = o.offset;
-          }
-          if(norms){
-            var o = partitionArray(norms, tempBufferN, tempBufferOffsetN, 3);
-            tempBufferN = o.buffer;
-            tempBufferOffsetN = o.offset;
-          }
-        }
-      };
-      
-      /**
-        @private
-      */
-      AJAX.firstLoad = function(textData){
-        var temp;
-
-        var xMax, xMin, yMax;
-        var yMin, zMax, zMin;
-
-        // numPtStr - number of points in the file
-        tagExists = textData.indexOf(numPtStr);
-        if(tagExists !== -1){
-          endTagExists = textData.indexOf(endXMLStr, tagExists);
-          temp = textData.substring((tagExists + numPtStr.length), endTagExists);
-          var numPtArr = temp.split(" ");
-          
-          // Multiply by 1 to convert to a Number type.
-          numTotalPoints = numPtArr[1] * 1;
-          
-          // We can find out if there are normals by inspecting <NumPoints>
-          // <NumPoints= 6 1 >
-          // <NumPoints= 6 2 >
-          // If the second value is 0, the file does not contain normals.
-          if((numPtArr[2] * 1) !== 0){
-            hasNormals = true;
-          }
-        }
-                
-        // posMinStr - lowest value in the file (used for decompression)
-        tagExists = textData.indexOf(posMinStr);
-        
-        if(tagExists !== -1){
-          endTagExists = textData.indexOf(endXMLStr, tagExists);
-          temp = textData.substring((tagExists + posMinStr.length), endTagExists);
-          var posMinArr = temp.split(" ");
-          
-          // Multiply by 1 to convert to a Number type.
-          xMin = posMinArr[1] * 1;
-          yMin = posMinArr[2] * 1;
-          zMin = posMinArr[3] * 1;
-        }
-        
-        // posMaxStr - highest value in the file (used for decompression)
-        tagExists = textData.indexOf(posMaxStr);
-
-        if(tagExists !== -1){
-          endTagExists = textData.indexOf(endXMLStr, tagExists);
-          temp = textData.substring((tagExists + posMaxStr.length), endTagExists);
-          var posMaxArr = temp.split(" ");
-          
-          // Multiply by 1 to convert to a Number type.
-          xMax = posMaxArr[1] * 1;
-          yMax = posMaxArr[2] * 1;
-          zMax = posMaxArr[3] * 1;
-          
-          bgnTag = textData.substring(tagExists, (endTagExists + 1));
-          
-          diffX = xMax - xMin;
-          diffY = yMax - yMin;
-          diffZ = zMax - zMin;
-
-          scaleX = SFACTOR + xMin;
-          scaleY = SFACTOR + yMin;
-          scaleZ = SFACTOR + zMin;
-          
-          // If normals:
-          // 9 for XYZ
-          // 3 for RGB
-          
-          // else: 
-          // 6 for XYZ
-          // 2 for RGB  
-          byteIncrement = hasNormals ? 12 : 8;
-          
-          // If we got this far, we can start parsing values and we don't
-          // have to try running this function again.
-          firstRun = false;
-        }
-        
-        // There is a chance that in the first XHR request we didn't get 
-        // as far as the <Max> tag. Since <Min> and <Max> are necessary to
-        // read before parsing the file, force the PSI parser to wait for
-        // the next request and try again.
-        else{
-          firstRun = true;
-        }
-      }
-    
       /**
         @private
         
@@ -837,9 +350,12 @@ var PSIParser = (function() {
         On Chrome/WebKit this will occur one or many times
       */
       AJAX.onprogress = function(evt){
-      
-        // 
-        onProgressCalled = true;
+        var textData = AJAX.responseText;
+              
+        // If there is nothing to parse, wait until there is.
+        if(!textData || textData.length < 6){
+          return;
+        }
         
         // Update the file's progress.
         if(evt.lengthComputable){
@@ -847,87 +363,31 @@ var PSIParser = (function() {
           progress = evt.loaded/evt.total;
         }
 
-        // If we have something to actually parse.
-        if(AJAX.responseText){
-          var textData = AJAX.responseText;
-          var chunkLength = textData.length;
-          
-          // If this is the first call to onprogress.
-          if(firstRun){
-            AJAX.firstLoad(textData);
-            // firstLoad() will have attempted to read at least the <Min> and <Max>
-            // tags, if we aren't that far in the file, we'll need to try again
-            if(firstRun){
-              return;
-            }
-          }
-          
-          // Try to find the <Level> and </Level=0> tags which means we would
-          // have all the data.
-          endTag = endLvlStr;
-          tagExists = textData.indexOf(bgnTag);
-          var infoEnd = textData.indexOf(endTag);
-          var infoStart;
-          
-          // If the bgnTag exists then set the startOfNextChunk
-          // to the end of the bgnTag + 2 for offset values.
-          if(tagExists !== -1){
-            // +2 for offset values
-            tagLen = bgnTag.length + 2;
-            infoStart = tagExists + tagLen;
-            if(AJAX.startOfNextChunk === 0){
-              AJAX.startOfNextChunk = infoStart;
-            }
-          }
-          
-          // Find the last multiple of 12 in the chunk
-          // this is because of the format shown at the top of this parser.
-          var last12 = Math.floor((chunkLength - infoStart) / byteIncrement);
-          AJAX.last12Index = (last12 * byteIncrement) + infoStart;
-          
-          // If the end tag was found.
-          if(infoEnd !== -1){
-            AJAX.last12Index = infoEnd;
-          }
-          
-          var totalPointsInBytes = (numTotalPoints * byteIncrement) + infoStart;
-
-          // Handles parsing up to the end of position and colors.
-          // Sets the next chunk at the start of normals.
-          if((totalPointsInBytes > AJAX.startOfNextChunk) && (totalPointsInBytes < AJAX.last12Index)){
-            var chunk	= textData.substring(AJAX.startOfNextChunk, totalPointsInBytes);
-            
-            if(chunk.length > 0){
-              AJAX.startOfNextChunk = totalPointsInBytes;
-            	AJAX.parseChunk(chunk);
-            }
-          }
-          
-          // Parse the normals.
-          else if((AJAX.last12Index > totalPointsInBytes) && (AJAX.startOfNextChunk >= totalPointsInBytes)){
-            var chunk	= textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
-            normalsPresent = true;
-            colorsPresent = false;
-                
-            if(chunk.length > 0){
-              AJAX.startOfNextChunk = AJAX.last12Index;
-              AJAX.parseChunk(chunk);
-            }
-          }
-
-          // Parse position and colors.
-          else{
-            var chunk = textData.substring(AJAX.startOfNextChunk, AJAX.last12Index);
-            
-            // !! debug this
-            if(chunk.length > 0){
-              AJAX.startOfNextChunk = AJAX.last12Index;
-              AJAX.parseChunk(chunk);
-            }
-            
-          }
-        }// AJAX.responseText
-      };// onprogress
+        // If this is the first call to onprogress, get the file type.
+        if(!fileType){
+          getFileType(textData);
+        }
+        
+        var attr = subParser.onprogress(textData);
+        
+        if(attr.ps_Vertex){
+          var o = partitionArray(attr.ps_Vertex, tempBufferV, tempBufferOffsetV, 1);
+          tempBufferV = o.buffer;
+          tempBufferOffsetV = o.offset;
+        }
+        
+        if(attr.ps_Color){
+          var o = partitionArray(attr.ps_Color, tempBufferC, tempBufferOffsetC, 2);
+          tempBufferC = o.buffer;
+          tempBufferOffsetC = o.offset;
+        }
+        
+        if(attr.ps_Normal){
+          var o = partitionArray(attr.ps_Normal, tempBufferN, tempBufferOffsetN, 3);
+          tempBufferN = o.buffer;
+          tempBufferOffsetN = o.offset;
+        }
+      };
       
       // This line is required since we are parsing binary data.
       if(AJAX.overrideMimeType){
