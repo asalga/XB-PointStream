@@ -232,13 +232,48 @@
             "src" : { "url" : "resources/ariusman_842K_n/psi.js", "type" : "script" },
             "run": "start"
         }
+      },
+
+
+      {
+        "name": "mask_70K.psi",
+	"tag": "PSI2",
+        "note": "70,139 points (XYZ RGB)",
+        "firstCanvas" : {
+            "src" : { "url" : "resources/mask_70K/70K.png", "type" : "image" }
+        },
+        "secondCanvas" : {
+            "src" : { "url" : "resources/mask_70K/psi.js", "type" : "script" },
+            "run": "start"
+        }
+      },
+
+      {
+        "name": "mask_18K.psi",
+	"tag": "PSI2",
+        "note": "17,656 points (XYZ RGB)",
+        "firstCanvas" : {
+            "src" : { "url" : "resources/mask_18K/18K.png", "type" : "image" }
+        },
+        "secondCanvas" : {
+            "src" : { "url" : "resources/mask_18K/psi.js", "type" : "script" },
+            "run": "start"
+        }
+      },
+
+
+      {
+        "name": "mask_273K.psi",
+	"tag": "PSI2",
+        "note": "273,545 points (XYZ RGB)",
+        "firstCanvas" : {
+            "src" : { "url" : "resources/mask_273K/70K.png", "type" : "image" }
+        },
+        "secondCanvas" : {
+            "src" : { "url" : "resources/mask_273K/psi.js", "type" : "script" },
+            "run": "start"
+        }
       }
-
-
-
-
-
-
 
       /*{
         "name": "User shader",
