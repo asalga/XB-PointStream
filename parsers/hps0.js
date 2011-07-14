@@ -131,6 +131,7 @@ var HPS0Parser = (function(){
         
         // !!! COMMENT
         if(onProgressCalled === true){
+        
 
           // !!! this needs to be changed.
           // if colors are present, we know we're still
@@ -413,7 +414,6 @@ var HPS0Parser = (function(){
     /**
     */
     this.onload = function(textData){
-      
       // If we downloaded the entire file in one request.
       if(!gotHeader){
         readHeader(textData);
@@ -446,7 +446,6 @@ var HPS0Parser = (function(){
         }
         return attributes;        
       }
-      
 
       var infoEnd = textData.indexOf("</Level=");
 
@@ -458,7 +457,7 @@ var HPS0Parser = (function(){
         colorsPresent = false;
       }
       else{
-        chunk = textData.substring(AJAX.startOfNextChunk-1, infoEnd-1);
+        chunk = textData.substring(startOfNextChunk, infoEnd);
       }
 
       return parseChunk(chunk);
@@ -533,7 +532,6 @@ var HPS0Parser = (function(){
       
       // Parse the normals.
       else if((last12Index > totalPointsInBytes) && (startOfNextChunk >= totalPointsInBytes)){
-      
         var chunk	= textData.substring(startOfNextChunk, last12Index);
         normalsPresent = true;
         colorsPresent = false;
@@ -552,8 +550,9 @@ var HPS0Parser = (function(){
         if(chunk.length > 0){
           startOfNextChunk = last12Index;
           attr = parseChunk(chunk);
-        } 
+        }
       }
+
       return attr;
     }
     

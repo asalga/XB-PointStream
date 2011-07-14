@@ -28,13 +28,10 @@ function start(){
   ps = new PointStream();
   ps.setup(document.getElementById('canvas'));
 	ps.background([0.25, 0.25, 0.25, 1]);
-
+  
   ps.onRender = render;
   ps.onMouseScroll = zoom;
   ps.onKeyDown = keyDown;
-
-  var progObj = ps.createProgram(fixedFunctionVert, fixedFunctionFrag);
-  ps.useProgram(progObj);
   ps.pointSize(5);
   
   mickey = ps.load("../../clouds/mickey_156K_n.psi");

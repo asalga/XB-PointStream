@@ -369,23 +369,24 @@ var PSIParser = (function() {
         }
         
         var attr = subParser.onprogress(textData);
-        
-        if(attr.ps_Vertex){
-          var o = partitionArray(attr.ps_Vertex, tempBufferV, tempBufferOffsetV, 1);
-          tempBufferV = o.buffer;
-          tempBufferOffsetV = o.offset;
-        }
-        
-        if(attr.ps_Color){
-          var o = partitionArray(attr.ps_Color, tempBufferC, tempBufferOffsetC, 2);
-          tempBufferC = o.buffer;
-          tempBufferOffsetC = o.offset;
-        }
-        
-        if(attr.ps_Normal){
-          var o = partitionArray(attr.ps_Normal, tempBufferN, tempBufferOffsetN, 3);
-          tempBufferN = o.buffer;
-          tempBufferOffsetN = o.offset;
+        if(attr){
+          if(attr.ps_Vertex){
+            var o = partitionArray(attr.ps_Vertex, tempBufferV, tempBufferOffsetV, 1);
+            tempBufferV = o.buffer;
+            tempBufferOffsetV = o.offset;
+          }
+          
+          if(attr.ps_Color){
+            var o = partitionArray(attr.ps_Color, tempBufferC, tempBufferOffsetC, 2);
+            tempBufferC = o.buffer;
+            tempBufferOffsetC = o.offset;
+          }
+          
+          if(attr.ps_Normal){
+            var o = partitionArray(attr.ps_Normal, tempBufferN, tempBufferOffsetN, 3);
+            tempBufferN = o.buffer;
+            tempBufferOffsetN = o.offset;
+          }
         }
       };
       

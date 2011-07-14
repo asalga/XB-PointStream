@@ -74,5 +74,5 @@ function start(){
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
   
-  mickey = ps.load("../../clouds/mickey.asc");
+  mickey = ps.load("../../clouds/mickey_156K_baked.psi");
 }

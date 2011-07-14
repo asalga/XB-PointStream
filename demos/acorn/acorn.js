@@ -1,8 +1,7 @@
 var ps, acorn;
-var r = 0;
-var r2 =  0;
+
 // Create an orbit camera halfway between the closest and farthest point
-var cam = new OrbitCam({closest:10, farthest:100, distance: 70});
+var cam = new OrbitCam({closest:10, farthest:20, distance: 20});
 var isDragging = false;
 var rotationStartCoords = [0, 0];
 
@@ -49,41 +48,6 @@ function keyDown(){
 }
 
 function render(){
- 
-  ps.pushMatrix();
-  ps.loadMatrix([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
-  ps.rotateY(r+=0.1);
-  ps.translate(0,0,1000);
-  var mat = ps.peekMatrix();  
-  
-  var vec = V3.$(0, 0, 0);
-  var newpos = V3.mul4x4(mat, vec);
-        
-  ps.uniformi("lights0.isOn", false);  
-  ps.uniformf("lights0.ambient",  [0.1,0.1,0.1]);
-  ps.uniformf("lights0.position", newpos);  
-  ps.uniformf("lights0.specular", [0, 1, 0]);
-  
-  ps.loadMatrix([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
-  ps.rotateZ(r2+=0.1);
-  ps.translate(100,0,100);
-  mat = ps.peekMatrix();
-  
-  vec = V3.$(0, 0, 0);
-  newpos = V3.mul4x4(mat, vec);
-  
-  ps.uniformi("lights1.isOn", false);
-  ps.uniformi("lights1.type", 2);
-  ps.uniformf("lights1.position", newpos);
-  ps.uniformf("lights1.diffuse", [0.7, 0.7, 0.7]);
-  ps.uniformf("lights1.specular", [1, 0, 0]);
-
-
-
-ps.popMatrix();  
-
-
-
   if(isDragging === true){		
 		// how much was the cursor moved compared to last time
 		// this function was called?
@@ -101,36 +65,6 @@ ps.popMatrix();
   var c = acorn.getCenter();  
   ps.multMatrix(M4x4.makeLookAt(cam.position, cam.direction, cam.up));
   ps.translate(-cam.position[0]-c[0], -cam.position[1]-c[1], -cam.position[2]-c[2] );
-  
-  
-  
-  
-  
-  
-  ps.pushMatrix();
-  ps.loadMatrix([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
-  //ps.multMatrix(M4x4.makeLookAt(cam.position, cam.direction, cam.up));
-  
- 
-  ps.rotateY(r2+=0.1);//,cam.direction);
- // ps.translate(0,0,1);  
-  ps.translate(-cam.position[0], -cam.position[1], -cam.position[2] );
-   
-  vec = V3.$(0, 0, 1);
-  mat = ps.peekMatrix();
-  newpos = V3.mul4x4(mat, vec);
-
-  ps.uniformi("lights2.isOn", true);
-  ps.uniformi("lights2.type", 1);
-  ps.uniformf("lights2.ambient",  [0.1, 0.1, 0.1]);
-  ps.uniformf("lights2.diffuse",  [0.3, 0.9, 0.3]);
-  ps.uniformf("lights2.position", newpos);
-  ps.popMatrix();
-  
-
-  
-  
-  
   
   ps.clear();
   ps.render(acorn);
@@ -162,41 +96,17 @@ ps.popMatrix();
 function start(){
   ps = new PointStream();
   document.getElementById('debug').innerHTML += "XB PointStream Version: " + ps.version;
+  
   ps.setup(document.getElementById('canvas'));
-  ps.background([1, 1, 1, 1.0]);
+  
+  ps.background([0, 0, 0, 0.5]);
+  ps.pointSize(5);
 
-  var vert = ps.getShaderStr("../../shaders/fixed_function.vs");
-  var frag = ps.getShaderStr("../../shaders/fixed_function.fs");
-  
-  fixedFunctionProg = ps.createProgram(vert, frag);
-  ps.useProgram(fixedFunctionProg);
-
-
-  ps.uniformi("matOn", 0);
-  ps.uniformf("matShininess", 100);
-  ps.uniformf("matAmbient", [0.3, 0.3, 0.3]); // 204/255
-  ps.uniformf("matDiffuse", [1, 1, 1]); // 51/255
-  ps.uniformf("matSpecular", [0.7, 1, 1]);
-  
-   
-/*  ps.uniformi("matOn", 1);
-  ps.uniformf("matShininess", 18);
-  ps.uniformf("matAmbient", [0.8, 0.8, 0.8]); // 204/255
-  ps.uniformf("matDiffuse", [0.2, 0.2, 0.2]); // 51/255
-  ps.uniformf("matSpecular", [1, 1, 1]);
-  
-  ps.uniformf("lights0.ambient",  [0.3, 0.3, 0.3]);
-  ps.uniformf("lights0.diffuse",  [0.7, 0.7, 0.7]);
-  ps.uniformf("lights0.specular", [0.1, 0.1, 0.1]);
-  ps.uniformf("lights0.position", [0, 0, 10]);*/
-  
-  ps.pointSize(3.0);
-
-  acorn = ps.load("../../clouds/Mickey_Mouse.psi");
-  
   ps.onRender = render;
   ps.onMouseScroll = zoom;
   ps.onMousePressed = mousePressed;
   ps.onMouseReleased = mouseReleased;
   ps.onKeyDown = keyDown;
+  
+  acorn = ps.load("../../clouds/acorn.asc");
 }
