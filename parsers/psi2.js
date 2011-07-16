@@ -14,7 +14,8 @@ var PSI2Parser = (function(){
     @private
   */
   function PSI2Parser(config){
-    
+  
+    var lastChunkSize = 0;
     var parsingVertsCols = true;
     
     var gotHeader = false;
@@ -205,6 +206,13 @@ var PSI2Parser = (function(){
     /**
     */
     this.onprogress = function(textData){
+  
+      // This occurs at least on Firefox when working remotely.  
+      if(lastChunkSize === textData.length){
+        return;
+      }
+      lastChunkSize = textData.length;
+      
       chunkLength = textData.length;
       
       var attributes = {};

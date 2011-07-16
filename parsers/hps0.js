@@ -3,9 +3,10 @@
   MIT LICENSE
 */
 /**
-  @class 
-    If the hps0 files have normals, there will be
+  @author:  Mickael Medel
+            Andor Salga
   
+  If the hps0 files have normals, there will be
   - 3 bytes for X
   - 3 bytes for Y
   - 3 bytes for Z
@@ -69,15 +70,15 @@ var HPS0Parser = (function(){
   */
   function HPS0Parser(config){
     
+    var lastChunkSize = 0;
     var gotHeader = false;
-      
-    var numTotalPoints;
+    var numTotalPoints = 0;
     
-    // !!!
-    var normalsPresent = false;
-    var colorsPresent = true;
+    //
+    var loadedInOneRequest = false;
     
-    // If the PSI file has normals, this will be true.
+    // If the PSI file does not have normals, the structure of the file
+    // will be different and therefore we need to parse differently.
     var hasNormals = false;
 
     // If the PSI file has normals, we'll have 9 bytes for XYZ
@@ -88,6 +89,8 @@ var HPS0Parser = (function(){
     // parts are the vertices and which parts are the colors.
     var byteIncrement;
     
+    // These will be set when the header data is read and used
+    // when the values are being parsed.
     // Values to be used in decompression of HPS0 files.
     var diffX, diffY, diffZ;
     var xMin, yMin, zMin;
@@ -97,85 +100,29 @@ var HPS0Parser = (function(){
     const SFACTOR = 16777216; // 2^24
     const NFACTOR = -0.5 + 1024; // 2^10
     
-    var startOfBin;
     var last12Index;
     var startOfNextChunk = 0;
-    
 
-    // keep track if onprogress event handler was called to 
-    // handle Chrome/WebKit vs. Firefox differences.
+    // Start of the binary data and the end of vertex and color data.
+    var startOfBin;
+    var endOfVertsCols;
+
     //
-    // Firefox will call onprogress zero or many times
+    var parsingVertsCols = true;
+
+    // This will hold a reference to 
+    // <Max ...>
+    var maxTag;
+
+    // Note: Firefox will call onprogress zero or many times
     // Chrome/WebKit will call onprogress one or many times
-    var onProgressCalled;
       
-      
+    /**
+    */
     this.__defineGetter__("numTotalPoints", function(){
       return numTotalPoints;
     });
     
-    
-    /**
-    */
-    var parseChunk = function(chunk){
-    
-      // !! Fix this.
-      // This occurs over network connections, but not locally.
-      if(chunk){
-      
-        var numVerts = chunk.length/byteIncrement;
-        var numBytes = chunk.length;
-        
-        //
-        var verts, cols, norms;
-        
-        // !!! COMMENT
-        if(onProgressCalled === true){
-        
-
-          // !!! this needs to be changed.
-          // if colors are present, we know we're still
-          // dealing with vertices.
-          if(numVerts > 0 && colorsPresent){
-            // !!! only for debugging, remove on prduction
-            if(numVerts !== Math.floor(numVerts)){
-              console.log("invalid numVerts: " + numVerts);
-              numVerts = Math.floor(numVerts);
-            }
-            verts = new Float32Array(numVerts * 3);
-            cols = new Float32Array(numVerts * 3);
-          }
-          
-          // parsing normal values, not sure the logic behind it (as it was never provided)
-          // we take 3 bytes and apply some bit shifting operations on it
-          // we then take the results and multiply it to some set values
-          // the normals are the resulting values
-          if(numBytes > 0 && normalsPresent){
-          
-            if(numBytes !== Math.floor(numBytes)){
-              console.log('invalid num bytes');
-            }
-            norms = new Float32Array(numBytes);
-            parseNorms(chunk, numBytes, 0, norms);
-          }
-          // parsing xyz and rgb values, not sure behind the logic either
-          // 3 bytes are used for each x, y, z values
-          // each of the last 3 bytes of the 12 correspond to an rgb value
-          else{
-            var byteIdx = 0;
-            parseVertsCols(chunk, numBytes, byteIdx, verts, cols);
-          }
-        }
-        
-        var attributes = {};
-        // ps vertex needs to be the first element!
-        if(verts){attributes["ps_Vertex"] = verts;}
-        if(cols){ attributes["ps_Color"] = cols;}
-        if(norms){ attributes["ps_Normal"] = norms;}
-        
-        return attributes;
-      }
-    }
     
     /**
       @private
@@ -210,11 +157,11 @@ var HPS0Parser = (function(){
     };
 
 
-    /*
-     
+    /**
     */
-    var parseVertsCols = function(chunk, numBytes, byteIdx, verts, cols){
+    var parseVertsCols = function(chunk, byteIdx, verts, cols){
       var byte1, byte2, short;
+      var numBytes = chunk.length;
       
       for(var point = 0; point < numBytes/byteIncrement; byteIdx += byteIncrement, point++){
         // If the PSI file has normals, there are 3 bytes for each component.
@@ -250,9 +197,11 @@ var HPS0Parser = (function(){
       @param {Number} byteIdx
       @param {ArrayBuffer} norms
     */
-    var parseNorms = function(chunk, numBytes, byteIdx, norms){
+    var parseNorms = function(chunk, norms){
       var nzsign, nx11bits, ny11bits, ivalue;
       var nvec = new Float32Array(3);
+      var byteIdx = 0;
+      var numBytes = chunk.length;
       
       // Start reading the normals where we left off reading the
       // vertex positions and colors.
@@ -295,25 +244,26 @@ var HPS0Parser = (function(){
       }
     };
     
-    
-        
     /**
     */
     var readHeader = function(textData){
 
-      // !!
-      // see if we have the entire Max tag, if we don't wait around
-      // until we do.
+      // Check if we have the entire Max tag, if we don't, we need to just 
+      // wait around until the next XHR call is made and check again.
+      // We need the entire max tag since it contain values which are used
+      // to parse the vertices.
       var maxTagIdx = textData.indexOf("<Max=");
-      if(maxTagIdx !== -1){
+      if(maxTagIdx > -1){
         var endTag =  textData.indexOf(">", maxTagIdx);
-        if(endTag == -1){
+        
+        // If we still haven't found it, we'll try again in the next call.
+        if(endTag === -1){
           return;
         }
       }
       
       var numPtsIdx = textData.indexOf("<NumPoints=");
-      endTagIdx = textData.indexOf(">", numPtsIdx);
+      var endTagIdx = textData.indexOf(">", numPtsIdx);
       
       // <NumPoints= 57507 2 0 57507 0 0 >
       var numPtsValuesStr = textData.substring((numPtsIdx + "<NumPoints=".length), endTagIdx);
@@ -321,6 +271,7 @@ var HPS0Parser = (function(){
       
       // Multiply by 1 to convert to a Number type.
       numTotalPoints = numPtsValuesArr[1] * 1;
+      
       // We can find out if there are normals by inspecting <NumPoints>
       // <NumPoints= 11158 1 >
       // <NumPoints= 11158 2 >
@@ -329,9 +280,9 @@ var HPS0Parser = (function(){
         hasNormals = true;
       }
       
-      /// !!! var...
-      // posMinStr - lowest value in the file (used for decompression)
-      minIdx = textData.indexOf("<Min=");
+      // Min tag contains the lowest bounding box values in the cloud which
+      // are used for decompression.
+      var minIdx = textData.indexOf("<Min=");
       
       endTagIdx = textData.indexOf(">", minIdx);
       var temp = textData.substring((minIdx + "<Min=".length), endTagIdx);
@@ -342,8 +293,9 @@ var HPS0Parser = (function(){
       yMin = posMinArr[2] * 1;
       zMin = posMinArr[3] * 1;
       
-      // posMaxStr - highest value in the file (used for decompression)
-      maxIdx = textData.indexOf("<Max=");
+      // Max tag contains the highest bounding box values in the cloud which
+      // are used for decompression.
+      var maxIdx = textData.indexOf("<Max=");
 
       endTagIdx = textData.indexOf(">", maxIdx);
       var temp = textData.substring((maxIdx + "<Max=".length), endTagIdx);
@@ -354,10 +306,13 @@ var HPS0Parser = (function(){
       yMax = posMaxArr[2] * 1;
       zMax = posMaxArr[3] * 1;
       
-      bgnTag = textData.substring(maxIdx, endTagIdx + 1);
+      // Store the entire <Max= xx yy zz> tag
+      maxTag = textData.substring(maxIdx, endTagIdx + 1);
       
-      // !! fix me
-      startOfBin = textData.indexOf(">", maxIdx) + 3;
+      // Now we know exaxtly where the binary data begins
+      // +2 bytes for offset values: \r\n
+      // +1 is the byte after the \n
+      infoStart = startOfBin = endTagIdx + 3;
       
       diffX = xMax - xMin;
       diffY = yMax - yMin;
@@ -367,107 +322,42 @@ var HPS0Parser = (function(){
       scaleY = SFACTOR + yMin;
       scaleZ = SFACTOR + zMin;
       
-      // If normals:
-      // 9 for XYZ
-      // 3 for RGB
-      
-      // else: 
-      // 6 for XYZ
-      // 2 for RGB  
+      // If normals: 9 bytes for XYZ,  3 for RGB
+      // otherwise: 6 for XYZ 2 for RGB  
       byteIncrement = hasNormals ? 12 : 8;
+      
+      endOfVertsCols = numTotalPoints * byteIncrement + infoStart;
       
       // If we got this far, we can start parsing values and we don't
       // have to try running this function again.
       gotHeader = true;
     }
 
-
-
-
-
-
-
-
-
-                    /*   
-            // Checks if begin or end tags can be found using regex.
-            var binBeginIdx = textData.indexOf(bgnTag);
-            var infoEnd = textData.indexOf("</Level=");
-            // This contains our raw binary data.
-            // +2 bytes for offset values: \r\n
-            var binData = textData.substring(binBeginIdx + bgnTag.length + 2, infoEnd);
-            var numBytes = binData.length;
-            var attributes = {};
-            var verts = new Float32Array(numTotalPoints * 3);
-            var cols  = new Float32Array(numTotalPoints * 3);
-            parseVertsCols_HPS0(binData, numBytes, 0, verts, cols);
-            // ps vertex needs to be the first element!
-            if(verts){attributes["ps_Vertex"] = verts;}
-            if(cols){ attributes["ps_Color"] = cols;}
-            var norms;
-            // Parse the normals if we have them.
-            if(hasNormals){
-              norms = new Float32Array(numTotalPoints * 3);
-              parseNorms_HPS0(binData, numBytes, numTotalPoints * byteIncrement, norms);
-              attributes["ps_Normal"] = norms;
-            }*/
     /**
+      This is called once the entire file is done being downloaded.
     */
     this.onload = function(textData){
-      // If we downloaded the entire file in one request.
       if(!gotHeader){
-        readHeader(textData);
-        
-        // Checks if begin or end tags can be found using regex.
-        var binBeginIdx = textData.indexOf(bgnTag);
-        var infoEnd = textData.indexOf("</Level=");
-        
-        // This contains our raw binary data.
-        // +2 bytes for offset values: \r\n
-        var binData = textData.substring(binBeginIdx + bgnTag.length + 2, infoEnd);
-        var numBytes = binData.length;
-
-        var attributes = {};
-        var verts = new Float32Array(numTotalPoints * 3);
-        var cols  = new Float32Array(numTotalPoints * 3);
-        parseVertsCols(binData, numBytes, 0, verts, cols);
-
-        // ps vertex needs to be the first element!
-        if(verts){attributes["ps_Vertex"] = verts;}
-        if(cols){ attributes["ps_Color"] = cols;}
-        
-        var norms;
-        
-        // Parse the normals if we have them.
-        if(hasNormals){
-          norms = new Float32Array(numTotalPoints * 3);
-          parseNorms(binData, numBytes, numTotalPoints * byteIncrement, norms);
-          attributes["ps_Normal"] = norms;
-        }
-        return attributes;        
+        loadedInOneRequest = true;
       }
-
-      var infoEnd = textData.indexOf("</Level=");
-
-      var chunk = textData.substring(startOfNextChunk, infoEnd);
-
-      // If the file has normals as indicated at the start of the file.
-      if(hasNormals){
-        normalsPresent = true;
-        colorsPresent = false;
-      }
-      else{
-        chunk = textData.substring(startOfNextChunk, infoEnd);
-      }
-
-      return parseChunk(chunk);
+      // If we didn't read in the entire file in one request.
+      return this.onprogress(textData);
     }
     
     /**
     */
     this.onprogress = function(textData){
+  
+      // This occurs at least on Firefox when working remotely.  
+      if(lastChunkSize === textData.length){
+        return;
+      }
       
+      lastChunkSize = textData.length;
       var chunkLength = textData.length;
+      
+      // The attributes which will be returned to the main PSI parser.
+      var attributes = {};
       
       // If this is the first call to onprogress, try to read in the header.
       if(!gotHeader){
@@ -478,85 +368,81 @@ var HPS0Parser = (function(){
         if(!gotHeader){
           return;
         }
-        
         // If this is the first time we read the file, start reading the binary data
         // at the start of the binary data rather than somewhere in the middle.
-        startOfNextChunk = infoStart = startOfBin;
+        startOfNextChunk = startOfBin;
       }
+      var verts, cols, norms;
       
-      // The attributes which will be returned.
-      var attr;
-
-      onProgressCalled = true;
-      
-      // Try to find the <Level> and </Level=0> tags which means we would
-      // have all the data.
-      endTag = "</Level=";
-      var tagExists = textData.indexOf(bgnTag);
-      var infoEnd = textData.indexOf(endTag);
-      var infoStart;
-      
-      // If the bgnTag exists then set the startOfNextChunk
-      // to the end of the bgnTag + 2 for offset values.
-      if(tagExists !== -1){
-        // +2 for offset values
-        tagLen = bgnTag.length + 2;
-        infoStart = tagExists + tagLen;
-        if(startOfNextChunk === 0){
-          startOfNextChunk = infoStart;
-        }
+      // Check if we have the entire file
+      if(textData.indexOf("</Level=") > -1){
+        last12Index = textData.indexOf("</Level=");
+        var tagExists = textData.indexOf(maxTag);
+        // +2 for offset values \n\r
+        infoStart = tagExists + maxTag.length + 2;
       }
-      
-      // Find the last multiple of 12 in the chunk
-      // this is because of the format shown at the top of this parser.
-      var last12 = Math.floor((chunkLength - infoStart) / byteIncrement);
-      last12Index = (last12 * byteIncrement) + infoStart;
-      
-      // If the end tag was found.
-      if(infoEnd !== -1){
-        last12Index = infoEnd;
+      else{
+        // Find the last multiple of 12 in the chunk
+        // this is because of the format shown at the top of this parser.
+        var last12 = Math.floor((chunkLength - infoStart) / byteIncrement);
+        last12Index = (last12 * byteIncrement) + infoStart;
       }
       
       var totalPointsInBytes = (numTotalPoints * byteIncrement) + infoStart;
 
-      // Handles parsing up to the end of position and colors.
-      // Sets the next chunk at the start of normals.
-      if((totalPointsInBytes > startOfNextChunk) && (totalPointsInBytes < last12Index)){
-        var chunk	= textData.substring(startOfNextChunk, totalPointsInBytes);
-        
-        if(chunk.length > 0){
-          startOfNextChunk = totalPointsInBytes;
-          attr = parseChunk(chunk);
-        }
-      }
-      
-      // Parse the normals.
-      else if((last12Index > totalPointsInBytes) && (startOfNextChunk >= totalPointsInBytes)){
-        var chunk	= textData.substring(startOfNextChunk, last12Index);
-        normalsPresent = true;
-        colorsPresent = false;
-            
-        if(chunk.length > 0){
-          startOfNextChunk = last12Index;
-          attr = parseChunk(chunk);
-        }
-      }
-
-      // Parse position and colors.
-      else{
+      // If we are still only reading vertices and colors
+      if(chunkLength < endOfVertsCols){
         var chunk = textData.substring(startOfNextChunk, last12Index);
-        
-        // !! debug this
-        if(chunk.length > 0){
-          startOfNextChunk = last12Index;
-          attr = parseChunk(chunk);
-        }
+
+        startOfNextChunk = last12Index;
+           
+        var numVerts = chunk.length/byteIncrement;
+        var verts = new Float32Array(numVerts * 3);
+        var cols  = new Float32Array(numVerts * 3);
+
+        parseVertsCols(chunk, 0, verts, cols);
+        attributes["ps_Vertex"] = verts;
+        attributes["ps_Color"] = cols;
       }
 
-      return attr;
+
+      // If we downloaded the entire file in one request wer're going to read from
+      // the start of the binary to end of verts/cols.
+      
+      // If we have more data than the end of the vertices and colors, but
+      // our next read chunk is past the end of how much data we have.
+      // This means we're in the middle of parsing vertices,colors and normals.
+      
+      // OR we're still parsing vertices and cols from last call.
+      else if(startOfNextChunk < endOfVertsCols && last12Index > endOfVertsCols || loadedInOneRequest || parsingVertsCols ){
+        var chunk	= textData.substring(startOfNextChunk, totalPointsInBytes);  
+         
+        if(hasNormals){
+          parsingVertsCols = false;
+        }
+
+        startOfNextChunk = totalPointsInBytes;
+         
+        var numVerts = chunk.length/byteIncrement;
+        var verts = new Float32Array(numVerts * 3);
+        var cols  = new Float32Array(numVerts * 3);
+         
+        parseVertsCols(chunk, 0, verts, cols);
+        attributes["ps_Vertex"] = verts;
+        attributes["ps_Color"] = cols;
+      }
+      // Parse the normals.
+      if(!parsingVertsCols){
+        var chunk	= textData.substring(startOfNextChunk, last12Index);
+        
+        var norms = new Float32Array(chunk.length);
+
+        startOfNextChunk = last12Index;
+        parseNorms(chunk, norms);
+        attributes["ps_Normal"] = norms;
+      }
+      return attributes;
     }
-    
-    
   }// ctor
   
   return HPS0Parser;
