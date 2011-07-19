@@ -253,13 +253,14 @@ var HPS0Parser = (function(){
       // We need the entire max tag since it contain values which are used
       // to parse the vertices.
       var maxTagIdx = textData.indexOf("<Max=");
-      if(maxTagIdx > -1){
-        var endTag =  textData.indexOf(">", maxTagIdx);
-        
-        // If we still haven't found it, we'll try again in the next call.
-        if(endTag === -1){
-          return;
-        }
+      if(maxTagIdx === -1){
+        return;
+      }
+      
+      // If we still haven't found it, we'll try again in the next call.
+      var endTag = textData.indexOf(">", maxTagIdx);
+      if(endTag === -1){
+        return;
       }
       
       var numPtsIdx = textData.indexOf("<NumPoints=");
@@ -284,7 +285,7 @@ var HPS0Parser = (function(){
       // are used for decompression.
       var minIdx = textData.indexOf("<Min=");
       
-      endTagIdx = textData.indexOf(">", minIdx);
+      var endTagIdx = textData.indexOf(">", minIdx);
       var temp = textData.substring((minIdx + "<Min=".length), endTagIdx);
       var posMinArr = temp.split(" ");
       
@@ -347,7 +348,7 @@ var HPS0Parser = (function(){
     /**
     */
     this.onprogress = function(textData){
-  
+    
       // This occurs at least on Firefox when working remotely.  
       if(lastChunkSize === textData.length){
         return;
