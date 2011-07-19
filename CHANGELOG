@@ -1,0 +1,11 @@
+July 19, 2011 - Release 0.75
+
+  * Created changelog
+  * Added anti-aliasing option
+  * Cleaned ASC parser
+  * Converted shaders into simple text files from long strings
+  * Added PLY parser
+  * Added proper lights to fixed function shader
+  * Created PSI2 parser
+  * Rewrote a large part of the HSP0 parser
+  * Fixed PSI files not loading on Chrome
