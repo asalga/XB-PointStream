@@ -34,7 +34,7 @@ zip-min: minify
 # Create a simple example
 create-example: create-release-dir
 	mkdir ./xbps-min/clouds
-	cp ./clouds/acorn.asc ./xbps-min/clouds
+	cp ./clouds/acorn.psi ./xbps-min/clouds
 	echo "<html>" > ./xbps-min/example.html
 	echo "  <head>" >> ./xbps-min/example.html
 	echo "    <script src=\"xbps-min-${VERSION}.js\"></script>" >> ./xbps-min/example.html
