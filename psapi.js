@@ -897,45 +897,6 @@ var PointStream = (function() {
     /**
       @private
       
-      Sets variables to default values.
-    */
-    function runDefault(){
-      var fovy = 60;
-      
-      var aspect = width/height;
-      var znear = 0.1;
-
-      var zfar = 1000;
-
-      var ymax = znear * Math.tan(fovy * Math.PI / 360.0);
-      var ymin = -ymax;
-      var xmin = ymin * aspect;
-      var xmax = ymax * aspect;
-
-      var left = xmin;
-      var right = xmax;
-      var top =  ymax;
-      var bottom = ymin;
-
-      var X = 2 * znear / (right - left);
-      var Y = 2 * znear / (top - bottom);
-      var A = (right + left) / (right - left);
-      var B = (top + bottom) / (top - bottom);
-      var C = -(zfar + znear) / (zfar - znear);
-      var D = -2 * zfar * znear / (zfar - znear);
-      
-      projectionMatrix = M4x4.$(
-      X, 0, 0, 0, 
-      0, Y, 0, 0, 
-      A, B, C, -1, 
-      0, 0, D, 0);
-      
-      normalMatrix = M4x4.I;
-    };
-    
-    /**
-      @private
-      
       @param {} element
       @param {} type
       @param {Function} func
@@ -1308,7 +1269,8 @@ var PointStream = (function() {
       // parseInt hack used for Chrome/Chromium
       ctx.viewport(0, 0, parseInt(pWidth), parseInt(pHeight));
       
-      runDefault();
+      this.perspective();
+      normalMatrix = M4x4.I;
     };
     
     /**
@@ -1356,6 +1318,100 @@ var PointStream = (function() {
       ctx.readPixels(0, 0, width, height, ctx.RGBA, ctx.UNSIGNED_BYTE, arr);
       return arr;
     };
+
+    /*************************************/
+    /************* Projection ************/
+    /*************************************/
+    
+    /**
+      Create an orthographic projection matrix.
+      
+      If no arguments are provided the default values will be used:
+      ortho(0, width, 0, height, -10000, 10000);
+      
+      @param {Number} left
+      @param {Number} rigtht
+      @param {Number} bottom
+      @param {Number} top
+      @param {Number} near
+      @param {Number} far
+    */
+    this.ortho = function(left, right, bottom, top, near, far){
+      
+      if(arguments.length === 0){
+        left = 0;
+        right = width;
+        bottom = 0;
+        top = height;
+        near = -10000;
+        far = 10000;
+      }
+      
+      var l = left - width/2;
+      var r = right - width/2;
+          
+      var t = top -  height/2;
+      var b = bottom - height/2;
+
+      var x = 2 / (r - l);
+      var y = 2 / (t - b);
+      var z = -2 / (far - near);
+
+      var tx = (-(r + l)) / (r - l);
+      var ty = (-(t + b)) / (t - b);
+      var tz = (-(far + near)) / (far - near);
+      
+      projectionMatrix =  M4x4.$( x, 0, 0, tx,
+                                  0, y, 0, ty,
+                                  0, 0, z, tz,
+                                  0, 0, 0, 1);
+      if(currProgram){
+        uniformMatrix(currProgram, "ps_ProjectionMatrix", false, projectionMatrix);
+      }
+    }
+    
+    /**
+      Create a perspective projection matrix.
+      
+      If no arguments are provided the default values will be used:
+      perspective(PI/6, width/height, 0.1, 1000);
+      
+      @param {Number} fovy
+      @param {Number} aspect
+      @param {Number} near
+      @param {Number} far
+    */
+    this.perspective = function(fovy, aspect, near, far){
+    
+      if(arguments.length === 0){
+        fovy = 60;
+        aspect = width/height;
+        near = 0.1;
+        far = 1000;
+      }
+      
+      var ymax = near * Math.tan(fovy * Math.PI / 360);
+      var ymin = -ymax;
+      var xmin = ymin * aspect;
+      var xmax = ymax * aspect;
+      
+      var X = 2 * near / (xmax - xmin);
+      var Y = 2 * near / (ymax - ymin);
+      var A = (xmax + xmin) / (xmax - xmin);
+      var B = (ymax + ymin) / (ymax - ymin);
+      var C = -(far + near) / (far - near);
+      var D = -2 * far * near / (far - near);
+      
+      projectionMatrix = M4x4.$(X, 0, 0, 0, 
+                                0, Y, 0, 0, 
+                                A, B, C, -1, 
+                                0, 0, D, 0);
+      
+      if(currProgram){
+        uniformMatrix(currProgram, "ps_ProjectionMatrix", false, projectionMatrix);
+      }
+    }
+    
     
     /*************************************/
     /********** Transformations **********/
