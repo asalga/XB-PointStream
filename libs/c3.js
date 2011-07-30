@@ -1,4 +1,136 @@
 /**
+  @class FreeCamera
+  
+  @version 0.000001 alpha
+*/
+var FreeCam = (function(){
+
+  function FreeCam(config) {
+
+    var trans = [ 1, 0, 0, 0,  // left
+                  0, 1, 0, 0,  // up
+                  0, 0, 1, 0,  // direction
+                  0, 0, 0, 1]; // position
+
+    /**
+      Get the camera position.
+      
+      @return {Array} Array of three values.
+    */
+    this.__defineGetter__("pos", function(){
+      return [trans[12], trans[13], trans[14]];
+    });
+    
+    /**
+      Set the camera position.
+      
+      @return {Array} Array of three values.
+    */
+    this.__defineSetter__("pos", function(p){
+      trans[12] = p[0];
+      trans[13] = p[1];
+      trans[14] = p[2];
+    });
+    
+    /**
+      Get the direction of the camera.
+      
+      @return {Array} Array of three values.
+    */
+    this.__defineGetter__("dir", function(){
+      return [trans[8], trans[9], trans[10]];
+    });
+    
+    /**
+      Get the camera's up vector.
+      
+      @return {Array} Array of three values.
+    */
+    this.__defineGetter__("up", function(){
+      return [trans[4], trans[5], trans[6]];
+    });
+
+    /**
+      Get the camera's left vector.
+      
+      @return {Array} Array of three values.
+    */
+    this.__defineGetter__("left", function(){
+      return [trans[0], trans[1], trans[2]];
+    });
+    
+    /**
+      Get a copy of the camera's transformation matrix.
+      
+      @returns {Array} 
+    */
+    this.getMatrix = function(){
+      return  M4x4.clone(trans);
+    }
+    
+    /**
+      Set the camera's transformation matrix to an identity matrix.
+    */
+    this.reset = function(){
+      trans = [ 1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1];
+    };
+    
+    /**
+    */
+    this.move = function(p){
+      var tranMat = M4x4.makeTranslate([p[0],p[1],p[2]]);
+      trans = M4x4.mul(trans, tranMat);      
+    };
+
+    /**
+    */
+    this.yaw = function(angle){
+      var rotMat = M4x4.makeRotate(angle, this.up);
+      trans = M4x4.mul(trans, rotMat);
+    };
+
+    /**
+    */
+    this.roll = function(angle){
+      var rotMat = M4x4.makeRotate(angle, this.direction);
+      trans = M4x4.mul(trans, rotMat);
+    };
+
+    /**
+      Pitch the camera about its current left vector.
+      
+      @param {Number} angle in radians.
+    */
+    this.pitch = function(angle){
+      var rotMat = M4x4.makeRotate(angle, this.left);
+      trans = M4x4.mul(trans, rotMat);
+    };
+    
+    this.rotateOnAxis = function(angle, axis){
+      var rotMat = M4x4.makeRotate(angle, axis);
+      trans = M4x4.mul(trans,rotMat);
+    };
+    
+    /**
+      Get a string representation of this camera. Useful for debugging.
+      
+      @return {String}
+    */
+    this.toString = function(){
+      return "[" + trans[ 0] + ", " + trans[ 1] + ", " + trans[ 2] + ", " + trans[ 3] + ", " +
+                   trans[ 4] + ", " + trans[ 5] + ", " + trans[ 6] + ", " + trans[ 7] + ", " +
+                   trans[ 8] + ", " + trans[ 9] + ", " + trans[10] + ", " + trans[11] + ", " +
+                   trans[12] + ", " + trans[13] + ", " + trans[14] + ", " + trans[15] + "]";
+    };    
+  }
+  return FreeCam;
+}());
+
+
+/**
   @class OrbitCamera
   
   @version 0.000001 alpha
@@ -26,9 +158,6 @@ var OrbitCam = (function(){
     if(config.distance <= config.farthest && config.distance >= config.closest){
       pos =  V3.$( 0, 0, config.distance);
     }
-    
-    
-    
     
     /**
       Get the camera's transformation
@@ -83,7 +212,7 @@ var OrbitCam = (function(){
       
       @return {Array} Array of three values.
     */
-    this.__defineGetter__("position", function(){    
+    this.__defineGetter__("pos", function(){    
       return pos;
     });
     
@@ -92,7 +221,7 @@ var OrbitCam = (function(){
       
       @return {Array} Array of three values.
     */
-    this.__defineGetter__("direction", function(){    
+    this.__defineGetter__("dir", function(){
       return dir;
     });
     
@@ -102,7 +231,7 @@ var OrbitCam = (function(){
       @return {Array} Array of three values.
     */
     this.__defineGetter__("up", function(){    
-      return up;
+      return [up[0], up[1], up[2]];
     });
 
     /**
@@ -121,6 +250,7 @@ var OrbitCam = (function(){
       @param {Number} distance to move closer to the orbit point. Must be greater than zero.
     */
     this.goCloser = function(distance){
+    
       // A negative value for goCloser() could be allowed and would
       // mean moving farther using a positive value, but this could
       // create some confusion and is therefore not permitted.
@@ -236,10 +366,10 @@ var OrbitCam = (function(){
 
       // Prevent the user from pitching past the global up axis              
       if(angle > 0 && angle > angleFromGlobalUp){
-        angle = angleFromGlobalUp;
+        angle = angleFromGlobalUp;console.log('f');
       }
       else if(angle < 0 && Math.abs(angle) > angleFromGlobalDown){
-        angle = -angleFromGlobalDown;
+        angle = -angleFromGlobalDown;console.log('g');
       }
 
       // If the position of the camera is sitting at the orbit point,

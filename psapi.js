@@ -67,6 +67,7 @@ var PointStream = (function() {
     // for calculating fps
     var frames = 0;
     var frameRate = 0;
+    var frameCount = 0;
     var lastTime;
     
     // default rendering states
@@ -748,7 +749,7 @@ var PointStream = (function() {
       }
 
       return tinylogLite;
-    }());    
+    }());
 
     /***************************************/
     /**********  Parser callbacks **********/
@@ -858,6 +859,7 @@ var PointStream = (function() {
     */
     function renderLoop(){
       frames++;
+      frameCount++;
       var now = new Date();
 
       matrixStack.push(M4x4.I);
@@ -1158,13 +1160,19 @@ var PointStream = (function() {
     });
     
     /**
+    */
+    this.__defineGetter__("frameCount", function(){
+      return frameCount;
+    });
+
+    /**
       Sets the background color.
       
       @param {Array} color Array of 4 values ranging from 0 to 1.
     */
     this.background = function(color){
       ctx.clearColor(color[0], color[1], color[2], color[3]);
-    };  
+    };
     
     /**
       Clears the color and depth buffers.
@@ -1530,6 +1538,7 @@ var PointStream = (function() {
     };
     
     /**
+      
     */
     this.multMatrix = function(mat){
       this.loadMatrix(M4x4.mul(this.peekMatrix(), mat));

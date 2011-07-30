@@ -1,7 +1,7 @@
 var ps, lion;
 
 // Create an orbit camera halfway between the closest and farthest point
-var cam = new OrbitCam({closest:10, farthest:50, distance: 50});
+var  cam = new OrbitCam({closest:10, farthest:100, distance: 100});
 var rotationStartCoords = [0, 0];
 var isDragging = false;
 
@@ -50,8 +50,8 @@ function render() {
 	}
   
   var c = lion.getCenter();
-  ps.multMatrix(M4x4.makeLookAt(cam.position, cam.direction, cam.up));
-  ps.translate(-cam.position[0]-c[0], -cam.position[1]-c[1], -cam.position[2]-c[2]);
+  ps.multMatrix(M4x4.makeLookAt(cam.pos, V3.add(cam.pos,cam.dir), cam.up));
+  ps.translate(-c[0], -c[1], -c[2]);
   
   ps.clear();
   ps.render(lion);

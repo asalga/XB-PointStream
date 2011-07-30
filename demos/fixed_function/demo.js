@@ -2,7 +2,7 @@ var ps, pointCloud;
 var r1 = 0, r2 = 0, r3 = 0;
 
 // Create an orbit camera halfway between the closest and farthest point
-var cam = new OrbitCam({closest:10, farthest:350, distance: 300});
+var cam = new OrbitCam({closest:10, farthest:400, distance: 300});
 var isDragging = false;
 var rotationStartCoords = [0, 0];
 
@@ -77,8 +77,8 @@ function render(){
   }
 
   var c = pointCloud.getCenter();  
-  ps.multMatrix(M4x4.makeLookAt(cam.position, cam.direction, cam.up));
-  ps.translate(-cam.position[0]-c[0], -cam.position[1]-c[1], -cam.position[2]-c[2] );
+  ps.multMatrix(M4x4.makeLookAt(cam.pos, cam.dir, cam.up));
+  ps.translate(-c[0], -c[1], -c[2] );
   
   ps.pushMatrix();
 
@@ -107,8 +107,8 @@ function render(){
 
   // SPOT LIGHT
   ps.loadMatrix([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
-  ps.multMatrix(M4x4.makeLookAt(cam.position, cam.direction, cam.up));
-  ps.translate(-cam.position[0], -cam.position[1], -cam.position[2]);
+  ps.multMatrix(M4x4.makeLookAt(cam.pos, V3.add(cam.pos,cam.dir), cam.up));
+
   ps.rotateY(r3);
   
   var mvm = ps.peekMatrix();

@@ -2,7 +2,7 @@ var ps, mickey;
 var usingOrtho = true;
 
 var buttonDown = false;
-var zoomed = -50;
+var zoomed = -25;
 
 var rot = [0, 0];
 var curCoords = [0, 0];
