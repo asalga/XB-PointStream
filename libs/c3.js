@@ -157,6 +157,7 @@ var OrbitCam = (function(){
     // only set the distance if it is valid
     if(config.distance <= config.farthest && config.distance >= config.closest){
       pos =  V3.$( 0, 0, config.distance);
+      distance = config.distance;
     }
     
     /**
@@ -366,10 +367,10 @@ var OrbitCam = (function(){
 
       // Prevent the user from pitching past the global up axis              
       if(angle > 0 && angle > angleFromGlobalUp){
-        angle = angleFromGlobalUp;console.log('f');
+        angle = angleFromGlobalUp;
       }
       else if(angle < 0 && Math.abs(angle) > angleFromGlobalDown){
-        angle = -angleFromGlobalDown;console.log('g');
+        angle = -angleFromGlobalDown;
       }
 
       // If the position of the camera is sitting at the orbit point,

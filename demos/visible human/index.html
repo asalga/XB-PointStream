@@ -1,0 +1,32 @@
+<html>
+  <head>
+  <title>Visible Human demo</title>
+
+		<link type="text/css" href="css/ui-lightness/jquery-ui-1.8.14.custom.css" rel="stylesheet" />	
+		<script type="text/javascript" src="jquery-1.5.1.min.js"></script>
+		<script type="text/javascript" src="jquery-ui-1.8.14.custom.min.js"></script>
+
+    <script src="../../xbps.js"></script>
+    <script src="../../libs/c3.js"></script>
+    <script src="demo.js"></script>
+
+		<script type="text/javascript">
+			$(function(){
+				$('#slider').slider({
+					range: true,
+            min: 0,
+            max: 2800,
+            slide:blah,
+					values: [0, 2800]
+				});
+			});
+		</script>
+	
+  <body  onload="start();">
+    <div id="slider" style="width: 600;"></div>
+    <br />
+    <canvas id="cvs" width="600" height="1000" style="border:1px solid black;"></canvas>
+  </body>
+</html>
+
+
