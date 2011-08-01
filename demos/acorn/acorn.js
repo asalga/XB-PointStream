@@ -63,8 +63,8 @@ function render(){
 	}
 
   var c = acorn.getCenter();  
-  ps.multMatrix(M4x4.makeLookAt(cam.position, cam.direction, cam.up));
-  ps.translate(-cam.position[0]-c[0], -cam.position[1]-c[1], -cam.position[2]-c[2] );
+  ps.multMatrix(M4x4.makeLookAt(cam.pos, V3.add(cam.pos, cam.dir), cam.up));
+  ps.translate(-c[0], -c[1], -c[2]);
   
   ps.clear();
   ps.render(acorn);
