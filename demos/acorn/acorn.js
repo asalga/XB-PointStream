@@ -97,7 +97,7 @@ function start(){
   ps = new PointStream();
   document.getElementById('debug').innerHTML += "XB PointStream Version: " + ps.version;
   
-  ps.setup(document.getElementById('canvas'));
+  ps.setup(document.getElementById('canvas') ,{preserveDrawingBuffer:true});
   
   ps.background([0, 0, 0, 0.5]);
   ps.pointSize(5);
