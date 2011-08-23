@@ -38,15 +38,15 @@ var ASCParser = (function() {
     var parse = config.parse || __empty_func;
     var end = config.end || __empty_func;
     
-    const VERSION = "0.2";
-    const XHR_DONE = 4;
+    var VERSION = "0.2";
+    var XHR_DONE = 4;
     
     // The .ASC file can contain different types of data
-    const UNKNOWN = -1;
-    const VERTS = 0;
-    const VERTS_COLS = 1;
-    const VERTS_NORMS = 2;
-    const VERTS_COLS_NORMS = 3;
+    var UNKNOWN = -1;
+    var VERTS = 0;
+    var VERTS_COLS = 1;
+    var VERTS_NORMS = 2;
+    var VERTS_COLS_NORMS = 3;
 
     var pathToFile = null;
     var fileSizeInBytes = 0;
@@ -119,10 +119,11 @@ var ASCParser = (function() {
       // vertices and normals
       
       var str = "";
-     
+      var i;
+      
       // We're going to try the first 500 characters and hopefully
       // figure out what we're dealing with by then.
-      for(var i = 0; i < 500 && i < values.length; i++){
+      for(i = 0; i < 500 && i < values.length; i++){
         str += values[i];
       }
       
@@ -131,14 +132,17 @@ var ASCParser = (function() {
       
       // start at three since the first 3 values
       // are x,y,z.
-      for(var i = 3; i < str_split.length;i+=3){
-        data.push(str_split[i++]);
-        data.push(str_split[i++]);
-        data.push(str_split[i++]);
+      for(i = 3; i < str_split.length;i += 3){
+        data.push(str_split[i]);
+        i++;
+        data.push(str_split[i]);
+        i++;
+        data.push(str_split[i]);
+        i++;
       }
 
       // Pass 1
-      for(var i = 0; i < data.length; i+=3){
+      for(i = 0; i < data.length; i+=3){
         // if there is any component less than 0,
         // it must represent a part of a normal vector
         if(data[i] < 0 || data[i+1] < 0 || data[i+2] < 0){
@@ -157,7 +161,7 @@ var ASCParser = (function() {
       // so we can try this:
       // if the length of the components add up to 1 consistently,
       // it's likely normal data
-      for(var i = 0; i < data.length; i+=3){
+      for(i = 0; i < data.length; i+=3){
         var mag = data[i]*data[i] + data[i+1]*data[i+1] + data[i+2]*data[i+2];
         // allow a little slack for precision issues
         if( mag > 1.0001 || mag < 0.999){
@@ -204,6 +208,7 @@ var ASCParser = (function() {
                         normalsPresent = true;
                         colorsPresent = true;
                         break;
+            default: break;
           }
         }
         
@@ -245,9 +250,9 @@ var ASCParser = (function() {
 
           // XBPS spec for parsers requires colors to be normalized.
           if(cols){
-            cols[j]   = parseInt(chunk[i+3])/255;
-            cols[j+1] = parseInt(chunk[i+4])/255;
-            cols[j+2] = parseInt(chunk[i+5])/255;
+            cols[j]   = parseInt(chunk[i+3], 10)/255;
+            cols[j+1] = parseInt(chunk[i+4], 10)/255;
+            cols[j+2] = parseInt(chunk[i+5], 10)/255;
           }
         
           if(norms){
@@ -378,7 +383,7 @@ var ASCParser = (function() {
         progress = 1;
         
         end(theParser);
-      }
+      };
     
       /**
         @private
@@ -390,8 +395,9 @@ var ASCParser = (function() {
         On Chrome/WebKit this will occur one or many times
       */
       XHR.onprogress = function(evt){
-      
-       if(evt.lengthComputable){
+        var chunk;
+        
+        if(evt.lengthComputable){
           fileSizeInBytes = evt.total;
           progress = evt.loaded/evt.total;
         }
@@ -423,7 +429,7 @@ var ASCParser = (function() {
           // file, grab everyting until the end. If there is only a bunch
           // of whitespace, make a note of that and don't bother parsing.
           if(XHR.readyState === XHR_DONE){
-            var chunk = ascData.substring(startOfNextChunk, ascData.length);
+            chunk = ascData.substring(startOfNextChunk, ascData.length);
             // If the last chunk doesn't have any digits (just spaces)
             // don't parse it.
             if(chunk.match(/[0-9]/)){
@@ -433,7 +439,7 @@ var ASCParser = (function() {
           // if we still have more data to go
           else{
             // Start of the next chunk starts after the newline.
-            var chunk = ascData.substring(startOfNextChunk, lastNewLineIndex + 1);
+            chunk = ascData.substring(startOfNextChunk, lastNewLineIndex + 1);
             startOfNextChunk = lastNewLineIndex + 1;
             parseChunk(chunk);
           }

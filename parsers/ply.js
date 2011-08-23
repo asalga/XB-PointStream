@@ -53,8 +53,8 @@ var PLYParser = (function() {
     var parse = config.parse || __empty_func;
     var end = config.end || __empty_func;
     
-    const VERSION = "0.1";
-    const XHR_DONE = 4;
+    var VERSION = "0.1";
+    var XHR_DONE = 4;
     
     var pathToFile = null;
     var fileSizeInBytes = 0;
@@ -195,7 +195,7 @@ var PLYParser = (function() {
         progress = 1;
 
         end(AJAX.parser);
-      }
+      };
       
       /**
         @private
@@ -210,9 +210,9 @@ var PLYParser = (function() {
             var properties = header.match(/property.*/g);
             
             if(properties){
-              for(var i = 0; i < properties.length; i++){
-                var t = properties[i].replace(/property.*\s+/, '');
-                map[t] = i;
+              for(var prop = 0; prop < properties.length; prop++){
+                var t = properties[prop].replace(/property.*\s+/, '');
+                map[t] = prop;
               }
 
               if(map["nx"] && map["ny"] && map["nz"]){
@@ -277,9 +277,9 @@ var PLYParser = (function() {
               }
               
              if(cols){
-                cols[j]   = parseInt(chunk[ i + map["red"] ])/255;
-                cols[j+1] = parseInt(chunk[ i + map["green"] ])/255;
-                cols[j+2] = parseInt(chunk[ i + map["blue"] ])/255;
+                cols[j]   = parseInt(chunk[ i + map["red"] ], 10)/255;
+                cols[j+1] = parseInt(chunk[ i + map["green"] ], 10)/255;
+                cols[j+2] = parseInt(chunk[ i + map["blue"] ], 10)/255;
               }
             }
             
@@ -302,8 +302,9 @@ var PLYParser = (function() {
         On Chrome/WebKit this will occur one or many times
       */
       AJAX.onprogress = function(evt){
-      
-       if(evt.lengthComputable){
+        var chunk;
+       
+        if(evt.lengthComputable){
           fileSizeInBytes = evt.total;
           progress = evt.loaded/evt.total;
         }
@@ -330,7 +331,7 @@ var PLYParser = (function() {
           // file, grab everyting until the end. If there is only a bunch
           // of whitespace, make a note of that and don't bother parsing.
           if(AJAX.readyState === XHR_DONE){
-            var chunk = data.substring(AJAX.startOfNextChunk, data.length);
+            chunk = data.substring(AJAX.startOfNextChunk, data.length);
             // If the last chunk doesn't have any digits (just spaces)
             // don't parse it.
             if(chunk.match(/[0-9]/)){
@@ -340,7 +341,7 @@ var PLYParser = (function() {
           // if we still have more data to go
           else{
             // Start of the next chunk starts after the newline.
-            var chunk = data.substring(AJAX.startOfNextChunk, lastNewLineIndex + 1);
+            chunk = data.substring(AJAX.startOfNextChunk, lastNewLineIndex + 1);
             AJAX.startOfNextChunk = lastNewLineIndex + 1;
             AJAX.parseChunk(chunk);
           }

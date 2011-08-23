@@ -46,7 +46,7 @@ var PSI2Parser = (function(){
     /**
     */
     var parseVertsCols = function(chunk, numBytes, byteIdx, verts, cols){
-      var byte1, byte2, short;
+      var byte1, byte2, twoBytes; // don't use short, that's a reserved keyword.
       
       var numPoints = numBytes/8;
       
@@ -58,11 +58,11 @@ var PSI2Parser = (function(){
         byte1 = getByte(chunk, byteIdx + 6);
         byte2 = getByte(chunk, byteIdx + 7);
        
-        short = (byte2 << 8) + byte1;
+        twoBytes = (byte2 << 8) + byte1;
         
-        cols[point*3]     = (((short>>10) & 0x1F) << 3)/255;
-        cols[point*3 + 1] = (((short>>5) & 0x1F) << 3)/255;
-        cols[point*3 + 2] = ((short & 0x1F) << 3)/255;
+        cols[point*3]     = (((twoBytes>>10) & 0x1F) << 3)/255;
+        cols[point*3 + 1] = (((twoBytes>>5) & 0x1F) << 3)/255;
+        cols[point*3 + 2] = ((twoBytes & 0x1F) << 3)/255;
       }
     };
     
@@ -92,7 +92,7 @@ var PSI2Parser = (function(){
     */
     var getByte = function(str, iOffset){
       return str.charCodeAt(iOffset) & 0xFF;
-    }
+    };
     
     /**
       @private
@@ -167,7 +167,7 @@ var PSI2Parser = (function(){
       diffZ = zMax - zMin;
       
       gotHeader = true;
-    }
+    };
 
     /**
       This will be called when the file is done being downloaded.
@@ -176,13 +176,16 @@ var PSI2Parser = (function(){
     
       // If we downloaded the entire file in one request.
       if(!gotHeader){
+        var verts,
+            cols;
+            
         readHeader(textData);
         // This contains our raw binary data.
         var binData = textData.substring(headerLength, endOfVertsCols);
 
         var attributes = {};
-        var verts = new Float32Array(numTotalPoints * 3);
-        var cols  = new Float32Array(numTotalPoints * 3);
+        verts = new Float32Array(numTotalPoints * 3);
+        cols  = new Float32Array(numTotalPoints * 3);
         
         parseVertsCols(binData, binData.length, 0, verts, cols);
         
@@ -201,7 +204,7 @@ var PSI2Parser = (function(){
         return attributes;
       }
       return this.onprogress(textData);
-    }
+    };
     
     /**
     */
@@ -211,6 +214,12 @@ var PSI2Parser = (function(){
       if(lastChunkSize === textData.length){
         return;
       }
+      
+      var chunk;
+      var verts,
+          cols,
+          norms;
+          
       lastChunkSize = textData.length;
       
       chunkLength = textData.length;
@@ -228,7 +237,7 @@ var PSI2Parser = (function(){
         startOfNextChunk = headerLength;
       }
       
-      // Check if we have the entire file
+      // Check if we have the entire file.
       // Consider changing this since this could be present in the binary data somewhere.
       if(textData.indexOf("End\r\n") > -1){
         last8Index = chunkLength - 5;
@@ -236,27 +245,28 @@ var PSI2Parser = (function(){
       
       // If we aren't done the file.
       else{
+        var last8;
+        
         // If we're parsing the beginning part of the file
         if(parsingVertsCols){
-          var last8 = Math.floor((chunkLength - headerLength) / 8);
+          last8 = Math.floor((chunkLength - headerLength) / 8);
           last8Index = (last8 * 8) + headerLength;
         }
         else{
-          var last8 = Math.floor((chunkLength - endOfVertsCols) / 8);
+          last8 = Math.floor((chunkLength - endOfVertsCols) / 8);
           last8Index = (last8 * 8) + endOfVertsCols;
         }
       }
       
       // If we are still only reading vertices and colors.
       if(chunkLength < endOfVertsCols){
-        var chunk = textData.substring(startOfNextChunk, last8Index);
+        chunk = textData.substring(startOfNextChunk, last8Index);
         
         // We'll start parsing in the next call where we left off.
         startOfNextChunk = last8Index;
         
-        var numVerts = chunk.length/8;
-        var verts = new Float32Array(numVerts * 3);
-        var cols  = new Float32Array(numVerts * 3);
+        verts = new Float32Array(chunk.length/8 * 3);
+        cols  = new Float32Array(chunk.length/8 * 3);
 
         parseVertsCols(chunk, chunk.length, 0, verts, cols);
         attributes["ps_Vertex"] = verts;
@@ -265,7 +275,7 @@ var PSI2Parser = (function(){
       
       // If we're in the middle of parsing vertices, colors and normals
       else if(chunkLength > endOfVertsCols && startOfNextChunk < endOfVertsCols){
-        var chunk = textData.substring(startOfNextChunk, endOfVertsCols);
+        chunk = textData.substring(startOfNextChunk, endOfVertsCols);
 
         if(hasNormals){
           parsingVertsCols = false;
@@ -275,8 +285,8 @@ var PSI2Parser = (function(){
         startOfNextChunk = endOfVertsCols;
 
         var numVerts = chunk.length/8;
-        var verts = new Float32Array(numVerts * 3);
-        var cols  = new Float32Array(numVerts * 3);
+        verts = new Float32Array(numVerts * 3);
+        cols  = new Float32Array(numVerts * 3);
 
         parseVertsCols(chunk, chunk.length, 0, verts, cols);
         attributes["ps_Vertex"] = verts;
@@ -287,15 +297,17 @@ var PSI2Parser = (function(){
       // that we're now reading values AFTER the vertices and colors,
       // we're reading in normal data.
       if(!parsingVertsCols){
-        var chunk = textData.substring(startOfNextChunk, last8Index);
+        chunk = textData.substring(startOfNextChunk, last8Index);
         startOfNextChunk = last8Index;
-        var norms  = new Float32Array(chunk.length);
+        
+        norms  = new Float32Array(chunk.length);
         parseNorms(chunk, norms);
         attributes["ps_Normal"] = norms;
       }
-
+      /*jsl:ignore*/
       return attributes;
-    }
+      /*jsl:end*/
+    };
   }// ctor
   
   return PSI2Parser;

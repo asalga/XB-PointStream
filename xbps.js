@@ -1,3 +1,16 @@
+/*jsl:import parsers/asc.js*/
+/*jsl:import parsers/fake.js*/
+/*jsl:import parsers/hps0.js*/
+/*jsl:import parsers/ply.js*/
+/*jsl:import parsers/psi.js*/
+/*jsl:import parsers/psi2.js*/
+/*jsl:import parsers/pts.js*/
+
+/*jsl:import libs/mjs.js*/
+/*jsl:import libs/c3.js*/
+
+/*jsl:import psapi.js*/
+
 /*
 */
 var ps_include = function(path){
@@ -8,8 +21,7 @@ var ps_include = function(path){
   document.write(' type="text/javascript"');
   document.write(' src="' + fullUrl + '">');
   document.write('</' + 'script' + '>');
-}
-
+};
 
 ps_include('psapi.js');
 ps_include('./libs/mjs.js');

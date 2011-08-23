@@ -20,7 +20,6 @@ var FAKEParser = (function() {
     @private
   */
   function FAKEParser(config) {
-        
     var start = config.start || __empty_func;
     var parse = config.parse || __empty_func;
     var end = config.end || __empty_func;
@@ -29,6 +28,57 @@ var FAKEParser = (function() {
     var numTotalPoints = 0;
     var progress = 0;
 
+    /*
+    */
+    function createPlane(verts, cols, norms){
+
+      var x = -0.5, y = -0.5;
+      for(var p = 0;p < verts.length; p += 3){
+      
+        if(p > 0 && p % 300 === 0){
+          x = -0.5;
+          y += 0.01;
+        }
+        
+        // White for now.
+        cols[p] = cols[p+1] = cols[p+2] = 1;
+        
+        norms[p] = norms[p+1] = 0;
+        norms[p+2] = 1;
+        
+        verts[p    ] = x;
+        verts[p + 1] = y;
+        verts[p + 2] = 0;
+
+        x += 0.01;  
+      }
+    }
+    
+    /*
+    */
+    function createCylinder(verts, cols, norms){
+      var radians = 0;
+      
+      var y = 0.3;
+      for(var p = 0;p < verts.length; p += 3){
+        radians += 0.01745 * 2;
+        
+        // y normal component is always zero.
+        norms[p+1] = 0;
+        
+        norms[p]   = verts[p  ] = Math.sin(radians);
+                     verts[p+1] = y;
+        norms[p+2] = verts[p+2] = Math.cos(radians);
+        
+        if(p > 0 && p % (360 * 3) === 0){
+          y -= 0.05;
+        }
+        
+        // White for now.
+        cols[p] = cols[p+1] = cols[p+2] = 1;
+      }
+    }
+    
     /**
       Returns the version of this parser.
       @name ASCParser#version
@@ -88,9 +138,9 @@ var FAKEParser = (function() {
       start(this);
       
       var attr = {};
-      var verts;
-      var norms;
-      var cols;
+      var verts,
+          cols,
+          norms;
       
       // 100 x 100 point plane
       // from -0.5 to +0.5 on the xy axis
@@ -100,27 +150,8 @@ var FAKEParser = (function() {
         verts = new Float32Array(numTotalPoints * 3);
         cols = new Float32Array(numTotalPoints * 3);
         norms = new Float32Array(numTotalPoints * 3);
-        
-        var x = -0.5, y = -0.5;
-        for(var p = 0;p < verts.length; p += 3){
-        
-          if(p > 0 && p % 300 === 0){
-            x = -0.5;
-            y += 0.01;
-          }
-          
-          // White for now.
-          cols[p] = cols[p+1] = cols[p+2] = 1;
-          
-          norms[p] = norms[p+1] = 0;
-          norms[p+2] = 1;
-          
-          verts[p    ] = x;
-          verts[p + 1] = y;
-          verts[p + 2] = 0;
 
-          x += 0.01;  
-        }
+        createPlane(verts, cols, norms);
       }
       else if(path === "cylinder.fake"){
         
@@ -130,26 +161,7 @@ var FAKEParser = (function() {
         cols = new Float32Array(numTotalPoints * 3);
         norms = new Float32Array(numTotalPoints * 3);
         
-        var radians = 0;
-        
-        var y = 0.3;
-        for(var p = 0;p < verts.length; p += 3){
-          radians += 0.01745 * 2;
-          
-          // y normal component is always zero.
-          norms[p+1] = 0;
-          
-          norms[p]   = verts[p  ] = Math.sin(radians);
-                       verts[p+1] = y;
-          norms[p+2] = verts[p+2] = Math.cos(radians);
-          
-          if(p > 0 && p % (360 * 3) === 0){
-            y -= 0.05;
-          }
-          
-          // White for now.
-          cols[p] = cols[p+1] = cols[p+2] = 1;
-        }
+        createCylinder(verts, cols, norms);
       }
       
       if(verts){attr["ps_Vertex"] = verts;}

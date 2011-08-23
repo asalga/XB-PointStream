@@ -76,26 +76,27 @@ var PSIParser = (function() {
       Get the type of PSI this file is. Can be HPS0, PSI2, etc.
     */
     var getFileType = function(textData){
-
+      var type;
+      
       // If we don't have enough bytes to find out what type of file it is, 
       // we'll have to wait until the next xhr request.
       if(textData.length < 6){
         return;
       }
 
-      var type = textData.substring(0, 4);
+      type = textData.substring(0, 4);
       if(type === "psi2"){
         fileType = PSI2;
         subParser = new PSI2Parser();
       }
       else{
-        var type = textData.substring(0, 6);
+        type = textData.substring(0, 6);
         if(type === "<hps0>"){
           fileType = HPS0;
           subParser = new HPS0Parser();
         }
       }
-    }
+    };
 
 
     /**
@@ -137,7 +138,7 @@ var PSIParser = (function() {
       
         // if temp buffer offset is zero, Find out how many buffers we can fill up with this set of vertices
         var counter = 0;
-        var numBuffersToFill = parseInt(arr.length/BUFFER_SIZE);
+        var numBuffersToFill = parseInt(arr.length/BUFFER_SIZE, 10);
       
         // If there is something already in the buffer, fill up the rest.
         if(tempBufferOffset > 0){
@@ -150,10 +151,11 @@ var PSIParser = (function() {
                     parse(AJAX.parser, {"ps_Vertex": tempBuffer});break;
             case 2: parse(AJAX.parser, {"ps_Color":  tempBuffer});break;
             case 3: parse(AJAX.parser, {"ps_Normal": tempBuffer});break;
+            default: break;
           }
           
           // now find out how many other buffers we can fill
-          numBuffersToFill = parseInt((arr.length - amtToFill)/BUFFER_SIZE);
+          numBuffersToFill = parseInt((arr.length - amtToFill)/BUFFER_SIZE, 10);
           counter = amtToFill;
         }
         
@@ -169,6 +171,7 @@ var PSIParser = (function() {
                     parse(AJAX.parser, {"ps_Vertex": buffer});break;
             case 2: parse(AJAX.parser, {"ps_Color":  buffer});break;
             case 3: parse(AJAX.parser, {"ps_Normal": buffer});break;
+            default:break;
           }
           
           counter += BUFFER_SIZE;
@@ -185,7 +188,7 @@ var PSIParser = (function() {
         buffer: tempBuffer,
         offset: tempBufferOffset
       };
-    }
+    };
     
     /**
       Returns the version of this parser
@@ -277,6 +280,7 @@ var PSIParser = (function() {
       */
       AJAX.onload = function(evt){
         var textData = AJAX.responseText;
+        var o;
         
         // If we downloaded the file in one request.
         if(!fileType){
@@ -302,19 +306,19 @@ var PSIParser = (function() {
 
         if(attr){
           if(attr.ps_Vertex){
-            var o = partitionArray(attr.ps_Vertex, tempBufferV, tempBufferOffsetV, 1);
+            o = partitionArray(attr.ps_Vertex, tempBufferV, tempBufferOffsetV, 1);
             tempBufferV = o.buffer;
             tempBufferOffsetV = o.offset;
           }
           
           if(attr.ps_Color){
-            var o = partitionArray(attr.ps_Color, tempBufferC, tempBufferOffsetC, 2);
+            o = partitionArray(attr.ps_Color, tempBufferC, tempBufferOffsetC, 2);
             tempBufferC = o.buffer;
             tempBufferOffsetC = o.offset;
           }
           
           if(attr.ps_Normal){
-            var o = partitionArray(attr.ps_Normal, tempBufferN, tempBufferOffsetN, 3);
+            o = partitionArray(attr.ps_Normal, tempBufferN, tempBufferOffsetN, 3);
             tempBufferN = o.buffer;
             tempBufferOffsetN = o.offset;
           }
@@ -343,7 +347,7 @@ var PSIParser = (function() {
 
         progress = 1;
         end(AJAX.parser);
-      }
+      };
       
       /**
         @private
@@ -353,7 +357,8 @@ var PSIParser = (function() {
       */
       AJAX.onprogress = function(evt){
         var textData = AJAX.responseText;
-              
+        var o;
+        
         // If there is nothing to parse, wait until there is.
         if(!textData || textData.length < 6){
           return;
@@ -373,19 +378,19 @@ var PSIParser = (function() {
         var attr = subParser.onprogress(textData);
         if(attr){
           if(attr.ps_Vertex){
-            var o = partitionArray(attr.ps_Vertex, tempBufferV, tempBufferOffsetV, 1);
+            o = partitionArray(attr.ps_Vertex, tempBufferV, tempBufferOffsetV, 1);
             tempBufferV = o.buffer;
             tempBufferOffsetV = o.offset;
           }
           
           if(attr.ps_Color){
-            var o = partitionArray(attr.ps_Color, tempBufferC, tempBufferOffsetC, 2);
+            o = partitionArray(attr.ps_Color, tempBufferC, tempBufferOffsetC, 2);
             tempBufferC = o.buffer;
             tempBufferOffsetC = o.offset;
           }
           
           if(attr.ps_Normal){
-            var o = partitionArray(attr.ps_Normal, tempBufferN, tempBufferOffsetN, 3);
+            o = partitionArray(attr.ps_Normal, tempBufferN, tempBufferOffsetN, 3);
             tempBufferN = o.buffer;
             tempBufferOffsetN = o.offset;
           }

@@ -56,13 +56,15 @@ var PointStream = (function() {
     registeredParsers["pts"] = PTSParser;
     registeredParsers["ply"] = PLYParser;
     
-    const VERSION  = "0.7";
+    var VERSION  = "0.7";
     
+    // Following should be const, but some browsers along
+    // with jslint have issues with this keyword. 
     // file status of point clouds
-    const FILE_NOT_FOUND = -1;
-    const STARTED = 1;
-    const STREAMING = 2;
-    const COMPLETE = 3;
+    var FILE_NOT_FOUND = -1;
+    var STARTED = 1;
+    var STREAMING = 2;
+    var COMPLETE = 3;
       
     // for calculating fps
     var frames = 0;
@@ -79,16 +81,16 @@ var PointStream = (function() {
       
     // browser detection to handle differences such as mouse scrolling
     var browser     = -1;
-    const MINEFIELD = 0;
-    const CHROME    = 1;
-    const CHROMIUM  = 2;
-    const WEBKIT    = 3;
+    var MINEFIELD = 0;
+    var CHROME    = 1;
+    var CHROMIUM  = 2;
+    var WEBKIT    = 3;
 
     // not used yet
-    const FIREFOX   = 4;
-    const OPERA     = 5;
-    const SAFARI    = 6;
-    const IE        = 7;
+    var FIREFOX   = 4;
+    var OPERA     = 5;
+    var SAFARI    = 6;
+    var IE        = 7;
     
     var canvas = null;
     var ctx = null;
@@ -105,22 +107,22 @@ var PointStream = (function() {
     var programCaches = [];
     
     // Both key and keyCode will be equal to these values
-    const _BACKSPACE = 8;
-    const _TAB       = 9;
-    const _ENTER     = 10;
-    const _RETURN    = 13;
-    const _ESC       = 27;
-    const _DELETE    = 127;
-    const _CODED     = 0xffff;
+    var _BACKSPACE = 8;
+    var _TAB       = 9;
+    var _ENTER     = 10;
+    var _RETURN    = 13;
+    var _ESC       = 27;
+    var _DELETE    = 127;
+    var _CODED     = 0xffff;
 
     // p.key will be CODED and p.keyCode will be this value
-    const _SHIFT     = 16;
-    const _CONTROL   = 17;
-    const _ALT       = 18;
-    const _UP        = 38;
-    const _RIGHT     = 39;
-    const _DOWN      = 40;
-    const _LEFT      = 37;
+    var _SHIFT     = 16;
+    var _CONTROL   = 17;
+    var _ALT       = 18;
+    var _UP        = 38;
+    var _RIGHT     = 39;
+    var _DOWN      = 40;
+    var _LEFT      = 37;
 
     var codedKeys = [_SHIFT, _CONTROL, _ALT, _UP, _RIGHT, _DOWN, _LEFT];
     
@@ -149,15 +151,17 @@ var PointStream = (function() {
     "}";
 
     var fragmentShaderSource =
-    '#ifdef GL_ES                 \n\
-    precision highp float;        \n\
-    #endif                        \n\
-                                  \n\
-    varying vec4 frontColor;      \n\
-    void main(void){              \n\
-      gl_FragColor = frontColor;  \n\
-    }';
+    "#ifdef GL_ES                 \n" +
+    "  precision highp float;     \n" +
+    "#endif                       \n" +
+                                  
+    "varying vec4 frontColor;      " + 
+    "void main(void){              " + 
+    "  gl_FragColor = frontColor;  " + 
+    "}";
 
+    console = window.console || tinylogLite;
+    
     /**
       @private
       
@@ -264,7 +268,7 @@ var PointStream = (function() {
           length: arr.length,
           VBO: VBO,
           array: arr
-        }
+        };
         
         return obj;
       }
@@ -355,7 +359,7 @@ var PointStream = (function() {
       }
 
       return programObject;
-    };
+    }
 
     /**
       @private
@@ -383,26 +387,28 @@ var PointStream = (function() {
       else if (code >= 48 && code <= 57) { // 0-9
         if (shift) {
           switch (code) {
-          case 49:
-            return 33; // !
-          case 50:
-            return 64; // @
-          case 51:
-            return 35; // #
-          case 52:
-            return 36; // $
-          case 53:
-            return 37; // %
-          case 54:
-            return 94; // ^
-          case 55:
-            return 38; // &
-          case 56:
-            return 42; // *
-          case 57:
-            return 40; // (
-          case 48:
-            return 41; // )
+            case 49:
+              return 33; // !
+            case 50:
+              return 64; // @
+            case 51:
+              return 35; // #
+            case 52:
+              return 36; // $
+            case 53:
+              return 37; // %
+            case 54:
+              return 94; // ^
+            case 55:
+              return 38; // &
+            case 56:
+              return 42; // *
+            case 57:
+              return 40; // (
+            case 48:
+              return 41; // )
+            default:
+              return 0;
           }
         }
       }
@@ -410,35 +416,39 @@ var PointStream = (function() {
       else {
         if (shift) {
           switch (code) {
-          case 107:
-            return 43; // +
-          case 219:
-            return 123; // {
-          case 221:
-            return 125; // }
-          case 222:
-            return 34; // "
+            case 107:
+              return 43; // +
+            case 219:
+              return 123; // {
+            case 221:
+              return 125; // }
+            case 222:
+              return 34; // "
+            default:
+              return 0;
           }
         } else {
           switch (code) {
-          case 188:
-            return 44; // ,
-          case 109:
-            return 45; // -
-          case 190:
-            return 46; // .
-          case 191:
-            return 47; // /
-          case 192:
-            return 96; // ~
-          case 219:
-            return 91; // [
-          case 220:
-            return 92; // \
-          case 221:
-            return 93; // ]
-          case 222:
-            return 39; // '
+            case 188:
+              return 44; // ,
+            case 109:
+              return 45; // -
+            case 190:
+              return 46; // .
+            case 191:
+              return 47; // /
+            case 192:
+              return 96; // ~
+            case 219:
+              return 91; // [
+            case 220:
+              return 92; // \
+            case 221:
+              return 93; // ]
+            case 222:
+              return 39; // '
+            default:
+              return 0;
           }
         }
       }
@@ -548,7 +558,7 @@ var PointStream = (function() {
           setStyles = function() {
             var i = arguments.length,
               elemStyle, styles, style;
-
+            /*jsl:ignore*/
             while (i--) {
               styles = arguments[i--];
               elemStyle = arguments[i][$style];
@@ -558,6 +568,7 @@ var PointStream = (function() {
                   elemStyle[style] = styles[style];
                 }
               }
+            /*jsl:end*/
             }
           },
           /**
@@ -587,10 +598,11 @@ var PointStream = (function() {
           clearChildren = function(node) {
             var children = node.childNodes,
               child = children.length;
-
+            /*jsl:ignore*/
             while (child--) {
               node.removeChild(children.item(0));
             }
+            /*jsl:end*/
           },
           /**
             @private
@@ -1275,7 +1287,7 @@ var PointStream = (function() {
       }
 
       // parseInt hack used for Chrome/Chromium
-      ctx.viewport(0, 0, parseInt(pWidth), parseInt(pHeight));
+      ctx.viewport(0, 0, parseInt(pWidth, 10), parseInt(pHeight, 10));
       
       this.perspective();
       normalMatrix = M4x4.I;
@@ -1376,7 +1388,7 @@ var PointStream = (function() {
       if(currProgram){
         uniformMatrix(currProgram, "ps_ProjectionMatrix", false, projectionMatrix);
       }
-    }
+    };
     
     /**
       Create a perspective projection matrix.
@@ -1418,7 +1430,7 @@ var PointStream = (function() {
       if(currProgram){
         uniformMatrix(currProgram, "ps_ProjectionMatrix", false, projectionMatrix);
       }
-    }
+    };
     
     
     /*************************************/
@@ -1666,8 +1678,6 @@ var PointStream = (function() {
       registeredParsers[extension] = usersParser;
     };
 
-    console: window.console || tinylogLite;
-
     /**
       Prints a line of text to the console.
       
@@ -1724,10 +1734,10 @@ var PointStream = (function() {
       var cvsWidth = canvas.getAttribute("width");
       var cvsHeight = canvas.getAttribute("height");
       
-      if(cvsWidth == null){
+      if(cvsWidth === null){
         cvsWidth = 300;
       }
-      if(cvsHeight == null){
+      if(cvsHeight === null){
         cvsHeight = 150;
       }
 
@@ -1890,10 +1900,7 @@ var PointStream = (function() {
       }
       
       throw "There is no parser for the file type: " + extension;
-      
-      return null;
-    }
-  }// constructor
-
+    };
+  }
   return PointStream;
 }());

@@ -156,7 +156,7 @@ var PTSParser = (function() {
         progress = 1;
         
         end(AJAX.parser);
-      }
+      };
       
       /**
         @private
@@ -168,7 +168,7 @@ var PTSParser = (function() {
         if(chunk !== ""){
           
           numPoints = chunk.match(/^[0-9]+\n/);
-          numTotalPoints += parseInt(numPoints);
+          numTotalPoints += parseInt(numPoints, 10);
 
           // get rid of the point count to simplify the rest of the parsing
           chunk = chunk.replace(/^[0-9]+\n/, "");
@@ -196,9 +196,9 @@ var PTSParser = (function() {
             verts[j+1] = parseFloat(chunk[i+1]);
             verts[j+2] = parseFloat(chunk[i+2]);
 
-            cols[j]   = parseInt(chunk[i+4])/255;
-            cols[j+1] = parseInt(chunk[i+5])/255;
-            cols[j+2] = parseInt(chunk[i+6])/255;
+            cols[j]   = parseInt(chunk[i+4], 10)/255;
+            cols[j+1] = parseInt(chunk[i+5], 10)/255;
+            cols[j+2] = parseInt(chunk[i+6], 10)/255;
           }
                     
           // XB PointStream expects an object with named/value pairs
@@ -229,8 +229,9 @@ var PTSParser = (function() {
 
         // if we have something to actually parse
         if(AJAX.responseText){
+          var chunk;
           var data = AJAX.responseText;
-
+          
           // we likely stopped getting data somewhere in the middle of 
           // a line in the PTS file
           
@@ -247,7 +248,7 @@ var PTSParser = (function() {
           // file, grab everyting until the end. If there is only a bunch
           // of whitespace, make a note of that and don't bother parsing.
           if(AJAX.readyState === XHR_DONE){
-            var chunk = data.substring(AJAX.startOfNextChunk, data.length);
+            chunk = data.substring(AJAX.startOfNextChunk, data.length);
             // If the last chunk doesn't have any digits (just spaces)
             // don't parse it.
             if(chunk.match(/[0-9]/)){
@@ -257,7 +258,7 @@ var PTSParser = (function() {
           // if we still have more data to go
           else{
             // Start of the next chunk starts after the newline.
-            var chunk = data.substring(AJAX.startOfNextChunk, lastNewLineIndex + 1);
+            chunk = data.substring(AJAX.startOfNextChunk, lastNewLineIndex + 1);
             AJAX.startOfNextChunk = lastNewLineIndex + 1;
             AJAX.parseChunk(chunk);
           }

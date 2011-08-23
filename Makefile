@@ -2,6 +2,8 @@
 #
 # You must specify a version when running make:
 # make VERSION=0.1
+#
+#
 
 # create a clean release directory and copy in the release documents
 release: create-release-dir create-release-files
@@ -10,6 +12,10 @@ VERSION ?= $(error Specify a version for your release (e.g., make VERSION=0.1))
 
 # final files to release
 create-release-files: create-release-docs create-user-docs minify create-example zip-min
+
+check-lint:
+	echo "\nLinting all library code:"
+	./tools/jsl -process xbps.js
 
 # Minification strips out comments and most whitespace
 minify: create-release-dir

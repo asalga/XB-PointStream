@@ -11,7 +11,8 @@ var FreeCam = (function(){
                   0, 1, 0, 0,  // up
                   0, 0, 1, 0,  // direction
                   0, 0, 0, 1]; // position
-
+    
+    var rotMat;
     /**
       Get the camera position.
       
@@ -66,7 +67,7 @@ var FreeCam = (function(){
     */
     this.getMatrix = function(){
       return  M4x4.clone(trans);
-    }
+    };
     
     /**
       Set the camera's transformation matrix to an identity matrix.
@@ -88,14 +89,14 @@ var FreeCam = (function(){
     /**
     */
     this.yaw = function(angle){
-      var rotMat = M4x4.makeRotate(angle, this.up);
+      rotMat = M4x4.makeRotate(angle, this.up);
       trans = M4x4.mul(trans, rotMat);
     };
 
     /**
     */
     this.roll = function(angle){
-      var rotMat = M4x4.makeRotate(angle, this.direction);
+      rotMat = M4x4.makeRotate(angle, this.direction);
       trans = M4x4.mul(trans, rotMat);
     };
 
@@ -105,13 +106,13 @@ var FreeCam = (function(){
       @param {Number} angle in radians.
     */
     this.pitch = function(angle){
-      var rotMat = M4x4.makeRotate(angle, this.left);
+      rotMat = M4x4.makeRotate(angle, this.left);
       trans = M4x4.mul(trans, rotMat);
     };
     
     this.rotateOnAxis = function(angle, axis){
-      var rotMat = M4x4.makeRotate(angle, axis);
-      trans = M4x4.mul(trans,rotMat);
+      rotMat = M4x4.makeRotate(angle, axis);
+      trans = M4x4.mul(trans, rotMat);
     };
     
     /**
@@ -153,6 +154,8 @@ var OrbitCam = (function(){
     var up =   V3.$( 0, 1, 0);
     var dir =  V3.$( 0, 0,-1);
     var pos =  V3.$( 0, 0, config.closest);
+    
+    var rotMat;
     
     // only set the distance if it is valid
     if(config.distance <= config.farthest && config.distance >= config.closest){
@@ -376,14 +379,14 @@ var OrbitCam = (function(){
       // If the position of the camera is sitting at the orbit point,
       // we don't actually move the camera.
       if(V3.equals(pos, orbitPoint)){
-        var rotMat = M4x4.makeRotate(angle, left);
+        rotMat = M4x4.makeRotate(angle, left);
         dir = V3.normalize(V3.mul4x4(rotMat, dir));            
         up = V3.normalize(V3.cross(dir, left));
       }
       else{
         // Get the position relative to orbit point.
         pos = V3.sub(pos, orbitPoint);
-        var rotMat = M4x4.makeRotate(angle, left);
+        rotMat = M4x4.makeRotate(angle, left);
         
         // The position of the camera will actually change when pitching.
         var newpos = V3.mul4x4(rotMat, pos);
@@ -403,7 +406,7 @@ var OrbitCam = (function(){
     this.yaw = function(angle){
       if(V3.equals(pos, orbitPoint)){
       
-        var rotMat = M4x4.makeRotate(angle, [0,1,0]);
+        rotMat = M4x4.makeRotate(angle, [0,1,0]);
         
         left = V3.normalize(V3.mul4x4(rotMat, left));
         up = V3.normalize(V3.mul4x4(rotMat, up));

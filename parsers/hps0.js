@@ -132,7 +132,7 @@ var HPS0Parser = (function(){
     */
     var getByte = function(str, iOffset){
       return str.charCodeAt(iOffset) & 0xFF;
-    }
+    };
     
     /**
       @private
@@ -160,7 +160,7 @@ var HPS0Parser = (function(){
     /**
     */
     var parseVertsCols = function(chunk, byteIdx, verts, cols){
-      var byte1, byte2, short;
+      var byte1, byte2, twoBytes; // don't use short, that's reserved.
       var numBytes = chunk.length;
       
       for(var point = 0; point < numBytes/byteIncrement; byteIdx += byteIncrement, point++){
@@ -182,11 +182,11 @@ var HPS0Parser = (function(){
           byte1 = getByte(chunk, byteIdx + 6);
           byte2 = getByte(chunk, byteIdx + 7);
          
-          short = (byte2 << 8) + byte1;
+          twoBytes = (byte2 << 8) + byte1;
           
-          cols[point*3]     = (((short>>10) & 0x1F) << 3)/255;
-          cols[point*3 + 1] = (((short>>5) & 0x1F) << 3)/255;
-          cols[point*3 + 2] = ((short & 0x1F) << 3)/255;
+          cols[point*3]     = (((twoBytes >> 10) & 0x1F) << 3)/255;
+          cols[point*3 + 1] = (((twoBytes >> 5) & 0x1F) << 3)/255;
+          cols[point*3 + 2] = ((twoBytes & 0x1F) << 3)/255;
         }
       }
     };
@@ -258,8 +258,8 @@ var HPS0Parser = (function(){
       }
       
       // If we still haven't found it, we'll try again in the next call.
-      var endTag = textData.indexOf(">", maxTagIdx);
-      if(endTag === -1){
+      var maxEndTag = textData.indexOf(">", maxTagIdx);
+      if(maxEndTag === -1){
         return;
       }
       
@@ -285,8 +285,8 @@ var HPS0Parser = (function(){
       // are used for decompression.
       var minIdx = textData.indexOf("<Min=");
       
-      var endTagIdx = textData.indexOf(">", minIdx);
-      var temp = textData.substring((minIdx + "<Min=".length), endTagIdx);
+      var minEndTagIdx = textData.indexOf(">", minIdx);
+      var temp = textData.substring((minIdx + "<Min=".length), minEndTagIdx);
       var posMinArr = temp.split(" ");
       
       // Multiply by 1 to convert to a Number type.
@@ -299,7 +299,7 @@ var HPS0Parser = (function(){
       var maxIdx = textData.indexOf("<Max=");
 
       endTagIdx = textData.indexOf(">", maxIdx);
-      var temp = textData.substring((maxIdx + "<Max=".length), endTagIdx);
+      temp = textData.substring((maxIdx + "<Max=".length), endTagIdx);
       var posMaxArr = temp.split(" ");
       
       // Multiply by 1 to convert to a Number type.
@@ -332,7 +332,7 @@ var HPS0Parser = (function(){
       // If we got this far, we can start parsing values and we don't
       // have to try running this function again.
       gotHeader = true;
-    }
+    };
 
     /**
       This is called once the entire file is done being downloaded.
@@ -343,12 +343,12 @@ var HPS0Parser = (function(){
       }
       // If we didn't read in the entire file in one request.
       return this.onprogress(textData);
-    }
+    };
     
     /**
     */
     this.onprogress = function(textData){
-    
+      
       // This occurs at least on Firefox when working remotely.  
       if(lastChunkSize === textData.length){
         return;
@@ -374,6 +374,8 @@ var HPS0Parser = (function(){
         startOfNextChunk = startOfBin;
       }
       var verts, cols, norms;
+      var numVerts;
+      var chunk;
       
       // Check if we have the entire file
       if(textData.indexOf("</Level=") > -1){
@@ -393,13 +395,13 @@ var HPS0Parser = (function(){
 
       // If we are still only reading vertices and colors
       if(chunkLength < endOfVertsCols){
-        var chunk = textData.substring(startOfNextChunk, last12Index);
+        chunk = textData.substring(startOfNextChunk, last12Index);
 
         startOfNextChunk = last12Index;
            
-        var numVerts = chunk.length/byteIncrement;
-        var verts = new Float32Array(numVerts * 3);
-        var cols  = new Float32Array(numVerts * 3);
+        numVerts = chunk.length/byteIncrement;
+        verts = new Float32Array(numVerts * 3);
+        cols  = new Float32Array(numVerts * 3);
 
         parseVertsCols(chunk, 0, verts, cols);
         attributes["ps_Vertex"] = verts;
@@ -416,7 +418,7 @@ var HPS0Parser = (function(){
       
       // OR we're still parsing vertices and cols from last call.
       else if(startOfNextChunk < endOfVertsCols && last12Index > endOfVertsCols || loadedInOneRequest || parsingVertsCols ){
-        var chunk	= textData.substring(startOfNextChunk, totalPointsInBytes);  
+        chunk = textData.substring(startOfNextChunk, totalPointsInBytes);  
          
         if(hasNormals){
           parsingVertsCols = false;
@@ -424,9 +426,9 @@ var HPS0Parser = (function(){
 
         startOfNextChunk = totalPointsInBytes;
          
-        var numVerts = chunk.length/byteIncrement;
-        var verts = new Float32Array(numVerts * 3);
-        var cols  = new Float32Array(numVerts * 3);
+        numVerts = chunk.length/byteIncrement;
+        verts = new Float32Array(numVerts * 3);
+        cols  = new Float32Array(numVerts * 3);
          
         parseVertsCols(chunk, 0, verts, cols);
         attributes["ps_Vertex"] = verts;
@@ -434,16 +436,18 @@ var HPS0Parser = (function(){
       }
       // Parse the normals.
       if(!parsingVertsCols){
-        var chunk	= textData.substring(startOfNextChunk, last12Index);
+        chunk = textData.substring(startOfNextChunk, last12Index);
         
-        var norms = new Float32Array(chunk.length);
+        norms = new Float32Array(chunk.length);
 
         startOfNextChunk = last12Index;
         parseNorms(chunk, norms);
         attributes["ps_Normal"] = norms;
       }
+      /*jsl:ignore*/
       return attributes;
-    }
+      /*jsl:end*/
+    };
   }// ctor
   
   return HPS0Parser;
