@@ -52,11 +52,6 @@ function handleOrientation(eventData){
 }
 
 function start(){
-
-  if(!window.DeviceMotionEvent){
-    document.getElementById('msg').innerHTML = "Your browser does not support the motion event.";
-  }
-
   ps = new PointStream();
   ps.setup(document.getElementById('canvas'));
   ps.background([0.3, 0.5, 0.6, 0.6]);
