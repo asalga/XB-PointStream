@@ -10,8 +10,11 @@ uniform mat4 ps_ModelViewMatrix;
 uniform mat4 ps_ProjectionMatrix;
 uniform mat4 ps_NormalMatrix;
 
-uniform float minClip;
-uniform float maxClip;
+uniform float minVertClip;
+uniform float maxVertClip;
+
+uniform float minHorizClip;
+uniform float maxHorizClip;
 
 void main(void){
   frontColor =  ps_Color;
@@ -25,7 +28,7 @@ void main(void){
 
   gl_PointSize = ps_PointSize * sqrt(1.0/attn);
 
-  if(ps_Vertex.z < minClip || ps_Vertex.z > maxClip){
+  if(ps_Vertex.z > minVertClip || ps_Vertex.z < maxVertClip || ps_Vertex.y < minHorizClip || ps_Vertex.y > maxHorizClip ){
     gl_Position = vec4(0.0, 0.0, 0.0, 0.0);
     frontColor = vec4(0.0, 0.0, 0.0, 1.0);
     gl_PointSize = 0.0;

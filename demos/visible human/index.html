@@ -1,6 +1,6 @@
 <html>
   <head>
-  <title>Visible Human demo</title>
+  <title>Visible Human Demo</title>
 
 		<link type="text/css" href="css/ui-lightness/jquery-ui-1.8.14.custom.css" rel="stylesheet" />	
 		<script type="text/javascript" src="jquery-1.5.1.min.js"></script>
@@ -10,22 +10,34 @@
     <script src="../../libs/c3.js"></script>
     <script src="demo.js"></script>
 
+
+
 		<script type="text/javascript">
 			$(function(){
-				$('#slider').slider({
+        $('#hslider').slider({
 					range: true,
-            min: 0,
-            max: 2800,
-            slide:blah,
+          min: 20,
+          max: 500,
+          slide: horizSlide,
+					values: [20, 500]
+				});
+        
+        $('#vslider').slider({
+					range: true,
+          min: 0,
+          max: 2800,
+          orientation: "vertical",
+          slide: slidey,
 					values: [0, 2800]
 				});
 			});
 		</script>
 	
-  <body  onload="start();">
-    <div id="slider" style="width: 600;"></div>
-    <br />
-    <canvas id="cvs" width="600" height="1000" style="border:1px solid black;"></canvas>
+  <body onload="start();">
+  <span id="debug"></span>
+    <div id="hslider" style="margin:0px 0px 8px 25px; width: 600px;"></div>
+    <canvas id="cvs" width="600" height="600" style="border:1px solid black;"></canvas>
+    <span id="vslider" style="height:600px; float:left; margin:0px 10px 0px 0px; display:inline;"></span>
   </body>
 </html>
 
