@@ -1211,7 +1211,25 @@ var PointStream = (function() {
     this.clear = function(){
       ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
     };
-        
+    
+    this.delete = function(pointCloud){
+      var semantics = Object.keys(pointCloud.attributes);
+      var firstSemantic = semantics[0];
+
+      var arrayOfBufferObjsV = pointCloud.attributes[firstSemantic];
+      if(arrayOfBufferObjsV){
+        // Iterate over all the vertex buffer objects.
+        for(var currVBO = 0; currVBO < arrayOfBufferObjsV.length; currVBO++){
+          // iterate over all the semantic names "ps_Vertex", "ps_Normal", etc.
+          for(name in semantics){
+            if(pointCloud.attributes[semantics[name]][currVBO]){
+              ctx.deleteBuffer(pointCloud.attributes[semantics[name]][currVBO].VBO);
+            }
+          }
+        }
+      }
+    };
+    
     /**
       Renders a point cloud.
       @param {} pointCloud
