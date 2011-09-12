@@ -173,8 +173,9 @@ var PointStream = (function() {
     */
     function uniformi(programObj, varName, varValue) {
       var varLocation = ctx.getUniformLocation(programObj, varName);
+
       // the variable won't be found if it was optimized out.
-      if (varLocation !== -1) {
+      if (varLocation !== null) {
         if (varValue.length === 4) {
           ctx.uniform4iv(varLocation, varValue);
         } else if (varValue.length === 3) {
@@ -184,6 +185,8 @@ var PointStream = (function() {
         } else {
           ctx.uniform1i(varLocation, varValue);
         }
+      }else{
+        console.log("uniform var '" + varName + "' was not found.");  
       }
     }
 
@@ -199,7 +202,7 @@ var PointStream = (function() {
     function uniformf(programObj, varName, varValue) {
       var varLocation = ctx.getUniformLocation(programObj, varName);
       // the variable won't be found if it was optimized out.
-      if (varLocation !== -1) {
+      if (varLocation !== null) {
         if (varValue.length === 4) {
           ctx.uniform4fv(varLocation, varValue);
         } else if (varValue.length === 3) {
@@ -209,6 +212,36 @@ var PointStream = (function() {
         } else {
           ctx.uniform1f(varLocation, varValue);
         }
+      }
+      else{
+        console.log("Uniform var '" + varName + "' was not found."); 
+      }
+    }
+
+    /**
+      @private
+      
+      Sets a uniform matrix.
+      
+      @param {WebGLProgram} programObj
+      @param {String} varName
+      @param {Boolean} transpose must be false
+      @param {Array} matrix
+    */
+    function uniformMatrix(programObj, varName, transpose, matrix) {
+      var varLocation = ctx.getUniformLocation(programObj, varName);
+      // the variable won't be found if it was optimized out.
+      if (varLocation !== null) {
+        if (matrix.length === 16) {
+          ctx.uniformMatrix4fv(varLocation, transpose, matrix);
+        } else if (matrix.length === 9) {
+          ctx.uniformMatrix3fv(varLocation, transpose, matrix);
+        } else {
+          ctx.uniformMatrix2fv(varLocation, transpose, matrix);
+        }
+      }
+      else{
+        console.log("Uniform matrix '" + varName + "' was not found.");
       }
     }
 
@@ -226,6 +259,9 @@ var PointStream = (function() {
         ctx.bindBuffer(ctx.ARRAY_BUFFER, VBO);
         ctx.vertexAttribPointer(varLocation, size, ctx.FLOAT, false, 0, 0);
         ctx.enableVertexAttribArray(varLocation);
+      }
+      else{
+        console.log("Vertex attrib '" + varName + "' was not found.");
       }
     }
     
@@ -304,29 +340,7 @@ var PointStream = (function() {
       }
     }
 
-    /**
-      @private
-      
-      Sets a uniform matrix
-      
-      @param {WebGLProgram} programObj
-      @param {String} varName
-      @param {Boolean} transpose must be false
-      @param {Array} matrix
-    */
-    function uniformMatrix(programObj, varName, transpose, matrix) {
-      var varLocation = ctx.getUniformLocation(programObj, varName);
-      // the variable won't be found if it was optimized out.
-      if (varLocation !== -1) {
-        if (matrix.length === 16) {
-          ctx.uniformMatrix4fv(varLocation, transpose, matrix);
-        } else if (matrix.length === 9) {
-          ctx.uniformMatrix3fv(varLocation, transpose, matrix);
-        } else {
-          ctx.uniformMatrix2fv(varLocation, transpose, matrix);
-        }
-      }
-    }
+
 
     /**
       @private
@@ -1223,7 +1237,14 @@ var PointStream = (function() {
         // we don't need to figure out the normal transformation.
         var topMatrix = this.peekMatrix();
         normalMatrix = M4x4.inverseOrthonormal(topMatrix);
-        uniformMatrix(currProgram, "ps_NormalMatrix", false, M4x4.transpose(normalMatrix));
+        
+        // If we try to set a uniform matrix which doesn't exist in the shader
+        // the library will report an error. Since we don't know which shader
+        // is currently being used, we need to check if the uniform exists first
+        // so an error isn't generated, such as when using the built-in default shader. 
+        if(ctx.getUniformLocation(currProgram, "ps_NormalMatrix") !== null){
+          uniformMatrix(currProgram, "ps_NormalMatrix", false, M4x4.transpose(normalMatrix));
+        }
         uniformMatrix(currProgram, "ps_ModelViewMatrix", false, topMatrix);
         
         // Get the list of semantic names.
@@ -1252,7 +1273,10 @@ var PointStream = (function() {
                 the corresponding attributes which exist.
               */
               if(pointCloud.attributes[semantics[name]][currVBO]){
-                vertexAttribPointer(currProgram, semantics[name], 3, pointCloud.attributes[semantics[name]][currVBO].VBO);
+
+                if(ctx.getAttribLocation(currProgram, semantics[name]) !== -1){
+                  vertexAttribPointer(currProgram, semantics[name], 3, pointCloud.attributes[semantics[name]][currVBO].VBO);
+                }
               }
             }
             ctx.drawArrays(ctx.POINTS, 0, arrayOfBufferObjsV[currVBO].length/3);

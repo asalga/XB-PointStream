@@ -22,7 +22,7 @@ function pointLight(light){
 
 function render() {
   ps.translate(0, 0, zoomed);
-  ps.rotateY(yRot += 0.001);
+  ps.rotateY(yRot += 0.01);
   
   var c = pointCloud.getCenter();
   ps.translate(-c[0], -c[1], -c[2]);
