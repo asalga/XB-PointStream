@@ -10,6 +10,7 @@ uniform vec3 ps_Attenuation;
 uniform mat4 ps_ModelViewMatrix;
 uniform mat4 ps_ProjectionMatrix;
 uniform mat4 ps_NormalMatrix;
+uniform bool ps_UsingColor;
 
 // careful changing the order of these fields. Some cards have issues with 
 // memory alignment
@@ -164,9 +165,13 @@ void main(void) {
   vec3 finalDiffuse = vec3(0.0);
   vec3 finalSpecular = vec3(0.0);
 
+  // If we don't have normals, we can't do lighting, so just
+  // use the color of the vertex.
   if(ps_Normal == vec3(0.0, 0.0, 0.0)){
     frontColor = vec4(ps_Color, 1.0); 
   }
+  
+  // If we do have normals, we can do lighting.
   else{
     for(int i = 0; i < MAX_LIGHTS; i++){
       Light light = getLight(i);
@@ -183,7 +188,13 @@ void main(void) {
         }
       }
     }
-    if(matOn){
+    
+    // If the point cloud does not have any colors, just normals don't 
+    // use ps_Color which would make everything black. 
+    if(ps_UsingColor == false){
+      frontColor = vec4(finalAmbient + finalDiffuse + finalSpecular, 1.0);
+    }
+    else if(matOn){
       frontColor = vec4(  (ps_Color * matAmbient *  finalAmbient) + 
                           (ps_Color * matDiffuse *  finalDiffuse)  + 
                           (ps_Color * matSpecular *  finalSpecular), 1.0); 
@@ -192,6 +203,7 @@ void main(void) {
       frontColor = vec4((ps_Color * finalAmbient) + 
                         (ps_Color * finalDiffuse) + 
                         (ps_Color * finalSpecular), 1.0);
+
     }
   }
 

@@ -1,4 +1,4 @@
-var ps, acorn;
+var ps, pointCloud;
 
 // Create an orbit camera halfway between the closest and farthest point
 var cam = new OrbitCam({closest:10, farthest:20, distance: 20});
@@ -62,16 +62,16 @@ function render(){
     cam.pitch(deltaY * 0.015);
 	}
 
-  var c = acorn.getCenter();  
+  var c = pointCloud.getCenter();  
   ps.multMatrix(M4x4.makeLookAt(cam.pos, V3.add(cam.pos, cam.dir), cam.up));
   ps.translate(-c[0], -c[1], -c[2]);
   
   ps.clear();
-  ps.render(acorn);
+  ps.render(pointCloud);
       
   var status = document.getElementById("fileStatus");
   status.innerHTML = "";
-  switch(acorn.status){
+  switch(pointCloud.status){
     case 1: status.innerHTML = "STARTED";break;
     case 2: status.innerHTML = "STREAMING";break;
     case 3: status.innerHTML = "COMPLETE";break;
@@ -85,8 +85,8 @@ function render(){
   
   var numPointsAndFPS = document.getElementById("numPointsAndFPS");
   
-  if(acorn.getNumPoints() > 0){
-    numPointsAndFPS.innerHTML = acorn.getNumPoints() + " points @ " + fps + " FPS";
+  if(pointCloud.getNumPoints() > 0){
+    numPointsAndFPS.innerHTML = pointCloud.getNumPoints() + " points @ " + fps + " FPS";
   }
   else{
     numPointsAndFPS.innerHTML = fps + " FPS";
@@ -108,5 +108,5 @@ function start(){
   ps.onMouseReleased = mouseReleased;
   ps.onKeyDown = keyDown;
   
-  acorn = ps.load("../../clouds/acorn.asc");
+  pointCloud = ps.load("../../clouds/acorn.asc");
 }

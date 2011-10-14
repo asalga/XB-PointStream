@@ -837,6 +837,12 @@ var PointStream = (function() {
           pc.attributes[semantic] = [];
         }
         
+        //
+        //
+        if(semantic === "ps_Color"){
+          pc.usingColor = true;
+        }
+        
         var buffObj = createBufferObject(attributes[semantic]);
         pc.attributes[semantic].push(buffObj);
         
@@ -1233,6 +1239,13 @@ var PointStream = (function() {
     
       // Don't bother doing any work if we don't have a context yet.
       if(ctx){
+      
+        if(pointCloud.usingColor){
+          if(ctx.getUniformLocation(currProgram, "ps_UsingColor") !== null){
+            uniformi(currProgram, "ps_UsingColor", true);
+          }
+        }
+      
         // We need to find a way to detect normals. If normals don't exist,
         // we don't need to figure out the normal transformation.
         var topMatrix = this.peekMatrix();
@@ -1887,7 +1900,7 @@ var PointStream = (function() {
           
           VBOs: [],
           attributes: {},
-          
+          usingColor: false,
           progress: 0,
           
           /**

@@ -2,7 +2,7 @@ var currentCloudPath;
 var ps, pointCloud;
 
 // Create an orbit camera halfway between the closest and farthest point
-var cam = new OrbitCam({closest:0, farthest:140, distance: 5});
+var cam = new OrbitCam({closest:0, farthest:440, distance: 5});
 var isDragging = false;
 var rotationStartCoords = [0, 0];
 

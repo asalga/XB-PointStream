@@ -1,4 +1,4 @@
-var ps, mickey;
+var ps, pointCloud;
 
 // If these values aren't set and the device used does
 // not support MozOrientation, nothing will render.
@@ -29,7 +29,7 @@ function render() {
   ps.rotateY(y * 2.5);
   
   ps.clear();
-  ps.render(mickey);
+  ps.render(pointCloud);
 }
 
 function handleOrientation(eventData){
@@ -69,5 +69,5 @@ function start(){
   
   ps.onRender = render;
   
-  mickey = ps.load("../../clouds/mickey.asc");
+  pointCloud = ps.load("../../clouds/mickey.asc");
 }

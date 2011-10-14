@@ -38,6 +38,18 @@
         }
       },
 
+      {
+        "name": "Vertices & Normals",
+        "note": "",
+        "tag": "ASC",
+        "firstCanvas" : {
+            "src" : { "url" : "resources/acorn_n/acorn_n.png", "type" : "image" }
+        },
+        "secondCanvas" : {
+            "src" : { "url" : "resources/acorn_n/acorn_n.js", "type" : "script" },
+            "run": "start"
+        }
+      },
 
       {
         "name": "Vertices & Colors",
