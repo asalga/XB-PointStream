@@ -7,9 +7,21 @@
     <script src="demo.js"></script>
   </head>
 
-  <body onLoad="start();startOrtho();" bgcolor="#222222">
-    <canvas id="canvas" width="500" height="500"></canvas>
-    <canvas id="ortho" width="500" height="500"></canvas>
+  <body onLoad="start();startOrtho();" bgcolor="#FFF">
+  
+    <table>
+      <tr>
+        <td>
+          Perspective<br />
+          <canvas id="canvas" width="500" height="500"></canvas>
+        </td>
+        <td>
+          Orthographic<br />
+          <canvas id="ortho" width="500" height="500"></canvas>
+        </td>
+      </tr>
+    </table>
+    
   </body>
 
 </html>
