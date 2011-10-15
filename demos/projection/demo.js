@@ -8,6 +8,9 @@ var camOrtho = new OrbitCam({closest:10, farthest:100, distance: 100});
 var rotationStartCoords = [0, 0];
 var rotationStartCoordsO = [0, 0];
 
+var renderedOnce = false;
+var renderedOnceO = false;
+
 var isDragging = false;
 var isDraggingO = false;
 
@@ -51,6 +54,12 @@ function mouseReleasedO(){
 }
 
 function render() {
+
+  // To keep the logic simple, only render when done
+  if(lion.status !== 3){
+    return;
+  }
+
   if(isDragging === true){		
     // how much was the cursor moved compared to last time
     // this function was called?
@@ -63,18 +72,29 @@ function render() {
 
     cam.yaw(-deltaX * 0.015);
     cam.pitch(deltaY * 0.015);
+  }  
+  
+  if(renderedOnce === false || isDragging){
+    renderedOnce = true;
+
+    var c = lion.getCenter();
+    ps.multMatrix(M4x4.makeLookAt(cam.pos, V3.add(cam.pos,cam.dir), cam.up));
+    ps.translate(-c[0], -c[1], -c[2]);
+  
+    ps.clear();
+    ps.render(lion);
+    document.getElementById('perFPS').innerHTML = Math.round(ps.frameRate);
   }
-  
-  var c = lion.getCenter();
-  ps.multMatrix(M4x4.makeLookAt(cam.pos, V3.add(cam.pos,cam.dir), cam.up));
-  ps.translate(-c[0], -c[1], -c[2]);
-  
-  ps.clear();
-  ps.render(lion);  
+
 }
 
 function renderOrtho() {
-  if(isDraggingO === true){		
+
+  if(pointCloudOrtho.status !== 3){
+    return;
+  }
+
+  if(isDraggingO){
     // how much was the cursor moved compared to last time
     // this function was called?
     var deltaX = psOrtho.mouseX - rotationStartCoordsO[0];
@@ -88,14 +108,18 @@ function renderOrtho() {
     camOrtho.pitch(deltaY * 0.015);
   }
   
-  psOrtho.ortho();
-  psOrtho.scale(3.5 + 1/camOrtho.distance * 60);
-  var c = pointCloudOrtho.getCenter();
-  psOrtho.multMatrix(M4x4.makeLookAt(camOrtho.pos, V3.add(camOrtho.pos, camOrtho.dir), camOrtho.up));
-  psOrtho.translate(-c[0], -c[1], -c[2]);
+  if(renderedOnceO === false || isDraggingO){
+    renderedOnceO = true;
+    psOrtho.ortho();
+    psOrtho.scale(3.5 + 1/camOrtho.distance * 60);
+    var c = pointCloudOrtho.getCenter();
+    psOrtho.multMatrix(M4x4.makeLookAt(camOrtho.pos, V3.add(camOrtho.pos, camOrtho.dir), camOrtho.up));
+    psOrtho.translate(-c[0], -c[1], -c[2]);
   
-  psOrtho.clear();
-  psOrtho.render(pointCloudOrtho);  
+    psOrtho.clear();
+    psOrtho.render(pointCloudOrtho);
+    document.getElementById('orthoFPS').innerHTML = Math.round(psOrtho.frameRate);
+  }
 }
 
 function start(){
