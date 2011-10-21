@@ -1,8 +1,11 @@
-var ps, lion;
-var psOrtho, pointCloudOrtho;
+var psPerspective;
+var psOrtho;
+
+var pointCloudOrtho;
+var pointCloutPersp;
 
 // Create an orbit camera halfway between the closest and farthest point
-var cam = new OrbitCam({closest:10, farthest:100, distance: 100});
+var camPerspective = new OrbitCam({closest:50, farthest:100, distance: 100});
 var camOrtho = new OrbitCam({closest:10, farthest:100, distance: 100});
 
 var rotationStartCoords = [0, 0];
@@ -14,30 +17,36 @@ var renderedOnceO = false;
 var isDragging = false;
 var isDraggingO = false;
 
+var drawingOrtho = false;
+var drawingPerspective = false;
+
 function zoom(amt){
   if(amt < 0){
-    cam.goCloser(-amt);
+    camPerspective.goCloser(-amt);
   }
   else{
-    cam.goFarther(amt);
+    camPerspective.goFarther(amt);
   }
+  drawingPerspective = true;
+  renderPerspective();
 }
 
-function zoomO(amt){
+function zoomOrtho(amt){
   if(amt < 0){
     camOrtho.goCloser(-amt);
   }
   else{
     camOrtho.goFarther(amt);
   }
+  drawingOrtho = true;
+  renderOrtho();
 }
 
 function mousePressed(){
-  rotationStartCoords[0] = ps.mouseX;
-  rotationStartCoords[1] = ps.mouseY;
+  rotationStartCoords[0] = psPerspective.mouseX;
+  rotationStartCoords[1] = psPerspective.mouseY;
   isDragging = true;
 }
-
 
 function mousePressedO(){
   rotationStartCoordsO[0] = psOrtho.mouseX;
@@ -53,43 +62,49 @@ function mouseReleasedO(){
   isDraggingO = false;
 }
 
-function render() {
+function renderPerspective(){
 
-  // To keep the logic simple, only render when done
-  if(lion.status !== 3){
+  // To keep the logic simple, only render when done.
+  if(pointCloutPersp.status !== 3){
     return;
   }
 
-  if(isDragging === true){		
+  if(isDragging){
+    var mx = psPerspective.mouseX;
+    var my = psPerspective.mouseY;
+    	
     // how much was the cursor moved compared to last time
     // this function was called?
-    var deltaX = ps.mouseX - rotationStartCoords[0];
-    var deltaY = ps.mouseY - rotationStartCoords[1];
+    var deltaX = mx - rotationStartCoords[0];
+    var deltaY = my - rotationStartCoords[1];
 		
     // now that the camera was updated, reset where the
     // rotation will start for the next time this function is called.
-    rotationStartCoords = [ps.mouseX, ps.mouseY];
+    rotationStartCoords = [psPerspective.mouseX, psPerspective.mouseY];
 
-    cam.yaw(-deltaX * 0.015);
-    cam.pitch(deltaY * 0.015);
-  }  
-  
-  if(renderedOnce === false || isDragging){
-    renderedOnce = true;
-
-    var c = lion.getCenter();
-    ps.multMatrix(M4x4.makeLookAt(cam.pos, V3.add(cam.pos,cam.dir), cam.up));
-    ps.translate(-c[0], -c[1], -c[2]);
-  
-    ps.clear();
-    ps.render(lion);
-    document.getElementById('perFPS').innerHTML = Math.round(ps.frameRate);
+    camPerspective.yaw(-deltaX * 0.015);
+    camPerspective.pitch(deltaY * 0.015);
   }
+  
+  if(renderedOnce === false || isDragging || drawingPerspective){
+    renderedOnce = true;
+    var cam = camPerspective;
+    psPerspective.perspective(60, 350/500, 1, 1000);
 
+    var c = pointCloutPersp.getCenter();
+    psPerspective.multMatrix(M4x4.makeLookAt(cam.pos, V3.add(cam.pos,cam.dir), cam.up));
+    psPerspective.translate(-c[0], -c[1], -c[2]);
+  
+    psPerspective.clear();
+    psPerspective.render(pointCloutPersp);
+    document.getElementById('perFPS').innerHTML = Math.round(psPerspective.frameRate);
+  }
+  drawingPerspective = false;
 }
 
 function renderOrtho() {
 
+  // To keep the logic simple, only render when done.
   if(pointCloudOrtho.status !== 3){
     return;
   }
@@ -108,44 +123,47 @@ function renderOrtho() {
     camOrtho.pitch(deltaY * 0.015);
   }
   
-  if(renderedOnceO === false || isDraggingO){
+  if(renderedOnceO === false || isDraggingO || drawingOrtho){
     renderedOnceO = true;
     psOrtho.ortho();
     psOrtho.scale(3.5 + 1/camOrtho.distance * 60);
+    
     var c = pointCloudOrtho.getCenter();
     psOrtho.multMatrix(M4x4.makeLookAt(camOrtho.pos, V3.add(camOrtho.pos, camOrtho.dir), camOrtho.up));
-    psOrtho.translate(-c[0], -c[1], -c[2]);
+    psOrtho.translate(-c[0], -c[1],   -c[2]);
   
     psOrtho.clear();
     psOrtho.render(pointCloudOrtho);
     document.getElementById('orthoFPS').innerHTML = Math.round(psOrtho.frameRate);
   }
+  
+  drawingOrtho = false;
 }
 
 function start(){
-  ps = new PointStream();
-  ps.setup(document.getElementById('canvas'));
-  ps.background([0.2, 0.2 ,0.2 ,1]);
-  ps.pointSize(3);
+  psPerspective = new PointStream();
+  psPerspective.setup(document.getElementById('canvas'));
+  psPerspective.background([0.2, 0.2 ,0.2 ,1]);
+  psPerspective.pointSize(4);
 
-  ps.onRender = render;
-  ps.onMouseScroll = zoom;
-  ps.onMousePressed = mousePressed;
-  ps.onMouseReleased = mouseReleased;
+  psPerspective.onRender = renderPerspective;
+  psPerspective.onMouseScroll = zoom;
+  psPerspective.onMousePressed = mousePressed;
+  psPerspective.onMouseReleased = mouseReleased;
   
-  lion = ps.load("../../clouds/lion_1048K_n.psi");
+  pointCloutPersp = psPerspective.load("../../clouds/lion_1048K_n.psi");
 }
 
 function startOrtho(){
   psOrtho = new PointStream();
   psOrtho.setup(document.getElementById('ortho'));
   psOrtho.background([0.2, 0.2 ,0.2 ,1]);
-  psOrtho.pointSize(3);
+  psOrtho.pointSize(4);
 
   psOrtho.attenuation(10, 0, 0);
-    
+  
   psOrtho.onRender = renderOrtho;
-  psOrtho.onMouseScroll = zoomO;
+  psOrtho.onMouseScroll = zoomOrtho;
   psOrtho.onMousePressed = mousePressedO;
   psOrtho.onMouseReleased = mouseReleasedO;
   
