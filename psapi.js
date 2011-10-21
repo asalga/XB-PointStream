@@ -1213,7 +1213,10 @@ var PointStream = (function() {
       ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
     };
     
-    this.delete = function(pointCloud){
+    /**
+      Deletes the VBOs for the specified point cloud.
+    */
+    this.free = function(pointCloud){
       var semantics = Object.keys(pointCloud.attributes);
       var firstSemantic = semantics[0];
 

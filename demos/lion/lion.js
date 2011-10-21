@@ -35,7 +35,7 @@ function keyDown(){
 
   // D deletes and recreates the cloud
   if(ps.key == 68 || ps.key == 100 ){
-    ps.delete(lion);
+    ps.free(lion);
     lion = ps.load("../../clouds/lion_1048K_n.psi");
   }
 }
