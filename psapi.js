@@ -1,3 +1,91 @@
+var leafcounter = 0;
+var childCounter = 0;
+var counter = 0;
+
+var counter1 = 0;
+var counter2 = 1;
+
+var myCounter = 0;
+
+
+function isPointInBox(p, b){
+// min x 0
+// min y 1
+// min z 2
+
+// max x 3
+// max y 4
+// max z 5
+
+  if(p[0] >= b[0] && p[0] <= b[3] &&
+     p[1] >= b[1] && p[1] <= b[4] &&
+     p[2] >= b[2] && p[2] <= b[5]){
+       return true;
+     }
+  return false;
+}
+
+
+function isBoxInBox(b1, b2){
+
+//var isInside = false;
+
+
+// 0 - totally outside
+// 1 - partially in
+// 2 - totally in
+
+
+var p0 = [b1[0], b1[1], b1[2]];
+var p1 = [b1[0], b1[1], b1[5]];
+var p2 = [b1[0], b1[4], b1[5]];
+var p3 = [b1[0], b1[4], b1[2]];
+
+var p4 = [b1[3], b1[1], b1[2]];
+var p5 = [b1[3], b1[1], b1[5]];
+var p6 = [b1[3], b1[4], b1[5]];
+var p7 = [b1[3], b1[4], b1[2]];
+
+
+
+
+// totally inside
+if( isPointInBox(p0, b2) &&
+    isPointInBox(p1, b2) &&
+    isPointInBox(p2, b2) &&
+    isPointInBox(p3, b2) &&
+    isPointInBox(p4, b2) &&
+    isPointInBox(p5, b2) &&
+    isPointInBox(p6, b2) &&
+    isPointInBox(p7, b2)){
+return 2;
+}
+
+
+// totally outside
+else if(
+
+ !isPointInBox(p0, b2) &&
+    !isPointInBox(p1, b2) &&
+    !isPointInBox(p2, b2) &&
+    !isPointInBox(p3, b2) &&
+    !isPointInBox(p4, b2) &&
+    !isPointInBox(p5, b2) &&
+    !isPointInBox(p6, b2) &&
+    !isPointInBox(p7, b2)){
+    return 0;
+    }
+
+
+
+return 1;
+
+}
+
+
+
+
+var currProgram1;
 /*
   Copyright (c) 2010  Seneca College
   MIT LICENSE
@@ -484,6 +572,419 @@ var PointStream = (function() {
       }
       return key;
     }
+    
+    
+    
+    var octree = (function(){
+    
+        function octree(){
+            this.children;
+            
+            // rename to vertex data
+            //this.data = [];
+            
+            
+            this.min;
+            this.max;
+            
+            this.datas = {};
+            this.VBOs = {};
+            
+            // this.
+            
+            // need to have many vbos
+           // this.VBO_;
+            
+            // If this is a leaf, we can stop recursing deeper when
+            // traversing the octree.
+            this.isLeaf = true;
+            
+            // Insert a point into the octant.
+            // p - array of floats
+            this.insert = function(pp){
+
+                var p = pp["ps_Vertex"];
+                var c = pp["ps_Color"];
+                var n = pp["ps_Normal"];
+            
+                var hasInserted = false;
+                
+                var minX = this.min[0];
+                var maxX = this.max[0];
+
+                var minY = this.min[1];
+                var maxY = this.max[1];
+
+                var minZ = this.min[2];
+                var maxZ = this.max[2];
+            
+                // If this is a leaf, we can add it to our array
+                if(this.isLeaf){
+
+                     if(p[0] >= minX && p[0] <= maxX &&
+                        p[1] >= minY && p[1] <= maxY &&
+                        p[2] >= minZ && p[2] <= maxZ)
+                     {
+                     
+                     
+                       //
+                       // this.datas["ps_Vertex"].push();
+                       // 
+//                       alert(Object.keys(pp));
+                       
+                      // this.data.push(p[0]);
+                      // this.data.push(p[1]);              
+                      // this.data.push(p[2]);
+                       
+                       
+                       if(!this.datas["ps_Vertex"]){
+                         this.datas["ps_Vertex"] = [];
+                       }
+                       
+                       if(!this.datas["ps_Color"]){
+                         this.datas["ps_Color"] = [];
+                       }
+
+                       if(!this.datas["ps_Normal"]){
+                         this.datas["ps_Normal"] = [];
+                       }
+
+                       this.datas["ps_Color"].push(c[0]);
+                       this.datas["ps_Color"].push(c[1]);
+                       this.datas["ps_Color"].push(c[2]);
+                       
+                       this.datas["ps_Vertex"].push(p[0]);
+                       this.datas["ps_Vertex"].push(p[1]);
+                       this.datas["ps_Vertex"].push(p[2]);
+
+                       this.datas["ps_Normal"].push(n[0]);
+                       this.datas["ps_Normal"].push(n[1]);
+                       this.datas["ps_Normal"].push(n[2]);
+                       
+                       hasInserted = true;
+                    }
+                }
+                
+                // Otherwise, find out which child should hold the point.
+                else{
+                    for(var i = 0; !hasInserted && i < 8; i++){
+                        hasInserted = this.children[i].insert(pp);
+                    }
+                }
+                return hasInserted;
+            }
+            
+            
+            
+            /*
+            this.render = function(){
+                counterTest++;
+                if(counterTest >= myCounter){return;}
+                
+              if(this.children){
+                for(var i = 0; i < this.children.length; i++){
+                  this.children[i].render();
+                }
+              }
+
+              else{
+            
+                if(this.VBOs["ps_Vertex"] && this.datas["ps_Vertex"].length > 0){
+                    if(ctx.getAttribLocation(currProgram, "ps_Vertex") !== -1){
+                        
+                       // uniformi(currProgram, "ps_UsingColor", true);
+                        
+                        vertexAttribPointer(currProgram, "ps_Vertex", 3, this.VBOs["ps_Vertex"]);
+                        vertexAttribPointer(currProgram, "ps_Color", 3, this.VBOs["ps_Color"]);
+                       // vertexAttribPointer(currProgram, "ps_Normal", 3, this.VBOs["ps_Normal"]);
+                        
+                        ctx.drawArrays(ctx.POINTS, 0, this.datas["ps_Vertex"].length/3);
+                    }
+                }
+                
+                /*if(this.VBO_ && this.data.length > 0){
+
+                    if(ctx.getAttribLocation(currProgram, "ps_Vertex") !== -1){
+                        vertexAttribPointer(currProgram, "ps_Vertex", 3, this.VBO_);
+                        ctx.drawArrays(ctx.POINTS, 0, this.data.length/3);
+                    }
+                }*/
+            
+            /*
+              this.renderNoCheck = function(){
+                counterTest++;
+                if(counterTest >= myCounter){return;}
+                
+              if(this.children){
+                for(var i = 0; i < this.children.length; i++){
+                  this.children[i].render();
+                }
+              }
+
+              else{
+            
+                if(this.VBOs["ps_Vertex"] && this.datas["ps_Vertex"].length > 0){
+                    if(ctx.getAttribLocation(currProgram, "ps_Vertex") !== -1){
+                        
+                       // uniformi(currProgram, "ps_UsingColor", true);
+                        
+                        vertexAttribPointer(currProgram, "ps_Vertex", 3, this.VBOs["ps_Vertex"]);
+                        vertexAttribPointer(currProgram, "ps_Color", 3, this.VBOs["ps_Color"]);
+                       // vertexAttribPointer(currProgram, "ps_Normal", 3, this.VBOs["ps_Normal"]);
+                        
+                        ctx.drawArrays(ctx.POINTS, 0, this.datas["ps_Vertex"].length/3);
+                    }
+                }
+              }
+            }*/
+            
+                /*if(this.VBO_ && this.data.length > 0){
+
+                    if(ctx.getAttribLocation(currProgram, "ps_Vertex") !== -1){
+                        vertexAttribPointer(currProgram, "ps_Vertex", 3, this.VBO_);
+                        ctx.drawArrays(ctx.POINTS, 0, this.data.length/3);
+                    }
+                }*/
+
+
+
+
+            this.renderCheck = function(minBB, maxBB){
+                
+                
+            // check if this octant is entirely inside the bounds provided
+
+            if(!this.children){
+            
+            if( 2 === isBoxInBox( [this.min[0], this.min[1], this.min[2] , this.max[0], this.max[1], this.max[2]] ,
+                                        [minBB[0], minBB[1], minBB[2], maxBB[0], maxBB[1], maxBB[2]] )){
+
+            
+            childCounter++;
+                if(this.VBOs["ps_Vertex"] && this.datas["ps_Vertex"].length > 0){
+                    if(ctx.getAttribLocation(currProgram, "ps_Vertex") !== -1){
+
+                        uniformi(currProgram, "ps_UsingColor", true);
+                        vertexAttribPointer(currProgram, "ps_Vertex", 3, this.VBOs["ps_Vertex"]);
+                        vertexAttribPointer(currProgram, "ps_Color", 3, this.VBOs["ps_Color"]);
+                        vertexAttribPointer(currProgram, "ps_Normal", 3, this.VBOs["ps_Normal"]);
+                        ctx.drawArrays(ctx.POINTS, 0, this.datas["ps_Vertex"].length/3);
+                    }
+                }
+                return;
+                }
+            }
+
+            // totally outside
+            if( 0 === isBoxInBox(   [this.min[0], this.min[1], this.min[2] , this.max[0], this.max[1], this.max[2]] ,
+                                    [minBB[0], minBB[1], minBB[2], maxBB[0], maxBB[1], maxBB[2]] )){
+                                    return;
+            }
+           
+           
+           // totally inside
+            else if( 2 === isBoxInBox( [this.min[0], this.min[1], this.min[2] , this.max[0], this.max[1], this.max[2]] ,
+                                        [minBB[0], minBB[1], minBB[2], maxBB[0], maxBB[1], maxBB[2]] )){
+                if(this.children){
+                    for(var i = 0; i < this.children.length; i++){
+                        this.children[i].renderCheck(minBB, maxBB);
+                    }
+                }
+            }
+            
+            // partially in/out
+            else{
+            //console.log('f');
+             if(this.children){
+                for(var i = 0; i < this.children.length; i++){
+                  this.children[i].renderCheck(minBB, maxBB);
+                }
+              }
+            }
+                
+            }// renderCheck
+            
+            /*
+                                
+              if(this.children){
+                for(var i = 0; i < this.children.length; i++){
+                  this.children[i].render(minBB, maxBB);
+                }
+              }
+
+              else{
+            
+                if(this.VBOs["ps_Vertex"] && this.datas["ps_Vertex"].length > 0){
+                    if(ctx.getAttribLocation(currProgram, "ps_Vertex") !== -1){
+                        
+                       // uniformi(currProgram, "ps_UsingColor", true);
+                        
+                        vertexAttribPointer(currProgram, "ps_Vertex", 3, this.VBOs["ps_Vertex"]);
+                        vertexAttribPointer(currProgram, "ps_Color", 3, this.VBOs["ps_Color"]);
+                       // vertexAttribPointer(currProgram, "ps_Normal", 3, this.VBOs["ps_Normal"]);
+                        
+                        ctx.drawArrays(ctx.POINTS, 0, this.datas["ps_Vertex"].length/3);
+                    }
+                }
+                
+
+              }   
+              */
+                          
+            this.finish = function(){
+            
+             if(this.children){
+                for(var i = 0; i < this.children.length; i++){
+                    this.children[i].finish();
+                }
+            }
+          else{
+          
+            if(this.datas["ps_Color"] && this.datas["ps_Color"].length > 0){
+              var len = this.datas["ps_Color"].length;
+                var floatArray_color = new Float32Array(len);
+              
+              for(var i = 0; i < len; i++){
+              
+                floatArray_color[i] = this.datas["ps_Color"][i];
+              }
+ this.VBOs["ps_Color"] = createBufferObject(floatArray_color).VBO;
+
+            }
+             
+            if(this.datas["ps_Normal"] && this.datas["ps_Normal"].length > 0){
+              var len = this.datas["ps_Normal"].length;
+                var floatArray_normal = new Float32Array(len);
+              
+              for(var i = 0; i < len; i++){
+              
+                floatArray_normal[i] = this.datas["ps_Normal"][i];
+              }
+              this.VBOs["ps_Normal"] = createBufferObject(floatArray_normal).VBO;
+            }
+ 
+            
+            
+            
+            if(this.datas["ps_Vertex"] && this.datas["ps_Vertex"].length > 0){
+leafcounter++;
+
+//if(!this.VBOs["ps_Vertex"]){
+
+//  this.VBOs["ps_Vertex"] = new Float32Array(this.datas["ps_Vertex"].length);
+  
+  var len = this.datas["ps_Vertex"].length;
+  
+   var floatArray_vertex = new Float32Array(len);
+
+              for(var i = 0; i < len; i++){
+                floatArray_vertex[i] = this.datas["ps_Vertex"][i];
+              }
+ this.VBOs["ps_Vertex"] = createBufferObject(floatArray_vertex).VBO;
+  
+//}
+/*
+              var tttt = new Float32Array(this.data.length);
+                
+              for(var i = 0; i < this.data.length; i++){
+                tttt[i] = this.data[i];
+              }*/
+
+              //this.VBO_ = createBufferObject(tttt).VBO;
+              
+            }
+        }
+        }
+
+            
+            this.load = function(config){
+
+//                this.radius = config.radius;
+//                this.center = config.center;
+                this.isLeaf = true;
+                this.min = config.min;
+                this.max = config.max;
+                
+                if(config.levels > 0){
+                this.children = [];
+               // this.data = null;
+                this.isLeaf = false;
+                
+                var minX = this.min[0];
+                var minY = this.min[1];
+                var minZ = this.min[2];
+
+                var maxX = this.max[0];
+                var maxY = this.max[1];
+                var maxZ = this.max[2];
+
+                var avgX = (minX + maxX)/2;
+                var avgY = (minY + maxY)/2;
+                var avgZ = (minZ + maxZ)/2;
+                
+                var _min;
+                var _max;
+                
+                  var p = {x:0, y:0, z:0};
+                  
+                    for(var i = 0; i < 8; i++){
+                    switch(i){
+                    
+                        case 0: p.x = -1;  p.y =  1; p.z =  1;
+                                _min = [minX, avgY, avgZ];
+                                _max = [avgX, maxY, maxZ];
+                                break;
+                                
+                        // top right front
+                        case 1: p.x = -1;  p.y = -1; p.z = 1;
+                                _min = [avgX, avgY, avgZ];
+                                _max = [maxX, maxY, maxZ];
+                                break;
+                                
+                        case 2: // bottom left front   
+                                p.x =  1;  p.y = -1; p.z = 1;
+                                _min = [minX, minY, avgZ];
+                                _max = [avgX, avgY, maxZ];break;
+                        
+                        // bottom right front
+                        case 3: p.x =  1;  p.y =  1; p.z =  1;
+                                _min = [avgX, minY, avgZ];
+                                _max = [maxX, avgY, maxZ];break;
+                                
+                          //top left back 
+                        case 4: p.x = -1;  p.y =  1; p.z = -1;
+                                _min = [minX, avgY, minZ];
+                                _max = [avgX, maxY, avgZ];break;
+                        
+                        // top right back
+                        case 5: p.x = -1;  p.y = -1; p.z = -1;
+                                _min = [avgX, avgY, minZ];
+                                _max = [maxX, maxY, avgZ];break;
+                        
+                        // bottom left back
+                        case 6: p.x =  1;  p.y = -1; p.z = -1;
+                                _min = [minX, minY, minZ];
+                                _max = [avgX, avgY, avgZ];break;
+                        
+                         //bottom right back
+                        case 7: p.x =  1;  p.y =  1; p.z = -1;
+                                _min = [avgX, minY, minZ];
+                                _max = [maxX, avgY, avgZ];break;
+                                
+                    }
+
+                    var o = new octree();
+      
+                    o.load({levels:config.levels-1, min:_min, max:_max});
+                    this.children.push(o);
+                  }
+                }
+            }
+        }
+    
+        return octree;
+    })();
+
 
     // tinylog lite JavaScript library
     // http://purl.eligrey.com/tinylog/lite
@@ -843,6 +1344,29 @@ var PointStream = (function() {
           pc.usingColor = true;
         }
         
+        if(semantic === "ps_Vertex"){
+
+
+var verts = attributes["ps_Vertex"];
+var cols =  attributes["ps_Color"];
+var norms = attributes["ps_Normal"];
+
+for(var i = 0; i < verts.length; i+= 3){
+
+  pc._octree.insert(
+  {
+    "ps_Vertex" : [verts[i], verts[i+1], verts[i+2]],
+    "ps_Color" : [cols[i], cols[i+1], cols[i+2]],
+    "ps_Normal" : [norms[i], norms[i+1], norms[i+2]]
+  }
+  
+  );
+}
+
+
+         
+        }
+        
         var buffObj = createBufferObject(attributes[semantic]);
         pc.attributes[semantic].push(buffObj);
         
@@ -855,6 +1379,8 @@ var PointStream = (function() {
             addedVertices[1] += attributes[semantic][j+1];
             addedVertices[2] += attributes[semantic][j+2];
           }
+          
+          
 
           pc.addedVertices[0] += addedVertices[0];
           pc.addedVertices[1] += addedVertices[1];
@@ -884,6 +1410,10 @@ var PointStream = (function() {
       
       pc.status = COMPLETE;
       pc.progress = parser.progress;
+      
+      
+      counter =0;
+      pc._octree.finish();
     }
     
     /**
@@ -952,7 +1482,7 @@ var PointStream = (function() {
       point size, attenuation or projection.
     */
     function setDefaultUniforms(){
-      uniformf(currProgram, "ps_PointSize", 1);
+      uniformf(currProgram, "ps_PointSize", 10);
       uniformf(currProgram, "ps_Attenuation", [attn[0], attn[1], attn[2]]); 
       uniformMatrix(currProgram, "ps_ProjectionMatrix", false, projectionMatrix);
     }
@@ -1240,15 +1770,18 @@ var PointStream = (function() {
     */
     this.render = function(pointCloud){
     
+    test123 += pointCloud.numPoints
+
+    
       // Don't bother doing any work if we don't have a context yet.
       if(ctx){
       
         if(pointCloud.usingColor){
           if(ctx.getUniformLocation(currProgram, "ps_UsingColor") !== null){
-            uniformi(currProgram, "ps_UsingColor", true);
+         //   uniformi(currProgram, "ps_UsingColor", true);
           }
         }
-      
+        
         // We need to find a way to detect normals. If normals don't exist,
         // we don't need to figure out the normal transformation.
         var topMatrix = this.peekMatrix();
@@ -1268,15 +1801,21 @@ var PointStream = (function() {
 
         var firstSemantic = semantics[0];
         
+        
+        
+        
+        
+        
         // We need at least positional data.
-        if(pointCloud.attributes[firstSemantic]){
+      //  if(pointCloud.attributes["ps_Vertex"]){
 
-          var arrayOfBufferObjsV = pointCloud.attributes[firstSemantic];
+         // var arrayOfBufferObjsV = pointCloud.attributes[firstSemantic];
 
           // Iterate over all the vertex buffer objects.
-          for(var currVBO = 0; currVBO < arrayOfBufferObjsV.length; currVBO++){
-            // iterate over all the semantic names "ps_Vertex", "ps_Normal", etc.
-            for(name in semantics){
+//          for(var currVBO = 0; currVBO < arrayOfBufferObjsV.length; currVBO++){
+           // for(var currVBO = 0; currVBO < 1; currVBO++){
+                      // iterate over all the semantic names "ps_Vertex", "ps_Normal", etc.
+//            for(name in semantics){
               /*
                 There is a chance we don't have the correspoding semantic data
                 for this vertex. In that case, we skip it.
@@ -1288,24 +1827,37 @@ var PointStream = (function() {
                 We iterate over each set of vertex vbo, enabling
                 the corresponding attributes which exist.
               */
-              if(pointCloud.attributes[semantics[name]][currVBO]){
-
-                if(ctx.getAttribLocation(currProgram, semantics[name]) !== -1){
-                  vertexAttribPointer(currProgram, semantics[name], 3, pointCloud.attributes[semantics[name]][currVBO].VBO);
+              
+            /*  if(pointCloud.attributes["ps_Vertex"][0]){
+                if(ctx.getAttribLocation(currProgram, "ps_Vertex") !== -1){
+                  vertexAttribPointer(currProgram, "ps_Vertex", 3, pointCloud.attributes["ps_Vertex"][0].VBO);
                 }
-              }
             }
-            ctx.drawArrays(ctx.POINTS, 0, arrayOfBufferObjsV[currVBO].length/3);
+            */
+            
+         //   ctx.drawArrays(ctx.POINTS, 0, arrayOfBufferObjsV[0].length/3);
             
             // If we render a point cloud with vertices and colors, then 
             // another one with only vertices, this may cause issues if we
             // don't disabled all the current attributes after each draw.
-            for(var name in semantics){
-              disableVertexAttribPointer(currProgram, semantics[name]);
-            }
+           // for(var name in semantics){
+            // // disableVertexAttribPointer(currProgram, semantics[name]);
+          //  }
             
-          }
-        }
+        //  }
+     //   }
+     
+  //   if(pointCloud.attributes["ps_Vertex"]){
+//   vertexAttribPointer(currProgram, "ps_Vertex", 3, pointCloud.attributes["ps_Vertex"][0].VBO);
+  // }
+  
+  
+  
+        
+  
+        pointCloud._octree.renderCheck(minBB, maxBB);
+        
+        
       }
     };
         
@@ -1673,7 +2225,7 @@ var PointStream = (function() {
       @param {WebGLProgram} program
    */
     this.useProgram = function(program){
-      currProgram = program ? program : defaultProgram;
+      currProgram1 = currProgram = program ? program : defaultProgram;
       ctx.useProgram(currProgram);
       
       // We don't want to set the static uniforms every frame,
@@ -1901,6 +2453,8 @@ var PointStream = (function() {
         // !! fix (private vars are visible in user script)
         var newPointCloud = {
           
+          _octree: new octree(),
+          
           VBOs: [],
           attributes: {},
           usingColor: false,
@@ -1949,6 +2503,18 @@ var PointStream = (function() {
           }
         };
         
+        // 0 - 1
+        // 1 - 8
+        // 2 - 64
+        // 3 - 512
+        // 4 - 4096
+//        newPointCloud._octree.load({levels:3, min:[-10, -10, -10], max:[10, 10, 10]});
+
+          newPointCloud._octree.load({levels:2, min:[-70, -100, -50], max:[80, 100, 35]});
+        
+  //      -73.9937 -106.673 -56.4418
+//88.842 106.72 37.7634//
+
         parsers.push(parser);
         pointClouds.push(newPointCloud);
         
