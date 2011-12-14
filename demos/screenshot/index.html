@@ -8,18 +8,19 @@
     <script src="demo.js"></script>
   </head>
 
-  <body onLoad="start();" bgcolor="#222222">
-    <input type="button" value="Take Screenshot" onClick="addPNG();"/>
-    <input type="button" value="clear" onClick="removeAllScreenShots();"/><br />
+  <body onLoad="start();">
+    <h1><a href="http://zenit.senecac.on.ca/wiki/index.php/XB_PointStream">XB PointStream</a> Screenshot Demo</h1>
+    <p><input type="button" value="Take Screenshot" onClick="addPNG();"/>
+    <input type="button" value="clear" onClick="removeAllScreenShots();"/><br /></p>
     
-    <span>status: </span><span class="orangeText" id="fileStatus"></span><br />
-    <div id="numPointsAndFPS"></div>
+    <p><span>status: </span><span class="orangeText" id="fileStatus"></span><br />
+    <span id="numPointsAndFPS"></span></p>
     
-    <canvas id="canvas" width="300" height="300"></canvas><span id="thumbnails"></span><br />
+   <p> <canvas id="canvas" width="300" height="300"></canvas><span id="thumbnails"></span></p><br />
     <span>Invert scroll wheel:</span> <input type="checkbox" id="invertScroll" /><br />
     <span id="debug"></span>
     <br />
-    <span>Last key Pressed:</span> <span id="key" class="orangeText">None</span>
+    <span>Last key Pressed:</span> <span id="key" class="orangeText">None</span></p>
   </body>
 
 </html>

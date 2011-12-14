@@ -1,26 +1,29 @@
 <html>
 
   <head>
+    <link rel="stylesheet" type="text/css" href="../style.css" />
     <script src="../../xbps.js"></script>
     <script src="../../libs/c3.js"></script>
     <script src="demo.js"></script>
   </head>
 
   <body onLoad="start();startOrtho();" bgcolor="#FFF">
-  
+   <h1><a href="http://zenit.senecac.on.ca/wiki/index.php/XB_PointStream">XB PointStream</a> Projections</h1>
+   
+  <p>
     <table>
       <tr>
         <td>
-          Perspective - Last FPS: <span id="perFPS">0</span><br />
+          <span>Perspective - Last FPS:</span> <span id="perFPS">0</span><br />
           <canvas id="canvas" width="350" height="500"></canvas>
         </td>
         <td>
-          Orthographic - Last FPS: <span id="orthoFPS">0</span><br />
+          <span>Orthographic - Last FPS:</span> <span id="orthoFPS">0</span><br />
           <canvas id="ortho" width="350" height="500"></canvas>
         </td>
       </tr>
     </table>
+  </p>
     
   </body>
-
 </html>

@@ -22,12 +22,12 @@ function removeAllScreenShots(){
 
 function zoom(amt){
   var invert = document.getElementById('invertScroll').checked ? -1: 1;
-  
-  if(amt < 0){
-    cam.goCloser(-amt);
+  var zoomed = amt * invert;
+  if(zoomed < 0){
+    cam.goCloser(-zoomed);
   }
   else{
-    cam.goFarther(amt);
+    cam.goFarther(zoomed);
   }   
 }
 

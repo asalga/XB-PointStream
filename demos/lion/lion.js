@@ -9,12 +9,13 @@ const KEY_ESC = 27;
 
 function zoom(amt){
   var invert = document.getElementById('invertScroll').checked ? -1: 1;
+  var zoom = amt * invert;
   
-  if(amt < 0){
-    cam.goCloser(-amt);
+  if(zoom < 0){
+    cam.goCloser(-zoom);
   }
   else{
-    cam.goFarther(amt);
+    cam.goFarther(zoom);
   }
 }
 
@@ -42,18 +43,18 @@ function keyDown(){
 
 function render() {
   if(isDragging === true){		
-		// how much was the cursor moved compared to last time
-		// this function was called?
+    // how much was the cursor moved compared to last time
+    // this function was called?
     var deltaX = ps.mouseX - rotationStartCoords[0];
     var deltaY = ps.mouseY - rotationStartCoords[1];
 		
-		// now that the camera was updated, reset where the
-		// rotation will start for the next time this function is called.
-		rotationStartCoords = [ps.mouseX, ps.mouseY];
+    // now that the camera was updated, reset where the
+    // rotation will start for the next time this function is called.
+    rotationStartCoords = [ps.mouseX, ps.mouseY];
 
     cam.yaw(-deltaX * 0.015);
     cam.pitch(deltaY * 0.015);
-	}
+  }
   
   var c = lion.getCenter();
   ps.multMatrix(M4x4.makeLookAt(cam.pos, V3.add(cam.pos,cam.dir), cam.up));

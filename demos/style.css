@@ -1,14 +1,18 @@
-
-/* prevent the window scrollbars from appearing
-which conflict with zooming.*/
-html {
+html, body {
+  /* prevent the window scrollbars from appearing
+  which conflict with zooming.*/
  /* overflow-x: hidden; */
  /* overflow-y: hidden; */
+  background: #EEE;
+  font-family: Arial;
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
 }
 
 span, div{
   font-family: monospace;
-  color: #FFFFFF;
+  color: #000;
 }
 
 .orangeText{
@@ -26,4 +30,33 @@ span, div{
 img{
   vertical-align: top;
   border: 1px solid #000;
+}
+
+h1 {
+  background: #385C85;
+  color: #FFF;
+  padding: 10px;
+  padding-left: 20px;
+  margin-top: 0px;
+}
+
+h1 a {
+  color: #00AA00;
+}
+
+/*
+  wrap text around after we hit 500px
+*/
+p {
+  padding-left: 20px;
+  line-height: 1.3em;
+  width: 500px;
+}
+
+p a {
+  color: #385C85;
+}
+
+canvas{
+  border: solid black 1px;
 }
