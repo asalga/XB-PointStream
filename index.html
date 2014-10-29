@@ -1,0 +1,26 @@
+<html>
+
+  <head>
+    <script src="example.js"></script>
+    <script src="xbps.js"></script>
+  </head>
+
+  <body onLoad="start();">
+    <canvas id="canvas" style="border: 1px solid black;" width="400" height="400"></canvas>
+  </body>
+  <pre>
+var ps, acorn;
+
+function start(){
+  ps = new PointStream();
+  ps.setup(document.getElementById('canvas'));
+  ps.pointSize(5);
+  ps.onRender = function(){
+    ps.translate(0, 0, -25);
+    ps.clear();
+    ps.render(acorn);
+  };
+  acorn = ps.load("clouds/acorn.asc");
+}
+</pre>
+</html>
