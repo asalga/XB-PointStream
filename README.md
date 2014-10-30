@@ -13,6 +13,16 @@ Demos
 * [Shaders](http://asalga.github.io/XB-PointStream/demos/all_shaders)
 * [Lion](http://asalga.github.io/XB-PointStream/demos/lion)
 
+
+In The Wild
+----------
+* [http://www.beg.utexas.edu/temp/test/hebes/](http://www.beg.utexas.edu/temp/test/hebes/)
+* [http://developkinect.com/news/hacks/project-zeus-kinect-mounted-turtle-bot-point-cloud-output](http://developkinect.com/news/hacks/project-zeus-kinect-mounted-turtle-bot-point-cloud-output)
+* [http://dev.ipol.im/~carlo/ipol_demo/workshop_s2p/result?key=1A4471A9EE75B10658E46191317374DE](http://dev.ipol.im/~carlo/ipol_demo/workshop_s2p/result?key=1A4471A9EE75B10658E46191317374DE)
+* [https://www.mapbox.com/blog/sensefly-drone-mapping-matterhorn/](https://www.mapbox.com/blog/sensefly-drone-mapping-matterhorn/)
+* [http://photogrammetry.ims.forth.gr/3Dmodels.php?proj=Mani%20-%20Alepotrypa%20Cave%20-%20Basin%20room](http://photogrammetry.ims.forth.gr/3Dmodels.php?proj=Mani%20-%20Alepotrypa%20Cave%20-%20Basin%20room)
+* [http://www.lancaster.ac.uk/staff/jamesm/ptclouds/volc_sample.htm](http://www.lancaster.ac.uk/staff/jamesm/ptclouds/volcsample.htm)
+
 Resources
 ---------------------
 * Arius3D:     http://www.arius3d.com/
